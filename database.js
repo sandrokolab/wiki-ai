@@ -1,5 +1,11 @@
 const { Pool } = require('pg');
 
+console.log('--- Database Initialization ---');
+console.log('DATABASE_URL present:', !!process.env.DATABASE_URL);
+if (process.env.DATABASE_URL) {
+  console.log('DATABASE_URL starts with:', process.env.DATABASE_URL.substring(0, 15) + '...');
+}
+
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false
