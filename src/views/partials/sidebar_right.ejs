@@ -1,0 +1,33 @@
+<aside class="sidebar-right">
+    <div class="sidebar-right-header">
+        <h3>Activity</h3>
+    </div>
+
+    <div class="activity-feed">
+        <% recentActivity.forEach(function(act) { %>
+            <div class="activity-item">
+                <div class="act-avatar">
+                    <%= act.username.charAt(0).toUpperCase() %>
+                </div>
+                <div class="act-content">
+                    <p class="act-text">
+                        <strong>
+                            <%= act.username %>
+                        </strong> published an update
+                    </p>
+                    <a href="/wiki/<%= act.slug %>" class="act-title">
+                        <%= act.title %>
+                    </a>
+                    <div class="act-preview">
+                        <%= act.content.substring(0, 60) %>...
+                    </div>
+                    <div class="act-meta">
+                        <span class="act-time">
+                            <%= new Date(act.created_at).toLocaleTimeString([], {hour: '2-digit' , minute:'2-digit'}) %>
+                        </span>
+                        </p>
+                    </div>
+                </div>
+                <% }); %>
+            </div>
+</aside>

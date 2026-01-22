@@ -1,56 +1,38 @@
-<!DOCTYPE html>
-<html lang="en">
+<%- include('partials/layout_start', { title: 'User Profile: ' + user.username }) %>
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>
-        <%= user.username %> - Profile - Wiki AI
-    </title>
-    <link rel="stylesheet" href="/style.css">
-</head>
+    <section class="profile-section"
+        style="max-width: 600px; margin: 0 auto; padding: 2rem; background: #f8f9fa; border-radius: var(--radius); border: 1px solid var(--border-color); text-align: center;">
+        <div class="profile-avatar"
+            style="width: 80px; height: 80px; background: var(--primary-color); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: 800; margin: 0 auto 1.5rem;">
+            <%= user.username.charAt(0).toUpperCase() %>
+        </div>
 
-<body>
-    <header>
-        <nav>
-            <a href="/" class="logo">Wiki AI</a>
-            <div class="nav-links">
-                <a href="/">Home</a>
-                <% if (currentUser && currentUser.id===user.id) { %>
-                    <a href="/logout">Logout</a>
-                    <% } %>
+        <h1 style="border: none; margin-bottom: 0.5rem; font-size: 2rem;">
+            <%= user.username %>
+        </h1>
+        <p style="color: var(--text-muted); margin-bottom: 2rem;">Member since <%= new
+                Date(user.created_at).toLocaleDateString() %>
+        </p>
+
+        <div class="user-stats"
+            style="display: flex; justify-content: space-around; padding: 1.5rem 0; border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); margin-bottom: 2rem;">
+            <div>
+                <span style="display: block; font-size: 1.5rem; font-weight: 800; color: var(--text-main);">0</span>
+                <span
+                    style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;">Contributions</span>
             </div>
-        </nav>
-    </header>
-
-    <main class="container">
-        <div class="profile-header"
-            style="display: flex; align-items: center; gap: 2rem; margin-bottom: 3rem; padding-bottom: 2rem; border-bottom: 1px solid var(--border-color);">
-            <div class="profile-avatar"
-                style="width: 100px; height: 100px; background: #eaecf0; display: flex; align-items: center; justify-content: center; font-size: 3rem; border-radius: 4px; color: #72777d;">
-                <%= user.username[0].toUpperCase() %>
-            </div>
-            <div class="profile-info">
-                <h1 style="border: none; margin: 0;">
-                    <%= user.username %>
-                </h1>
-                <p style="color: #54595d; margin: 0.5rem 0;">Member since <%= new
-                        Date(user.created_at).toLocaleDateString() %>
-                </p>
-                <% if (currentUser && currentUser.id===user.id) { %>
-                    <p style="font-size: 0.9rem; color: #54595d;">Email: <%= user.email %>
-                    </p>
-                    <% } %>
+            <div>
+                <span style="display: block; font-size: 1.5rem; font-weight: 800; color: var(--text-main);">0</span>
+                <span style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;">Followers</span>
             </div>
         </div>
 
-        <section class="contributions">
-            <h2>Contributions</h2>
-            <p style="color: #72777d; font-style: italic;">User contributions will appear here once tracked in the
-                database.</p>
-            <!-- Future work: Add query for pages/revisions by this user -->
-        </section>
-    </main>
-</body>
+        <div class="profile-actions">
+            <% if (currentUser && currentUser.id===user.id) { %>
+                <a href="/logout" class="btn-create" style="background: #e9ecef; color: #495057 !important;">Logout
+                    Session</a>
+                <% } %>
+        </div>
+    </section>
 
-</html>
+    <%- include('partials/layout_end') %>

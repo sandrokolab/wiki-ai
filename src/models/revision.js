@@ -41,6 +41,23 @@ class Revision {
             callback(err);
         }
     }
+
+    static async getRecentActivity(limit, callback) {
+        try {
+            const sql = `
+                SELECT r.created_at, u.username, p.title, p.slug, r.content
+                FROM page_revisions r
+                JOIN pages p ON r.page_id = p.id
+                JOIN users u ON r.author_id = u.id
+                ORDER BY r.created_at DESC
+                LIMIT $1
+            `;
+            const res = await pool.query(sql, [limit]);
+            callback(null, res.rows);
+        } catch (err) {
+            callback(err);
+        }
+    }
 }
 
 module.exports = Revision;

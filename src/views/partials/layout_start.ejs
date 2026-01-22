@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+        <%= typeof title !=='undefined' ? title + ' - Wiki AI' : 'Wiki AI' %>
+    </title>
+    <link rel="stylesheet" href="/style.css">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+</head>
+
+<body>
+    <div class="app-layout">
+        <%- include('sidebar_left') %>
+
+            <main class="main-content">
+                <header class="top-bar">
+                    <form action="/search" method="GET" class="search-box">
+                        <i class="ph ph-magnifying-glass"></i>
+                        <input type="text" name="q" placeholder="Search or jump to..." required>
+                    </form>
+                </header>
+                <div class="content-wrapper">

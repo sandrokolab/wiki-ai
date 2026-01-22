@@ -1,52 +1,43 @@
-<!DOCTYPE html>
-<html lang="en">
+<%- include('partials/layout_start', { title: 'Search Results' }) %>
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Search Results for "<%= query %>" - Wiki AI</title>
-    <link rel="stylesheet" href="/style.css">
-</head>
+    <section class="search-header" style="margin-bottom: 2rem;">
+        <h1 style="border: none; font-size: 2rem;">Search results for "<%= query %>"</h1>
+        <p style="color: var(--text-muted);">
+            <%= results ? results.length : 0 %> matches found.
+        </p>
+    </section>
 
-<body>
-    <header>
-        <nav>
-            <a href="/" class="logo">Wiki AI</a>
-            <div class="nav-links">
-                <a href="/">Home</a>
-                <form action="/search" method="GET" class="search-form-inline">
-                    <input type="text" name="q" value="<%= query %>" placeholder="Search...">
-                </form>
+    <% if (results && results.length> 0) { %>
+        <div class="search-results">
+            <% results.forEach(function(item) { %>
+                <article class="search-item"
+                    style="margin-bottom: 2.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border-color);">
+                    <h2 style="margin-bottom: 0.5rem; border: none; font-size: 1.25rem;">
+                        <a href="/wiki/<%= item.slug %>"
+                            style="color: var(--primary-color); text-decoration: none; font-weight: 700;">
+                            <%= item.title %>
+                        </a>
+                    </h2>
+                    <p style="color: var(--text-main); font-size: 0.95rem; line-height: 1.6;">
+                        <%= item.content.substring(0, 250) %>...
+                    </p>
+                    <div style="margin-top: 1rem;">
+                        <a href="/wiki/<%= item.slug %>"
+                            style="font-size: 0.85rem; color: var(--primary-color); text-decoration: none; font-weight: 600;">Read
+                            more →</a>
+                    </div>
+                </article>
+                <% }); %>
+        </div>
+        <% } else { %>
+            <div class="empty-state"
+                style="text-align: center; padding: 4rem; background: #f8f9fa; border-radius: var(--radius); border: 2px dashed var(--border-color);">
+                <i class="ph ph-magnifying-glass"
+                    style="font-size: 3rem; color: #adb5bd; margin-bottom: 1rem; display: block;"></i>
+                <p style="color: var(--text-muted); margin-bottom: 1.5rem;">No results found for "<%= query %>". Try
+                        different keywords or check for typos.</p>
+                <a href="/" class="btn-primary">Back to Home</a>
             </div>
-        </nav>
-    </header>
+            <% } %>
 
-    <main class="container">
-        <h1>Search results for "<%= query %>"</h1>
-
-        <% if (results && results.length> 0) { %>
-            <div class="search-results">
-                <% results.forEach(function(page) { %>
-                    <article class="search-item"
-                        style="margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 1px solid #eaecf0;">
-                        <h2 style="margin-bottom: 0.5rem; border: none;">
-                            <a href="/wiki/<%= page.slug %>" style="color: var(--primary-color);">
-                                <%= page.title %>
-                            </a>
-                        </h2>
-                        <p style="color: #54595d; font-size: 0.95rem;">
-                            <%= page.content.substring(0, 200) %>...
-                        </p>
-                    </article>
-                    <% }); %>
-            </div>
-            <% } else { %>
-                <div class="empty-state">
-                    <p>No results found for your search.</p>
-                    <a href="/" class="btn-primary">Back to Home</a>
-                </div>
-                <% } %>
-    </main>
-</body>
-
-</html>
+                <%- include('partials/layout_end') %>

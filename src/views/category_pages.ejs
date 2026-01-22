@@ -1,38 +1,43 @@
-<!DOCTYPE html>
-<html lang="en">
+<%- include('partials/layout_start', { title: 'Category: ' + category }) %>
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Category: <%= category %> - Wiki AI</title>
-    <link rel="stylesheet" href="/style.css">
-</head>
-
-<body>
-    <header>
-        <nav>
-            <a href="/" class="logo">Wiki AI</a>
-            <div class="nav-links">
-                <a href="/">Home</a>
-                <a href="/categorias">All Categories</a>
-            </div>
+    <section class="category-header" style="margin-bottom: 2.5rem;">
+        <nav class="breadcrumb" style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+            <a href="/" style="color: inherit; text-decoration: none;">Wiki AI</a>
+            <i class="ph ph-caret-right" style="font-size: 0.7rem; margin: 0 0.5rem;"></i>
+            <a href="/categorias" style="color: inherit; text-decoration: none;">Categories</a>
         </nav>
-    </header>
+        <h1 style="border: none; margin: 0; font-size: 2.5rem;"># <%= category %>
+        </h1>
+        <p style="color: var(--text-muted); margin-top: 0.5rem;">
+            <%= pages ? pages.length : 0 %> pages in this topic
+        </p>
+    </section>
 
-    <main class="container">
-        <h1>Pages in category "<%= category %>"</h1>
-
-        <ul class="page-list" style="list-style: none; padding: 0; margin-top: 2rem;">
+    <div class="page-list" style="display: flex; flex-direction: column; gap: 0.75rem;">
+        <% if (pages && pages.length> 0) { %>
             <% pages.forEach(function(page) { %>
-                <li style="margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid #eaecf0;">
-                    <a href="/wiki/<%= page.slug %>"
-                        style="font-size: 1.2rem; color: var(--primary-color); font-weight: 500;">
+                <a href="/wiki/<%= page.slug %>" class="category-page-item"
+                    style="padding: 1.25rem; border: 1px solid var(--border-color); border-radius: var(--radius); text-decoration: none; color: var(--text-main); font-weight: 600; display: flex; align-items: center; justify-content: space-between; transition: all 0.2s;">
+                    <span>
                         <%= page.title %>
-                    </a>
-                </li>
+                    </span>
+                    <i class="ph ph-arrow-right"
+                        style="color: var(--primary-color); opacity: 0; transition: opacity 0.2s, transform 0.2s;"></i>
+                </a>
                 <% }); %>
-        </ul>
-    </main>
-</body>
+                    <% } %>
+    </div>
 
-</html>
+    <style>
+        .category-page-item:hover {
+            border-color: var(--primary-color);
+            background: #fcfcfc;
+        }
+
+        .category-page-item:hover i {
+            opacity: 1;
+            transform: translateX(4px);
+        }
+    </style>
+
+    <%- include('partials/layout_end') %>

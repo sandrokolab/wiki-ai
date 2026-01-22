@@ -1,0 +1,76 @@
+<aside class="sidebar-left">
+    <div class="sidebar-header">
+        <div class="team-logo">
+            <div class="logo-icon"><i class="ph ph-brain"></i></div>
+            <span>Wiki AI</span>
+            <i class="ph ph-caret-down logo-caret"></i>
+        </div>
+    </div>
+
+    <div class="user-profile-nav">
+        <% if (currentUser) { %>
+            <div class="avatar">
+                <%= currentUser.username.charAt(0).toUpperCase() %>
+            </div>
+            <div class="user-info">
+                <span class="user-name">
+                    <%= currentUser.username %>
+                </span>
+                <a href="/logout" class="logout-link">Logout</a>
+            </div>
+            <% } else { %>
+                <a href="/login" class="nav-item">
+                    <i class="ph ph-user"></i>
+                    <span>Login</span>
+                </a>
+                <% } %>
+    </div>
+
+    <nav class="side-nav">
+        <a href="/" class="nav-item">
+            <i class="ph ph-house"></i>
+            <span>Home</span>
+        </a>
+        <a href="/indice" class="nav-item">
+            <i class="ph ph-file-text"></i>
+            <span>All Pages</span>
+        </a>
+        <a href="/categorias" class="nav-item">
+            <i class="ph ph-map-trifold"></i>
+            <span>Content Map</span>
+        </a>
+        <a href="/create" class="nav-item">
+            <i class="ph ph-plus-circle"></i>
+            <span>New Content</span>
+        </a>
+    </nav>
+
+    <div class="sidebar-sections">
+        <details open>
+            <summary>
+                <i class="ph ph-star"></i>
+                <span>Favorites</span>
+                <i class="ph ph-caret-down section-caret"></i>
+            </summary>
+            <div class="section-content">
+                <a href="#" class="nav-item sub-item">Project Alpha</a>
+                <a href="#" class="nav-item sub-item">Meeting Notes</a>
+            </div>
+        </details>
+
+        <details open>
+            <summary>
+                <i class="ph ph-bookmarks"></i>
+                <span>All Topics</span>
+                <i class="ph ph-caret-down section-caret"></i>
+            </summary>
+            <div class="section-content">
+                <% allCategories.forEach(function(category) { %>
+                    <a href="/categoria/<%= category.category %>" class="nav-item sub-item">
+                        # <%= category.category %>
+                    </a>
+                    <% }); %>
+            </div>
+        </details>
+    </div>
+</aside>

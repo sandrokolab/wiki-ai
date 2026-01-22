@@ -1,67 +1,59 @@
-<!DOCTYPE html>
-<html lang="en">
+<%- include('partials/layout_start', { title: 'Home' }) %>
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wiki - Home</title>
-    <link rel="stylesheet" href="/style.css">
-</head>
-
-<body>
-    <header>
-        <nav>
-            <a href="/" class="logo">Wiki AI</a>
-
-            <form action="/search" method="GET" class="search-form"
-                style="display: flex; gap: 0.5rem; flex: 1; max-width: 400px; margin: 0 2rem;">
-                <input type="text" name="q" placeholder="Search pages..." required
-                    style="width: 100%; padding: 0.4rem 0.8rem; border: 1px solid var(--border-color); border-radius: 2px;">
-            </form>
-
-            <div class="nav-links">
-                <% if (currentUser) { %>
-                    <a href="/profile/<%= currentUser.username %>">My Profile (<%= currentUser.username %>)</a>
-                    <a href="/indice">Index</a>
-                    <a href="/categorias">Categories</a>
-                    <a href="/create" class="btn-create">New Page</a>
-                    <a href="/logout">Logout</a>
-                    <% } else { %>
-                        <a href="/indice">Index</a>
-                        <a href="/categorias">Categories</a>
-                        <a href="/login">Login</a>
-                        <a href="/register">Sign Up</a>
-                        <% } %>
-            </div>
-        </nav>
-    </header>
-
-    <main class="container">
+    <section class="welcome-section">
         <h1>Welcome to Wiki AI</h1>
-        <p class="subtitle">A clean, collaborative documentation platform.</p>
+        <p class="subtitle">A clean, collaborative documentation platform for modern teams.</p>
+    </section>
 
-        <section class="page-section">
-            <h2>Explore Pages</h2>
-            <% if (pages && pages.length> 0) { %>
-                <ul class="page-list">
-                    <% pages.forEach(function(page) { %>
-                        <li>
-                            <a href="/wiki/<%= page.slug %>">
-                                <%= page.title %>
-                            </a>
-                            <small>Last updated: <%= new Date(page.updated_at || page.created_at).toLocaleDateString()
-                                    %></small>
-                        </li>
-                        <% }); %>
-                </ul>
-                <% } else { %>
-                    <div class="empty-state">
-                        <p>No pages found yet.</p>
-                        <a href="/create" class="btn-primary">Create the first page</a>
+    <section class="page-section">
+        <div class="section-header"
+            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <h2 style="border: none; margin: 0; font-size: 1.4rem;">Explore Pages</h2>
+            <a href="/indice" style="font-size: 0.9rem; color: var(--primary-color); text-decoration: none;">View Index
+                →</a>
+        </div>
+
+        <% if (pages && pages.length> 0) { %>
+            <div class="page-grid"
+                style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
+                <% pages.forEach(function(page) { %>
+                    <div class="page-card"
+                        style="padding: 1.5rem; border: 1px solid var(--border-color); border-radius: var(--radius); background: #fefefe; transition: transform 0.2s, box-shadow 0.2s; cursor: pointer;"
+                        onclick="window.location.href='/wiki/<%= page.slug %>'">
+                        <a href="/wiki/<%= page.slug %>"
+                            style="font-size: 1.15rem; font-weight: 700; color: var(--text-main); text-decoration: none; display: block; margin-bottom: 0.5rem;">
+                            <%= page.title %>
+                        </a>
+                        <% if (page.category) { %>
+                            <span
+                                style="display: inline-block; font-size: 0.75rem; background: #e9ecef; color: #495057; padding: 0.2rem 0.5rem; border-radius: 4px; margin-bottom: 1rem;">#
+                                <%= page.category %></span>
+                            <% } %>
+                                <div style="font-size: 0.8rem; color: var(--text-muted);">
+                                    Last updated: <%= new Date(page.updated_at || page.created_at).toLocaleDateString()
+                                        %>
+                                </div>
                     </div>
-                    <% } %>
-        </section>
-    </main>
-</body>
+                    <% }); %>
+            </div>
+            <% } else { %>
+                <div class="empty-state"
+                    style="text-align: center; padding: 4rem; background: #f8f9fa; border-radius: var(--radius); border: 2px dashed var(--border-color);">
+                    <i class="ph ph-file-plus"
+                        style="font-size: 3rem; color: #adb5bd; margin-bottom: 1rem; display: block;"></i>
+                    <p style="color: var(--text-muted); margin-bottom: 1.5rem;">No pages found yet. Start building your
+                        knowledge base.</p>
+                    <a href="/create" class="btn-create">Create the first page</a>
+                </div>
+                <% } %>
+    </section>
 
-</html>
+    <style>
+        .page-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            border-color: var(--primary-color);
+        }
+    </style>
+
+    <%- include('partials/layout_end') %>

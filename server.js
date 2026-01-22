@@ -7,6 +7,8 @@ const compression = require('compression');
 const rateLimit = require('express-rate-limit');
 const pool = require('./database');
 const User = require('./src/models/user');
+const Page = require('./src/models/page');
+const Revision = require('./src/models/revision');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -42,17 +44,25 @@ app.use(session({
     cookie: { maxAge: 24 * 60 * 60 * 1000 } // 24 hours
 }));
 
-// Global middleware to provide user to all templates
+// Global middleware to provide user and layout data to all templates
 app.use((req, res, next) => {
-    if (req.session.userId) {
-        User.findById(req.session.userId, (err, user) => {
-            res.locals.currentUser = user || null;
-            next();
+    // Fetch categories and activity for sidebars
+    Page.getCategories((catErr, categories) => {
+        Revision.getRecentActivity(10, (actErr, activity) => {
+            res.locals.allCategories = categories || [];
+            res.locals.recentActivity = activity || [];
+
+            if (req.session && req.session.userId) {
+                User.findById(req.session.userId, (err, user) => {
+                    res.locals.currentUser = user || null;
+                    next();
+                });
+            } else {
+                res.locals.currentUser = null;
+                next();
+            }
         });
-    } else {
-        res.locals.currentUser = null;
-        next();
-    }
+    });
 });
 
 // View Engine
