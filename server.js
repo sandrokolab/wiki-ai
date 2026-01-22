@@ -10,6 +10,7 @@ const User = require('./src/models/user');
 const Page = require('./src/models/page');
 const Revision = require('./src/models/revision');
 const Topic = require('./src/models/topic');
+const Activity = require('./src/models/activity');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -49,7 +50,7 @@ app.use(session({
 app.use((req, res, next) => {
     // Fetch categories and activity for sidebars
     Page.getCategories((catErr, categories) => {
-        Revision.getRecentActivity(10, (actErr, activity) => {
+        Activity.getRecent(10, (actErr, activity) => {
             Topic.getAll((topErr, allTopics) => {
                 res.locals.allCategories = categories || [];
                 res.locals.recentActivity = activity || [];

@@ -3,31 +3,42 @@
         <h3>Activity</h3>
     </div>
 
-    <div class="activity-feed">
+    <div class="activity-feed" id="activityFeed">
         <% recentActivity.forEach(function(act) { %>
-            <div class="activity-item">
-                <div class="act-avatar">
+            <div class="activity-item" onclick="window.location.href='/wiki/<%= act.slug %>'">
+                <div class="act-avatar" title="<%= act.username %>">
                     <%= act.username.charAt(0).toUpperCase() %>
                 </div>
                 <div class="act-content">
                     <p class="act-text">
                         <strong>
                             <%= act.username %>
-                        </strong> published an update
+                        </strong>
+                        <% if (act.action_type==='published' ) { %>published a post<% } else { %>edited a post<% } %>
                     </p>
-                    <a href="/wiki/<%= act.slug %>" class="act-title">
-                        <%= act.title %>
-                    </a>
-                    <div class="act-preview">
-                        <%= act.content.substring(0, 60) %>...
+                    <div class="act-card">
+                        <% if (act.topic_name) { %>
+                            <span class="act-card-topic" style="color: <%= act.topic_color || '#6b7280' %>">Part of <%=
+                                    act.topic_name %></span>
+                            <% } %>
+                                <span class="act-card-title">
+                                    <%= act.title %>
+                                </span>
+                                <div class="act-card-preview">
+                                    <%= (act.content || '' ).substring(0, 100).replace(/[#*`]/g, '' ) %>...
+                                </div>
                     </div>
                     <div class="act-meta">
-                        <span class="act-time">
+                        <span class="act-time" data-time="<%= act.created_at %>">
                             <%= new Date(act.created_at).toLocaleTimeString([], {hour: '2-digit' , minute:'2-digit'}) %>
                         </span>
-                        </p>
+                        <% if (act.topic_name) { %>
+                            <a href="/categoria/<%= act.topic_name %>" class="act-topic-link">in: <%= act.topic_name %>
+                            </a>
+                            <% } %>
                     </div>
                 </div>
-                <% }); %>
             </div>
+            <% }); %>
+    </div>
 </aside>

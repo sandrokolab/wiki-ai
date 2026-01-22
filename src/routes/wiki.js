@@ -4,6 +4,7 @@ const Page = require('../models/page');
 const Revision = require('../models/revision');
 const User = require('../models/user');
 const Topic = require('../models/topic');
+const Activity = require('../models/activity');
 const isAuthenticated = require('../middleware/auth');
 const marked = require('marked');
 const diff = require('diff');
@@ -108,6 +109,7 @@ router.post('/create', isAuthenticated, (req, res) => {
             console.error(err);
             return res.status(500).send('Error creating page');
         }
+        Activity.log(userId, 'published', id, { title, slug });
         res.redirect(`/wiki/${slug}`);
     });
 });
@@ -186,6 +188,7 @@ router.post('/wiki/:slug/edit', isAuthenticated, (req, res) => {
         Revision.create(page.id, page.content, userId, (revErr) => {
             Page.update(oldSlug, title, slug, content, userId, category, topic_id || null, (upErr) => {
                 if (upErr) return res.status(500).send('Update failed');
+                Activity.log(userId, 'edited', page.id, { title, slug });
                 res.redirect(`/wiki/${slug}`);
             });
         });
@@ -322,6 +325,14 @@ router.get('/api/search', (req, res) => {
                 });
             });
         });
+    });
+});
+
+// API Activity (Recent feed)
+router.get('/api/activity', (req, res) => {
+    Activity.getRecent(20, (err, activity) => {
+        if (err) return res.status(500).json({ error: 'Database error' });
+        res.json(activity);
     });
 });
 

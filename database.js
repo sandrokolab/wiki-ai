@@ -73,6 +73,17 @@ const initialize = async () => {
 )
     `);
 
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS activity_log (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id),
+        action_type TEXT,
+        page_id INTEGER REFERENCES pages(id),
+        metadata JSONB,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
     await client.query('COMMIT');
     console.log('PostgreSQL tables initialized.');
   } catch (e) {
