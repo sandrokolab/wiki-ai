@@ -3,6 +3,7 @@ const router = express.Router();
 const Page = require('../models/page');
 const Revision = require('../models/revision');
 const User = require('../models/user');
+const Topic = require('../models/topic');
 const isAuthenticated = require('../middleware/auth');
 const marked = require('marked');
 const diff = require('diff');
@@ -94,7 +95,7 @@ router.get('/create', isAuthenticated, (req, res) => {
 
 // Create page submit
 router.post('/create', isAuthenticated, (req, res) => {
-    let { title, slug, content, category } = req.body;
+    let { title, slug, content, category, topic_id } = req.body;
     const userId = req.session.userId;
 
     // XSS Sanitization
@@ -102,7 +103,7 @@ router.post('/create', isAuthenticated, (req, res) => {
     content = xss(content);
     category = xss(category);
 
-    Page.create(title, slug, content, userId, category, (err, id) => {
+    Page.create(title, slug, content, userId, category, topic_id || null, (err, id) => {
         if (err) {
             console.error(err);
             return res.status(500).send('Error creating page');
@@ -170,7 +171,7 @@ router.get('/wiki/:slug/edit', isAuthenticated, (req, res) => {
 // Edit page submit
 router.post('/wiki/:slug/edit', isAuthenticated, (req, res) => {
     const oldSlug = req.params.slug;
-    let { title, slug, content, category } = req.body;
+    let { title, slug, content, category, topic_id } = req.body;
     const userId = req.session.userId;
 
     // XSS Sanitization
@@ -183,7 +184,7 @@ router.post('/wiki/:slug/edit', isAuthenticated, (req, res) => {
 
         // Save current as revision
         Revision.create(page.id, page.content, userId, (revErr) => {
-            Page.update(oldSlug, title, slug, content, userId, category, (upErr) => {
+            Page.update(oldSlug, title, slug, content, userId, category, topic_id || null, (upErr) => {
                 if (upErr) return res.status(500).send('Update failed');
                 res.redirect(`/wiki/${slug}`);
             });
@@ -271,6 +272,38 @@ router.get('/profile/:username', (req, res) => {
     User.findByUsername(username, (err, user) => {
         if (err || !user) return res.status(404).send('User not found');
         res.render('profile', { user });
+    });
+});
+
+// Create Topic
+router.post('/topics/create', isAuthenticated, (req, res) => {
+    let { name, icon, color, description, parentId } = req.body;
+    name = xss(name);
+    description = xss(description);
+
+    Topic.create(name, icon, color, description, parentId || null, (err, id) => {
+        if (err) return res.status(500).json({ error: 'Failed to create topic' });
+        res.json({ id, name });
+    });
+});
+
+// Follow Topic
+router.post('/topics/:id/follow', isAuthenticated, (req, res) => {
+    const userId = req.session.userId;
+    const topicId = req.params.id;
+    Topic.follow(userId, topicId, (err) => {
+        if (err) return res.status(500).json({ error: 'Failed to follow' });
+        res.json({ success: true });
+    });
+});
+
+// Favorite Topic
+router.post('/topics/:id/favorite', isAuthenticated, (req, res) => {
+    const userId = req.session.userId;
+    const topicId = req.params.id;
+    Topic.favorite(userId, topicId, (err) => {
+        if (err) return res.status(500).json({ error: 'Failed to favorite' });
+        res.json({ success: true });
     });
 });
 

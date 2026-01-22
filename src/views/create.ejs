@@ -1,31 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
+<%- include('partials/layout_start', { title: 'Create New Page' }) %>
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create New Page - Wiki</title>
-    <link rel="stylesheet" href="/style.css">
-</head>
+    <article class="wiki-article">
+        <h1 style="border: none; margin-bottom: 2rem;">Create a New Page</h1>
 
-<body>
-    <header>
-        <nav>
-            <a href="/" class="logo">Wiki AI</a>
-            <div class="nav-links">
-                <a href="/">Home</a>
-                <% if (currentUser) { %>
-                    <span class="user-info" style="font-size: 0.9rem; color: #54595d;">Logged in as <strong>
-                            <%= currentUser.username %>
-                        </strong></span>
-                    <a href="/logout" style="font-size: 0.8rem; color: #54595d;">Logout</a>
-                    <% } %>
-            </div>
-        </nav>
-    </header>
-
-    <main class="container">
-        <h1>Create a New Page</h1>
         <form action="/create" method="POST" class="wiki-form">
             <div class="form-group">
                 <label for="title">Page Title</label>
@@ -33,30 +10,43 @@
                     value="<%= prefilledTitle %>">
             </div>
 
-            <div class="form-group">
-                <label for="slug">URL Slug</label>
-                <input type="text" id="slug" name="slug" required placeholder="e.g. my-new-page">
-                <small>This determines the link to your page.</small>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="slug">URL Slug</label>
+                    <input type="text" id="slug" name="slug" required placeholder="e.g. my-new-page">
+                </div>
+                <div class="form-group">
+                    <label for="topic_id">Topic</label>
+                    <select id="topic_id" name="topic_id">
+                        <option value="">No Topic</option>
+                        <% allTopics.forEach(function(topic) { %>
+                            <option value="<%= topic.id %>">
+                                <%= topic.name %>
+                            </option>
+                            <% }); %>
+                    </select>
+                </div>
             </div>
 
             <div class="form-group">
-                <label for="category">Category (Optional)</label>
+                <label for="category">Custom Category Label (Optional)</label>
                 <input type="text" id="category" name="category" placeholder="e.g. Technology, Science, History...">
             </div>
 
             <div class="form-group">
                 <label for="content">Markdown Content</label>
-                <textarea id="content" name="content" required placeholder="# Start writing here..."></textarea>
+                <textarea id="content" name="content" required placeholder="# Start writing here..."
+                    style="min-height: 400px;"></textarea>
             </div>
 
-            <div class="form-actions">
-                <button type="submit" class="btn btn-primary">Create Page</button>
-                <a href="/" class="btn btn-secondary">Cancel</a>
+            <div class="form-actions" style="display: flex; gap: 1rem; margin-top: 2rem;">
+                <button type="submit" class="btn-primary">Create Page</button>
+                <a href="/" class="btn-secondary"
+                    style="background: #f1f3f5; padding: 0.6rem 1.25rem; border-radius: var(--radius); text-decoration: none; color: var(--text-main); font-weight: 600;">Cancel</a>
             </div>
         </form>
-    </main>
+    </article>
 
-    <!-- Simple script to auto-generate slug from title -->
     <script>
         const titleInput = document.getElementById('title');
         const slugInput = document.getElementById('slug');
@@ -66,12 +56,11 @@
                 .toString()
                 .toLowerCase()
                 .trim()
-                .replace(/\s+/g, '-')     // Replace spaces with -
-                .replace(/[^\w\-]+/g, '')  // Remove all non-word chars
-                .replace(/\-\-+/g, '-');   // Replace multiple - with single -
+                .replace(/\s+/g, '-')
+                .replace(/[^\w\-]+/g, '')
+                .replace(/\-\-+/g, '-');
         }
 
-        // Generate slug from initial value if exists
         if (titleInput.value) {
             slugInput.value = generateSlug(titleInput.value);
         }
@@ -80,6 +69,5 @@
             slugInput.value = generateSlug(titleInput.value);
         });
     </script>
-</body>
 
-</html>
+    <%- include('partials/layout_end') %>

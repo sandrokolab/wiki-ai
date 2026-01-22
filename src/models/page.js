@@ -1,15 +1,11 @@
 const pool = require('../../database');
 
 class Page {
-    static async create(title, slug, content, authorId, category, callback) {
-        if (typeof category === 'function') {
-            callback = category;
-            category = null;
-        }
+    static async create(title, slug, content, authorId, category, topicId, callback) {
         try {
-            const sql = 'INSERT INTO pages (title, slug, content, author_id, category) VALUES ($1, $2, $3, $4, $5) RETURNING id';
-            const res = await pool.query(sql, [title, slug, content, authorId, category]);
-            callback(null, res.rows[0].id);
+            const sql = 'INSERT INTO pages (title, slug, content, author_id, category, topic_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id';
+            const res = await pool.query(sql, [title, slug, content, authorId, category || null, topicId || null]);
+            callback(null, res.rows[0].id || res.rows[0].id);
         } catch (err) {
             callback(err);
         }
@@ -17,7 +13,7 @@ class Page {
 
     static async getBySlug(slug, callback) {
         try {
-            const sql = 'SELECT * FROM pages WHERE slug = $1';
+            const sql = 'SELECT p.*, t.name as topic_name, t.icon as topic_icon, t.color as topic_color FROM pages p LEFT JOIN topics t ON p.topic_id = t.id WHERE p.slug = $1';
             const res = await pool.query(sql, [slug]);
             callback(null, res.rows[0]);
         } catch (err) {
@@ -97,14 +93,10 @@ class Page {
         }
     }
 
-    static async update(slug, title, newSlug, content, authorId, category, callback) {
-        if (typeof category === 'function') {
-            callback = category;
-            category = null;
-        }
+    static async update(slug, title, newSlug, content, authorId, category, topicId, callback) {
         try {
-            const sql = 'UPDATE pages SET title = $1, slug = $2, content = $3, category = $4, author_id = $5, updated_at = CURRENT_TIMESTAMP WHERE slug = $6';
-            const res = await pool.query(sql, [title, newSlug, content, category, authorId, slug]);
+            const sql = 'UPDATE pages SET title = $1, slug = $2, content = $3, category = $4, author_id = $5, topic_id = $6, updated_at = CURRENT_TIMESTAMP WHERE slug = $7';
+            const res = await pool.query(sql, [title, newSlug, content, category || null, authorId, topicId || null, slug]);
             callback(null, res.rowCount);
         } catch (err) {
             callback(err);

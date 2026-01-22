@@ -9,6 +9,7 @@ const pool = require('./database');
 const User = require('./src/models/user');
 const Page = require('./src/models/page');
 const Revision = require('./src/models/revision');
+const Topic = require('./src/models/topic');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -49,18 +50,31 @@ app.use((req, res, next) => {
     // Fetch categories and activity for sidebars
     Page.getCategories((catErr, categories) => {
         Revision.getRecentActivity(10, (actErr, activity) => {
-            res.locals.allCategories = categories || [];
-            res.locals.recentActivity = activity || [];
+            Topic.getAll((topErr, allTopics) => {
+                res.locals.allCategories = categories || [];
+                res.locals.recentActivity = activity || [];
+                res.locals.allTopics = allTopics || [];
 
-            if (req.session && req.session.userId) {
-                User.findById(req.session.userId, (err, user) => {
-                    res.locals.currentUser = user || null;
+                if (req.session && req.session.userId) {
+                    User.findById(req.session.userId, (err, user) => {
+                        res.locals.currentUser = user || null;
+
+                        // Fetch followed and favorites if user is logged in
+                        Topic.getFollowedByUser(req.session.userId, (fErr, followed) => {
+                            Topic.getFavoritesByUser(req.session.userId, (favErr, favorites) => {
+                                res.locals.userTopics = followed || [];
+                                res.locals.favoriteTopics = favorites || [];
+                                next();
+                            });
+                        });
+                    });
+                } else {
+                    res.locals.currentUser = null;
+                    res.locals.userTopics = [];
+                    res.locals.favoriteTopics = [];
                     next();
-                });
-            } else {
-                res.locals.currentUser = null;
-                next();
-            }
+                }
+            });
         });
     });
 });

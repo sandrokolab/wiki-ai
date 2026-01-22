@@ -22,26 +22,55 @@ const initialize = async () => {
     `);
 
     await client.query(`
-      CREATE TABLE IF NOT EXISTS pages (
+      CREATE TABLE IF NOT EXISTS topics (
         id SERIAL PRIMARY KEY,
-        slug TEXT UNIQUE,
-        title TEXT,
-        content TEXT,
-        category TEXT,
-        author_id INTEGER REFERENCES users(id),
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        name TEXT UNIQUE,
+        icon TEXT DEFAULT 'ph-hash',
+        color TEXT DEFAULT '#6366f1',
+        description TEXT,
+        parent_id INTEGER REFERENCES topics(id),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
 
     await client.query(`
-      CREATE TABLE IF NOT EXISTS page_revisions (
-        id SERIAL PRIMARY KEY,
-        page_id INTEGER REFERENCES pages(id),
-        content TEXT,
-        author_id INTEGER REFERENCES users(id),
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )
+      CREATE TABLE IF NOT EXISTS pages(
+      id SERIAL PRIMARY KEY,
+      slug TEXT UNIQUE,
+      title TEXT,
+      content TEXT,
+      category TEXT,
+      topic_id INTEGER REFERENCES topics(id),
+      author_id INTEGER REFERENCES users(id),
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    `);
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS user_favorite_topics(
+      user_id INTEGER REFERENCES users(id),
+      topic_id INTEGER REFERENCES topics(id),
+      PRIMARY KEY(user_id, topic_id)
+    )
+    `);
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS user_topics(
+  user_id INTEGER REFERENCES users(id),
+  topic_id INTEGER REFERENCES topics(id),
+  PRIMARY KEY(user_id, topic_id)
+)
+    `);
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS page_revisions(
+  id SERIAL PRIMARY KEY,
+  page_id INTEGER REFERENCES pages(id),
+  content TEXT,
+  author_id INTEGER REFERENCES users(id),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+)
     `);
 
     await client.query('COMMIT');

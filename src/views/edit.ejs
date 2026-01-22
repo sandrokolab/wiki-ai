@@ -1,75 +1,68 @@
-<!DOCTYPE html>
-<html lang="en">
+<%- include('partials/layout_start', { title: 'Editing: ' + page.title }) %>
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit: <%= page.title %> - Wiki</title>
-    <link rel="stylesheet" href="/style.css">
-</head>
-
-<body>
-    <header>
-        <nav>
-            <a href="/" class="logo">Wiki AI</a>
-            <div class="nav-links">
-                <a href="/">Home</a>
-                <a href="/wiki/<%= page.slug %>" class="btn-cancel">Cancel</a>
-            </div>
-        </nav>
-    </header>
-
-    <main class="container">
-        <h1>Editing: <%= page.title %>
+    <article class="wiki-article">
+        <h1 style="border: none; margin-bottom: 2rem;">Editing: <%= page.title %>
         </h1>
+
         <form action="/wiki/<%= page.slug %>/edit" method="POST" class="wiki-form">
             <div class="form-group">
                 <label for="title">Page Title</label>
                 <input type="text" id="title" name="title" value="<%= page.title %>" required>
             </div>
 
-            <div class="form-group">
-                <label for="slug">Slug (URL Name)</label>
-                <input type="text" id="slug" name="slug" value="<%= page.slug %>" required>
-                <small>Warning: Changing the slug will change the page's URL.</small>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="slug">Slug (URL Name)</label>
+                    <input type="text" id="slug" name="slug" value="<%= page.slug %>" required>
+                </div>
+                <div class="form-group">
+                    <label for="topic_id">Topic</label>
+                    <select id="topic_id" name="topic_id">
+                        <option value="">No Topic</option>
+                        <% allTopics.forEach(function(topic) { %>
+                            <option value="<%= topic.id %>" <%=(page.topic_id==topic.id) ? 'selected' : '' %>><%=
+                                    topic.name %>
+                            </option>
+                            <% }); %>
+                    </select>
+                </div>
             </div>
 
             <div class="form-group">
-                <label for="category">Category</label>
+                <label for="category">Custom Category Label (Optional)</label>
                 <input type="text" id="category" name="category" value="<%= page.category || '' %>"
                     placeholder="e.g. Technology...">
             </div>
 
             <div class="form-group">
                 <label for="content">Page Content (Markdown)</label>
-                <textarea id="content" name="content" required><%= page.content %></textarea>
+                <textarea id="content" name="content" required style="min-height: 400px;"><%= page.content %></textarea>
             </div>
 
-            <div class="form-actions">
-                <button type="submit" class="btn btn-primary">Save Changes</button>
-                <a href="/wiki/<%= page.slug %>" class="btn btn-secondary">Cancel</a>
+            <div class="form-actions" style="display: flex; gap: 1rem; margin-top: 2rem;">
+                <button type="submit" class="btn-primary">Save Changes</button>
+                <a href="/wiki/<%= page.slug %>" class="btn-secondary"
+                    style="background: #f1f3f5; padding: 0.6rem 1.25rem; border-radius: var(--radius); text-decoration: none; color: var(--text-main); font-weight: 600;">Cancel</a>
             </div>
         </form>
-    </main>
+    </article>
 
     <script>
-        const titleInput = document.getElementById('title');
-        const slugInput = document.getElementById('slug');
+    const titleInput = document.getElementById('title');
+    const slugInput = document.getElementById('slug');
 
-        // Only auto-generate slug if title changes and user hasn't manually edited slug
-        let slugEdited = false;
-        slugInput.addEventListener('input', () => slugEdited = true);
+    let slugEdited = false;
+    slugInput.addEventListener('input', () => slugEdited = true);
 
-        titleInput.addEventListener('input', function () {
-            if (slugEdited) return;
-            const val = this.value;
-            const slug = val.toLowerCase()
-                .replace(/[^a-z0-9 -]/g, '')
-                .replace(/\s+/g, '-')
-                .replace(/-+/g, '-');
-            slugInput.value = slug;
-        });
+    titleInput.addEventListener('input', function () {
+        if (slugEdited) return;
+        const val = this.value;
+        const slug = val.toLowerCase()
+            .replace(/[^a-z0-9 -]/g, '')
+            .replace(/\s+/g, '-')
+            .replace(/-+/g, '-');
+        slugInput.value = slug;
+    });
     </script>
-</body>
 
-</html>
+    <%- include('partials/layout_end') %>
