@@ -13,6 +13,8 @@
     --activity-width: 320px;
     --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
     --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --magenta: #ec4899;
+    --magenta-hover: #db2777;
 }
 
 * {
@@ -311,6 +313,156 @@ details summary i.section-caret {
 .btn-create:hover,
 .btn-edit:hover {
     background: var(--primary-hover);
+}
+
+.btn-magenta {
+    background-color: var(--magenta);
+    color: white !important;
+    display: inline-flex;
+    align-items: center;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+}
+
+.btn-magenta:hover {
+    background-color: var(--magenta-hover);
+    transform: translateY(-1px);
+}
+
+.btn-magenta-split {
+    display: flex;
+    align-items: center;
+}
+
+.btn-magenta-main {
+    padding: 0.6rem 0.8rem 0.6rem 1rem;
+    border-right: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px 0 0 8px;
+    text-decoration: none !important;
+    color: white !important;
+}
+
+.btn-magenta-arrow {
+    padding: 0.6rem 0.8rem;
+    border-radius: 0 8px 8px 0;
+    background: none;
+    color: white;
+    cursor: pointer;
+    border: none;
+}
+
+.btn-magenta-arrow:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+/* DROP DOWN MENU STYLES */
+.dropdown-container {
+    position: relative;
+    display: inline-block;
+}
+
+.slab-dropdown {
+    display: none;
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    background: white;
+    min-width: 220px;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+    box-shadow: var(--shadow-lg);
+    z-index: 1100;
+    padding: 0.5rem;
+    animation: slideIn 0.2s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.slab-dropdown.show {
+    display: block;
+}
+
+.slab-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.7rem 1rem;
+    color: var(--text-main);
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    border-radius: 8px;
+    transition: background 0.15s;
+    cursor: pointer;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+}
+
+.slab-menu-item:hover {
+    background: #f3f4f6;
+}
+
+.slab-menu-item i {
+    font-size: 1.1rem;
+    color: var(--text-muted);
+}
+
+.slab-menu-item.danger {
+    color: #ef4444;
+}
+
+.slab-menu-item.danger i {
+    color: #ef4444;
+}
+
+.slab-menu-divider {
+    height: 1px;
+    background: #f1f3f5;
+    margin: 0.4rem 0.5rem;
+}
+
+.slab-submenu-trigger {
+    display: flex;
+    justify-content: space-between;
+}
+
+.slab-submenu-trigger i.ph-caret-right {
+    font-size: 0.8rem;
+}
+
+.btn-dots {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0.4rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+
+.btn-dots:hover {
+    background: #f1f3f5;
+    color: var(--text-main);
 }
 
 /* WIKI CONTENT */

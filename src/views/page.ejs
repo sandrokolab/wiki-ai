@@ -27,15 +27,37 @@
                 <h1 style="margin: 0; border: none; font-size: 2.5rem;">
                     <%= page.title %>
                 </h1>
-                <div class="article-actions" style="display: flex; gap: 0.75rem;">
-                    <a href="/wiki/<%= page.slug %>/history" class="btn-secondary"
-                        style="background: #f1f3f5; border: 1px solid var(--border-color); color: var(--text-main) !important; padding: 0.5rem 1rem; border-radius: var(--radius); font-size: 0.9rem; font-weight: 600; text-decoration: none;">
-                        History
-                    </a>
+                <div class="article-actions" style="display: flex; gap: 0.75rem; align-items: center;">
                     <% if (currentUser) { %>
-                        <a href="/wiki/<%= page.slug %>/edit" class="btn-edit">
-                            <i class="ph ph-pencil-simple" style="margin-right: 0.5rem;"></i> Edit
-                        </a>
+                        <div class="dropdown-container">
+                            <button class="btn-dots" id="pageMenuTrigger">
+                                <i class="ph ph-dots-three"></i>
+                            </button>
+                            <div class="slab-dropdown" id="pageMenu">
+                                <a href="/wiki/<%= page.slug %>/edit" class="slab-menu-item">
+                                    <i class="ph ph-pencil-simple"></i> Edit
+                                </a>
+                                <div class="slab-menu-item">
+                                    <i class="ph ph-star"></i> Add to favorites
+                                </div>
+                                <button onclick="copyToClipboard('<%= page.slug %>')" class="slab-menu-item">
+                                    <i class="ph ph-link"></i> Copy link
+                                </button>
+                                <a href="/wiki/<%= page.slug %>/history" class="slab-menu-item">
+                                    <i class="ph ph-clock-counter-clockwise"></i> History
+                                </a>
+                                <div class="slab-menu-item">
+                                    <i class="ph ph-folder-notch-open"></i> Move to topic
+                                </div>
+                                <div class="slab-menu-divider"></div>
+                                <form action="/wiki/<%= page.slug %>/delete" method="POST"
+                                    onsubmit="return confirm('Delete this page permanently?')">
+                                    <button type="submit" class="slab-menu-item danger">
+                                        <i class="ph ph-trash"></i> Delete
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
                         <% } %>
                 </div>
             </div>

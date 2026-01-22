@@ -25,5 +25,36 @@
                         </div>
                         <div id="searchDropdown" class="search-dropdown"></div>
                     </div>
+
+                    <div class="top-bar-actions"
+                        style="margin-left: auto; display: flex; gap: 1rem; align-items: center;">
+                        <div class="dropdown-container">
+                            <div class="btn-magenta btn-magenta-split" id="createPostDropdownTrigger">
+                                <a href="/create" class="btn-magenta-main">Create post</a>
+                                <button class="btn-magenta-arrow">
+                                    <i class="ph ph-caret-down"></i>
+                                </button>
+                            </div>
+                            <div class="slab-dropdown" id="createPostDropdown">
+                                <a href="/create" class="slab-menu-item">
+                                    <i class="ph ph-file-plus"></i> Create post
+                                </a>
+                                <div class="slab-menu-item slab-submenu-trigger">
+                                    <span><i class="ph ph-layout"></i> Templates</span>
+                                    <i class="ph ph-caret-right"></i>
+                                </div>
+                                <div class="slab-menu-item">
+                                    <i class="ph ph-download-simple"></i> Import
+                                </div>
+                                <div class="slab-menu-divider"></div>
+                                <button onclick="openCreateTopicModal()" class="slab-menu-item">
+                                    <i class="ph ph-plus-circle"></i> Create topic
+                                </button>
+                                <div class="slab-menu-item">
+                                    <i class="ph ph-users"></i> Invite teammates
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </header>
                 <div class="content-wrapper">
