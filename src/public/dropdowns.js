@@ -77,6 +77,23 @@
         if (e.key === 'Escape') closeAllDropdowns();
     });
 
+    // Mobile Menu Toggle
+    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+    const sidebarLeft = document.querySelector('.sidebar-left');
+    const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+    if (mobileMenuBtn && sidebarLeft && sidebarOverlay) {
+        mobileMenuBtn.addEventListener('click', () => {
+            sidebarLeft.classList.toggle('open');
+            sidebarOverlay.classList.toggle('show');
+        });
+
+        sidebarOverlay.addEventListener('click', () => {
+            sidebarLeft.classList.remove('open');
+            sidebarOverlay.classList.remove('show');
+        });
+    }
+
     window.toggleFavorite = async function (slug) {
         try {
             const res = await fetch(`/wiki/${slug}/favorite`, { method: 'POST' });

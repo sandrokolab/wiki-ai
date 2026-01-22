@@ -13,10 +13,14 @@
 
 <body>
     <div class="app-layout">
+        <div id="sidebarOverlay" class="sidebar-overlay"></div>
         <%- include('sidebar_left') %>
 
             <main class="main-content">
                 <header class="top-bar">
+                    <button id="mobileMenuBtn" class="mobile-menu-toggle">
+                        <i class="ph ph-list"></i>
+                    </button>
                     <div class="search-container">
                         <div class="search-box" id="searchBoxContainer">
                             <i class="ph ph-magnifying-glass search-icon"></i>
