@@ -1,16 +1,75 @@
 <%- include('partials/layout_start', { title: 'Home' }) %>
 
-    <section class="welcome-section">
-        <h1>Welcome to Wiki AI</h1>
-        <p class="subtitle">A clean, collaborative documentation platform for modern teams.</p>
+    <section class="welcome-card">
+        <h1 style="border: none; margin-bottom: 0.8rem; font-size: 2.8rem; color: #1a1a2e; font-weight: 800;">Welcome to
+            Wiki AI! 🌳</h1>
+        <p class="subtitle" style="margin-bottom: 2.5rem; color: #4b5563; font-size: 1.15rem; line-height: 1.6;">Your
+            team's collaborative brain. Capture knowledge, organize ideas, and build faster together.</p>
+
+        <div class="tip-box">
+            <div class="tip-icon"><i class="ph ph-lightbulb"></i></div>
+            <div class="tip-content">
+                <strong style="color: #4338ca;">Quick Tip:</strong> Use double brackets <code>[[Page Title]]</code> to
+                link to other pages instantly. It's the fastest way to build your knowledge network.
+            </div>
+        </div>
     </section>
 
-    <section class="page-section">
+    <section class="home-grid">
+        <div class="getting-started">
+            <h3 class="section-label">Getting Started</h3>
+            <nav class="action-links">
+                <a href="/create" class="action-item">
+                    <div class="action-icon"><i class="ph ph-file-plus"></i></div>
+                    <span>Learn about Posts</span>
+                </a>
+                <a href="/categorias" class="action-item">
+                    <div class="action-icon"><i class="ph ph-hash"></i></div>
+                    <span>Learn about Topics</span>
+                </a>
+                <a href="#" class="action-item"
+                    onclick="document.querySelector('.search-box input').focus(); return false;">
+                    <div class="action-icon"><i class="ph ph-magnifying-glass"></i></div>
+                    <span>Learn about Search</span>
+                </a>
+            </nav>
+        </div>
+
+        <div class="viewed-section">
+            <h3 class="section-label">Recently Viewed</h3>
+            <div class="viewed-list">
+                <% if (viewedPages && viewedPages.length> 0) { %>
+                    <% viewedPages.forEach(function(item) { %>
+                        <a href="/wiki/<%= item.slug %>" class="viewed-item">
+                            <div class="viewed-icon-wrap"><i class="ph ph-file-text"></i></div>
+                            <div class="viewed-info">
+                                <span class="viewed-meta">Part of <%= item.category || 'General' %></span>
+                                <span class="viewed-title">
+                                    <%= item.title %>
+                                </span>
+                                <div class="viewed-footer">
+                                    <span class="viewed-time">Viewed at <%= new
+                                            Date(item.timestamp).toLocaleTimeString([], {hour: '2-digit' ,
+                                            minute:'2-digit'}) %></span>
+                                </div>
+                            </div>
+                        </a>
+                        <% }); %>
+                            <% } else { %>
+                                <div class="empty-viewed">
+                                    <p>No pages visited lately. Explore the index below!</p>
+                                </div>
+                                <% } %>
+            </div>
+        </div>
+    </section>
+
+    <section class="page-section"
+        style="margin-top: 5rem; padding-top: 3rem; border-top: 1px solid var(--border-color);">
         <div class="section-header"
-            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-            <h2 style="border: none; margin: 0; font-size: 1.4rem;">Explore Pages</h2>
-            <a href="/indice" style="font-size: 0.9rem; color: var(--primary-color); text-decoration: none;">View Index
-                →</a>
+            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+            <h2 style="border: none; margin: 0; font-size: 1.6rem; font-weight: 800;">Latest content</h2>
+            <a href="/indice" class="btn-text">View all pages →</a>
         </div>
 
         <% if (pages && pages.length> 0) { %>
@@ -27,7 +86,8 @@
                         <% if (page.category) { %>
                             <span
                                 style="display: inline-block; font-size: 0.75rem; background: #e9ecef; color: #495057; padding: 0.2rem 0.5rem; border-radius: 4px; margin-bottom: 1rem;">#
-                                <%= page.category %></span>
+                                <%= page.category %>
+                            </span>
                             <% } %>
                                 <div style="font-size: 0.8rem; color: var(--text-muted);">
                                     Last updated: <%= new Date(page.updated_at || page.created_at).toLocaleDateString()

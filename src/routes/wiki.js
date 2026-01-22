@@ -43,7 +43,10 @@ async function processWikiLinks(content) {
 router.get('/', (req, res) => {
     Page.getAll((err, pages) => {
         if (err) return res.status(500).send('Database error');
-        res.render('index', { pages });
+        res.render('index', {
+            pages,
+            viewedPages: req.session.viewedPages || []
+        });
     });
 });
 
@@ -127,6 +130,21 @@ router.get('/wiki/:slug', (req, res) => {
             // Fetch Backlinks
             Page.getBacklinks(page.title, (backErr, backlinks) => {
                 page.backlinks = backlinks || [];
+
+                // Update Recently Viewed in Session
+                if (!req.session.viewedPages) req.session.viewedPages = [];
+                const currentPage = {
+                    title: page.title,
+                    slug: page.slug,
+                    category: page.category,
+                    timestamp: new Date()
+                };
+
+                // Remove if already exists to move to top, then unshift and slice
+                req.session.viewedPages = req.session.viewedPages.filter(p => p.slug !== page.slug);
+                req.session.viewedPages.unshift(currentPage);
+                req.session.viewedPages = req.session.viewedPages.slice(0, 5); // Keep last 5
+
                 res.render('page', { page });
             });
         };

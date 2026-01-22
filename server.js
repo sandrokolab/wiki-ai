@@ -65,6 +65,18 @@ app.use((req, res, next) => {
     });
 });
 
+// Recently Viewed Tracking Middleware
+app.use('/wiki/:slug', (req, res, next) => {
+    const slug = req.params.slug;
+    if (!req.session.viewedPages) req.session.viewedPages = [];
+
+    // We don't have the page info here yet, so we'll 
+    // hook into the wiki route or just store the slug for now.
+    // Actually, it's better to do this in the wiki.js route handler
+    // to have access to the page title/category/author.
+    next();
+});
+
 // View Engine
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'src', 'views'));

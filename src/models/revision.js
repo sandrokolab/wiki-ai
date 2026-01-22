@@ -45,7 +45,7 @@ class Revision {
     static async getRecentActivity(limit, callback) {
         try {
             const sql = `
-                SELECT r.created_at, u.username, p.title, p.slug, r.content
+                SELECT r.created_at, u.username, p.title, p.slug, r.content, p.category
                 FROM page_revisions r
                 JOIN pages p ON r.page_id = p.id
                 JOIN users u ON r.author_id = u.id
