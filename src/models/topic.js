@@ -100,6 +100,17 @@ class Topic {
             callback(err);
         }
     }
+
+    static async search(query, callback) {
+        try {
+            const pattern = `%${query}%`;
+            const sql = 'SELECT id, name, icon, color FROM topics WHERE name ILIKE $1 OR description ILIKE $1 LIMIT 5';
+            const res = await pool.query(sql, [pattern]);
+            callback(null, res.rows);
+        } catch (err) {
+            callback(err);
+        }
+    }
 }
 
 module.exports = Topic;

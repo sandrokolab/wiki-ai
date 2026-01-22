@@ -307,4 +307,22 @@ router.post('/topics/:id/favorite', isAuthenticated, (req, res) => {
     });
 });
 
+// API Search (Grouped results)
+router.get('/api/search', (req, res) => {
+    const query = req.query.q;
+    if (!query || query.length < 2) return res.json({ pages: [], topics: [], users: [] });
+
+    Page.search(query, (pErr, pages) => {
+        Topic.search(query, (tErr, topics) => {
+            User.search(query, (uErr, users) => {
+                res.json({
+                    pages: pages || [],
+                    topics: topics || [],
+                    users: users || []
+                });
+            });
+        });
+    });
+});
+
 module.exports = router;

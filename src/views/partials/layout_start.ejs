@@ -17,9 +17,13 @@
 
             <main class="main-content">
                 <header class="top-bar">
-                    <form action="/search" method="GET" class="search-box">
-                        <i class="ph ph-magnifying-glass"></i>
-                        <input type="text" name="q" placeholder="Search or jump to..." required>
-                    </form>
+                    <div class="search-container">
+                        <div class="search-box" id="searchBoxContainer">
+                            <i class="ph ph-magnifying-glass search-icon"></i>
+                            <input type="text" id="searchInput" placeholder="Search or jump to..." autocomplete="off">
+                            <div class="kbd-shortcut"><span id="kbd-key">⌘</span>K</div>
+                        </div>
+                        <div id="searchDropdown" class="search-dropdown"></div>
+                    </div>
                 </header>
                 <div class="content-wrapper">

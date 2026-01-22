@@ -36,6 +36,17 @@ class User {
     static async verifyPassword(plainPassword, hashedPassword) {
         return await bcrypt.compare(plainPassword, hashedPassword);
     }
+
+    static async search(query, callback) {
+        try {
+            const pattern = `%${query}%`;
+            const sql = 'SELECT id, username FROM users WHERE username ILIKE $1 LIMIT 5';
+            const res = await pool.query(sql, [pattern]);
+            callback(null, res.rows);
+        } catch (err) {
+            callback(err);
+        }
+    }
 }
 
 module.exports = User;
