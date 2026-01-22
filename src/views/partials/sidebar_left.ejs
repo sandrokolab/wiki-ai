@@ -45,96 +45,144 @@
         </a>
     </nav>
 
-    <div class="sidebar-sections">
-        <% if (favoriteTopics && favoriteTopics.length> 0) { %>
-            <details open>
-                <summary>
-                    <i class="ph ph-star"></i>
-                    <span>Favorites</span>
-                    <i class="ph ph-caret-down section-caret"></i>
-                </summary>
-                <div class="section-content">
-                    <% favoriteTopics.forEach(function(topic) { %>
-                        <a href="/categoria/<%= topic.name %>" class="nav-item sub-item">
-                            <span class="topic-dot" style="background-color: <%= topic.color %>;"></span>
-                            <%= topic.name %>
-                        </a>
-                        <% }); %>
-                </div>
-            </details>
-            <% } %>
+    <!-- Favorite Topics -->
+    <% if (favoriteTopics && favoriteTopics.length> 0) { %>
+        <details open>
+            <summary>
+                <i class="ph ph-bookmark-simple"></i>
+                <span>Favorite Topics</span>
+                <i class="ph ph-caret-down section-caret"></i>
+            </summary>
+            <div class="section-content">
+                <% favoriteTopics.forEach(function(topic) { %>
+                    <a href="/categoria/<%= topic.name %>" class="nav-item sub-item">
+                        <span class="topic-dot" style="background-color: <%= topic.color %>;"></span>
+                        <%= topic.name %>
+                    </a>
+                    <% }); %>
+            </div>
+        </details>
+        <% } %>
 
+            <!-- Favorite Pages -->
+            <% if (favoritePages && favoritePages.length> 0) { %>
                 <details open>
                     <summary>
-                        <i class="ph ph-user-focus"></i>
-                        <span>My Topics</span>
+                        <i class="ph ph-star"></i>
+                        <span>Favorites</span>
                         <i class="ph ph-caret-down section-caret"></i>
                     </summary>
                     <div class="section-content">
-                        <% userTopics.forEach(function(topic) { %>
-                            <a href="/categoria/<%= topic.name %>" class="nav-item sub-item">
-                                <span class="topic-dot" style="background-color: <%= topic.color %>;"></span>
-                                <%= topic.name %>
+                        <% favoritePages.forEach(function(page) { %>
+                            <a href="/wiki/<%= page.slug %>" class="nav-item sub-item">
+                                <i class="ph ph-file-text"></i>
+                                <span class="truncate-text">
+                                    <%= page.title %>
+                                </span>
                             </a>
                             <% }); %>
-                                <% if (userTopics.length===0) { %>
-                                    <p class="empty-side-text">No followed topics yet.</p>
-                                    <% } %>
                     </div>
                 </details>
+                <% } %>
 
-                <details open>
-                    <summary>
-                        <i class="ph ph-bookmarks"></i>
-                        <span>All Topics</span>
-                        <i class="ph ph-caret-down section-caret"></i>
-                    </summary>
-                    <div class="section-content">
-                        <% allTopics.forEach(function(topic) { %>
-                            <a href="/categoria/<%= topic.name %>" class="nav-item sub-item">
-                                <i class="<%= topic.icon || 'ph ph-hash' %>" style="color: <%= topic.color %>;"></i>
-                                <%= topic.name %>
-                            </a>
-                            <% }); %>
+                    <!-- User Drafts (Author Only) -->
+                    <% if (userDrafts && userDrafts.length> 0) { %>
+                        <details open>
+                            <summary>
+                                <i class="ph ph-file-dashed"></i>
+                                <span>Drafts</span>
+                                <i class="ph ph-caret-down section-caret"></i>
+                            </summary>
+                            <div class="section-content">
+                                <% userDrafts.forEach(function(draft) { %>
+                                    <a href="/wiki/<%= draft.slug %>" class="nav-item sub-item">
+                                        <i class="ph ph-file-dashed"></i>
+                                        <span class="truncate-text">
+                                            <%= draft.title %>
+                                        </span>
+                                    </a>
+                                    <% }); %>
+                            </div>
+                        </details>
+                        <% } %>
 
-                                <button class="btn-create-side" onclick="openTopicModal()">
-                                    <i class="ph ph-plus-circle"></i>
-                                    <span>Create Topic</span>
-                                </button>
-                    </div>
-                </details>
-    </div>
+                            <details open>
+                                <summary>
+                                    <i class="ph ph-user-focus"></i>
+                                    <span>My Topics</span>
+                                    <i class="ph ph-caret-down section-caret"></i>
+                                </summary>
+                                <div class="section-content">
+                                    <% userTopics.forEach(function(topic) { %>
+                                        <a href="/categoria/<%= topic.name %>" class="nav-item sub-item">
+                                            <span class="topic-dot"
+                                                style="background-color: <%= topic.color %>;"></span>
+                                            <%= topic.name %>
+                                        </a>
+                                        <% }); %>
+                                            <% if (userTopics.length===0) { %>
+                                                <p class="empty-side-text">No followed topics yet.</p>
+                                                <% } %>
+                                </div>
+                            </details>
 
-    <!-- Create Topic Modal -->
-    <div id="topicModal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="closeTopicModal()">&times;</span>
-            <h2>Create New Topic</h2>
-            <form id="createTopicForm" onsubmit="handleCreateTopic(event)">
-                <div class="form-group">
-                    <label>Name</label>
-                    <input type="text" name="name" required placeholder="Project Alpha, Research...">
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Color</label>
-                        <input type="color" name="color" value="#6366f1">
-                    </div>
-                    <div class="form-group">
-                        <label>Icon (Phosphor class)</label>
-                        <input type="text" name="icon" value="ph-hash" placeholder="ph-brain, ph-code...">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>Description</label>
-                    <textarea name="description" placeholder="What is this topic about?"></textarea>
-                </div>
-                <button type="submit" class="btn-primary" style="width: 100%;">Save Topic</button>
-            </form>
-        </div>
-    </div>
+                            <details open>
+                                <summary>
+                                    <i class="ph ph-bookmarks"></i>
+                                    <span>All Topics</span>
+                                    <i class="ph ph-caret-down section-caret"></i>
+                                </summary>
+                                <div class="section-content">
+                                    <% allTopics.forEach(function(topic) { %>
+                                        <a href="/categoria/<%= topic.name %>" class="nav-item sub-item">
+                                            <i class="<%= topic.icon || 'ph ph-hash' %>"
+                                                style="color: <%= topic.color %>;"></i>
+                                            <%= topic.name %>
+                                        </a>
+                                        <% }); %>
 
-    <script>
+                                            <button class="btn-create-side" onclick="openTopicModal()">
+                                                <i class="ph ph-plus-circle"></i>
+                                                <span>Create Topic</span>
+                                            </button>
+                                </div>
+                            </details>
+                            </div>
+
+                            <!-- Create Topic Modal -->
+                            <div id="topicModal" class="modal">
+                                <div class="modal-content">
+                                    <span class="close" onclick="closeTopicModal()">&times;</span>
+                                    <h2>Create New Topic</h2>
+                                    <form id="createTopicForm" onsubmit="handleCreateTopic(event)">
+                                        <div class="form-group">
+                                            <label>Name</label>
+                                            <input type="text" name="name" required
+                                                placeholder="Project Alpha, Research...">
+                                        </div>
+                                        <div class="form-row">
+                                            <div class="form-group">
+                                                <label>Color</label>
+                                                <input type="color" name="color" value="#6366f1">
+                                            </div>
+                                            <div class="form-group">
+                                                <label>Icon (Phosphor class)</label>
+                                                <input type="text" name="icon" value="ph-hash"
+                                                    placeholder="ph-brain, ph-code...">
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Description</label>
+                                            <textarea name="description"
+                                                placeholder="What is this topic about?"></textarea>
+                                        </div>
+                                        <button type="submit" class="btn-primary" style="width: 100%;">Save
+                                            Topic</button>
+                                    </form>
+                                </div>
+                            </div>
+
+                            <script>
         function openTopicModal() {
             document.getElementById('topicModal').style.display = 'block';
         }
@@ -161,5 +209,5 @@
                 console.error(err);
             }
         }
-    </script>
+                            </script>
 </aside>

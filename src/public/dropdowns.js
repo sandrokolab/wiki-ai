@@ -76,4 +76,40 @@
     window.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') closeAllDropdowns();
     });
+
+    window.toggleFavorite = async function (slug) {
+        try {
+            const res = await fetch(`/wiki/${slug}/favorite`, { method: 'POST' });
+            const data = await res.json();
+            if (data.success) {
+                location.reload(); // Simple reload to update state
+            } else {
+                showToast(data.error || 'Failed to toggle favorite');
+            }
+        } catch (err) {
+            console.error(err);
+            showToast('Network error');
+        }
+    };
+
+    window.publishPage = async function (slug) {
+        if (!confirm('Are you sure you want to publish this draft?')) return;
+        try {
+            const res = await fetch(`/wiki/${slug}/publish`, { method: 'POST' });
+            const data = await res.json();
+            if (data.success) {
+                showToast('Page published successfully!');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showToast(data.error || 'Failed to publish');
+            }
+        } catch (err) {
+            console.error(err);
+            showToast('Network error');
+        }
+    };
+
+    window.openMoveTopicModal = function (slug) {
+        showToast('Move to topic functionality coming soon!');
+    };
 })();

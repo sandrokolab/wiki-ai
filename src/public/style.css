@@ -891,3 +891,52 @@ h1 {
     grid-template-columns: 1fr 1fr;
     gap: 1.5rem;
 }
+
+/* Favorites and Drafts */
+.active-star {
+    color: #fbbf24 !important;
+}
+
+.draft-icon {
+    color: #9ca3af;
+    opacity: 0.7;
+}
+
+.verified-icon {
+    color: #10b981;
+    font-size: 1.2rem;
+}
+
+.btn-publish {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 0.8rem;
+    background: #ec4899;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-publish:hover {
+    background: #db2777;
+    transform: translateY(-1px);
+}
+
+.truncate-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: inline-block;
+    max-width: 150px;
+}
+
+.page-status-icons {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}

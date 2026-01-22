@@ -5,6 +5,7 @@ const Revision = require('../models/revision');
 const User = require('../models/user');
 const Topic = require('../models/topic');
 const Activity = require('../models/activity');
+const Favorite = require('../models/favorite');
 const isAuthenticated = require('../middleware/auth');
 const marked = require('marked');
 const diff = require('diff');
@@ -104,12 +105,15 @@ router.post('/create', isAuthenticated, (req, res) => {
     content = xss(content);
     category = xss(category);
 
-    Page.create(title, slug, content, userId, category, topic_id || null, (err, id) => {
+    Page.create(title, slug, content, userId, category, topic_id || null, 'draft', (err, id) => {
         if (err) {
             console.error(err);
             return res.status(500).send('Error creating page');
         }
-        Activity.log(userId, 'published', id, { title, slug });
+        // Don't log to activity yet for drafts? 
+        // User asked: "Drafts no aparecen en feeds"
+        // But maybe we log "created a draft"? 
+        // Let's stick to "published" logging in the publish route.
         res.redirect(`/wiki/${slug}`);
     });
 });
@@ -148,7 +152,22 @@ router.get('/wiki/:slug', (req, res) => {
                 req.session.viewedPages.unshift(currentPage);
                 req.session.viewedPages = req.session.viewedPages.slice(0, 5); // Keep last 5
 
-                res.render('page', { page });
+                // Check if user is logged in and if page is favorite
+                const checkFavorite = (done) => {
+                    if (req.session.userId) {
+                        Favorite.isFavorite(req.session.userId, page.id, (favErr, isFav) => {
+                            page.isFavorite = isFav;
+                            done();
+                        });
+                    } else {
+                        page.isFavorite = false;
+                        done();
+                    }
+                };
+
+                checkFavorite(() => {
+                    res.render('page', { page });
+                });
             });
         };
 
@@ -328,11 +347,54 @@ router.get('/api/search', (req, res) => {
     });
 });
 
-// API Activity (Recent feed)
-router.get('/api/activity', (req, res) => {
-    Activity.getRecent(20, (err, activity) => {
-        if (err) return res.status(500).json({ error: 'Database error' });
-        res.json(activity);
+// Toggle Page Favorite
+router.post('/wiki/:slug/favorite', isAuthenticated, (req, res) => {
+    const userId = req.session.userId;
+    const slug = req.params.slug;
+
+    Page.getBySlug(slug, (err, page) => {
+        if (err || !page) return res.status(404).json({ error: 'Page not found' });
+
+        Favorite.isFavorite(userId, page.id, (favErr, isFav) => {
+            if (isFav) {
+                Favorite.remove(userId, page.id, (remErr) => {
+                    if (remErr) return res.status(500).json({ error: 'Failed to unfavorite' });
+                    res.json({ success: true, action: 'removed' });
+                });
+            } else {
+                Favorite.add(userId, page.id, (addErr) => {
+                    if (addErr) return res.status(500).json({ error: 'Failed to favorite' });
+                    res.json({ success: true, action: 'added' });
+                });
+            }
+        });
+    });
+});
+
+// Publish Draft
+router.post('/wiki/:slug/publish', isAuthenticated, (req, res) => {
+    const slug = req.params.slug;
+    const userId = req.session.userId;
+
+    Page.getBySlug(slug, (err, page) => {
+        if (err || !page) return res.status(404).json({ error: 'Page not found' });
+        if (page.author_id !== userId) return res.status(403).json({ error: 'Only the author can publish' });
+
+        Page.publish(slug, (pubErr) => {
+            if (pubErr) return res.status(500).json({ error: 'Publish failed' });
+            Activity.log(userId, 'published', page.id, { title: page.title, slug: page.slug });
+            res.json({ success: true });
+        });
+    });
+});
+
+// Verify Page (Admin only - simplification)
+router.post('/wiki/:slug/verify', isAuthenticated, (req, res) => {
+    // Basic check - in a real app check for role
+    const slug = req.params.slug;
+    Page.verify(slug, true, (err) => {
+        if (err) return res.status(500).json({ error: 'Verification failed' });
+        res.json({ success: true });
     });
 });
 

@@ -11,6 +11,7 @@ const Page = require('./src/models/page');
 const Revision = require('./src/models/revision');
 const Topic = require('./src/models/topic');
 const Activity = require('./src/models/activity');
+const Favorite = require('./src/models/favorite');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -60,12 +61,18 @@ app.use((req, res, next) => {
                     User.findById(req.session.userId, (err, user) => {
                         res.locals.currentUser = user || null;
 
-                        // Fetch followed and favorites if user is logged in
+                        // Fetch followed, favorites, and drafts if user is logged in
                         Topic.getFollowedByUser(req.session.userId, (fErr, followed) => {
                             Topic.getFavoritesByUser(req.session.userId, (favErr, favorites) => {
-                                res.locals.userTopics = followed || [];
-                                res.locals.favoriteTopics = favorites || [];
-                                next();
+                                Favorite.getByUser(req.session.userId, (pageFavErr, favoritePages) => {
+                                    Page.getDraftsByAuthor(req.session.userId, (draftErr, drafts) => {
+                                        res.locals.userTopics = followed || [];
+                                        res.locals.favoriteTopics = favorites || [];
+                                        res.locals.favoritePages = favoritePages || [];
+                                        res.locals.userDrafts = drafts || [];
+                                        next();
+                                    });
+                                });
                             });
                         });
                     });

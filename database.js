@@ -42,8 +42,20 @@ const initialize = async () => {
       category TEXT,
       topic_id INTEGER REFERENCES topics(id),
       author_id INTEGER REFERENCES users(id),
+      status TEXT DEFAULT 'draft',
+      is_verified BOOLEAN DEFAULT false,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    `);
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS user_favorites(
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER REFERENCES users(id),
+      page_id INTEGER REFERENCES pages(id),
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(user_id, page_id)
     )
     `);
 
