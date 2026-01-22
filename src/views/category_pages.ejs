@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Category: <%= category %> - Wiki AI</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+
+<body>
+    <header>
+        <nav>
+            <a href="/" class="logo">Wiki AI</a>
+            <div class="nav-links">
+                <a href="/">Home</a>
+                <a href="/categorias">All Categories</a>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container">
+        <h1>Pages in category "<%= category %>"</h1>
+
+        <ul class="page-list" style="list-style: none; padding: 0; margin-top: 2rem;">
+            <% pages.forEach(function(page) { %>
+                <li style="margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid #eaecf0;">
+                    <a href="/wiki/<%= page.slug %>"
+                        style="font-size: 1.2rem; color: var(--primary-color); font-weight: 500;">
+                        <%= page.title %>
+                    </a>
+                </li>
+                <% }); %>
+        </ul>
+    </main>
+</body>
+
+</html>

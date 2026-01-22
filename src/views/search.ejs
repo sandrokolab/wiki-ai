@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Results for "<%= query %>" - Wiki AI</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+
+<body>
+    <header>
+        <nav>
+            <a href="/" class="logo">Wiki AI</a>
+            <div class="nav-links">
+                <a href="/">Home</a>
+                <form action="/search" method="GET" class="search-form-inline">
+                    <input type="text" name="q" value="<%= query %>" placeholder="Search...">
+                </form>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container">
+        <h1>Search results for "<%= query %>"</h1>
+
+        <% if (results && results.length> 0) { %>
+            <div class="search-results">
+                <% results.forEach(function(page) { %>
+                    <article class="search-item"
+                        style="margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 1px solid #eaecf0;">
+                        <h2 style="margin-bottom: 0.5rem; border: none;">
+                            <a href="/wiki/<%= page.slug %>" style="color: var(--primary-color);">
+                                <%= page.title %>
+                            </a>
+                        </h2>
+                        <p style="color: #54595d; font-size: 0.95rem;">
+                            <%= page.content.substring(0, 200) %>...
+                        </p>
+                    </article>
+                    <% }); %>
+            </div>
+            <% } else { %>
+                <div class="empty-state">
+                    <p>No results found for your search.</p>
+                    <a href="/" class="btn-primary">Back to Home</a>
+                </div>
+                <% } %>
+    </main>
+</body>
+
+</html>

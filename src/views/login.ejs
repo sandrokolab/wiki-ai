@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Wiki AI</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+
+<body>
+    <header>
+        <nav>
+            <a href="/" class="logo">Wiki AI</a>
+            <div class="nav-links">
+                <a href="/register">Create Account</a>
+                <a href="/">Home</a>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container" style="max-width: 500px;">
+        <h1>Login</h1>
+        <p>Access your wiki account to start editing.</p>
+
+        <% if (error) { %>
+            <div class="error-msg"
+                style="background: #ffebe9; color: #cf222e; padding: 0.8rem; border: 1px solid #d0d7de; border-radius: 4px; margin-bottom: 1.5rem;">
+                <%= error %>
+            </div>
+            <% } %>
+
+                <form action="/login" method="POST" class="wiki-form">
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <input type="text" id="username" name="username" required placeholder="Enter your username">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" name="password" required placeholder="Enter your password">
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary" style="width: 100%;">Log In</button>
+                    </div>
+
+                    <p style="text-align: center; margin-top: 1.5rem; font-size: 0.9rem;">
+                        Don't have an account? <a href="/register" style="color: var(--primary-color);">Create one
+                            now</a>
+                    </p>
+                </form>
+    </main>
+</body>
+
+</html>

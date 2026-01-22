@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Archived Version: <%= revision.title %> - Wiki AI</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+
+<body>
+    <header>
+        <nav>
+            <a href="/" class="logo">Wiki AI</a>
+            <div class="nav-links">
+                <a href="/">Home</a>
+                <a href="/wiki/<%= revision.slug %>/history">Back to History</a>
+                <% if (currentUser) { %>
+                    <a href="/logout" style="font-size: 0.8rem; color: #54595d; margin-left: 10px;">Logout</a>
+                    <% } %>
+            </div>
+        </nav>
+    </header>
+
+    <div class="revision-notice"
+        style="background: #fff9ea; border-bottom: 1px solid #fee199; padding: 1rem; text-align: center; color: #72777d;">
+        This is an old version of this page (archived on <%= new Date(revision.created_at).toLocaleString() %>).
+            <form action="/wiki/<%= revision.slug %>/v/<%= revision.id %>/revert" method="POST"
+                style="display: inline; margin-left: 10px;">
+                <button type="submit" class="btn btn-secondary"
+                    style="padding: 0.2rem 0.5rem; font-size: 0.8rem;">Revert to this version</button>
+            </form>
+    </div>
+
+    <main class="container">
+        <h1>
+            <%= revision.title %>
+        </h1>
+        <div class="meta">
+            Archived version from <%= new Date(revision.created_at).toLocaleString() %>
+        </div>
+
+        <div class="content">
+            <%- revision.htmlContent %>
+        </div>
+    </main>
+</body>
+
+</html>

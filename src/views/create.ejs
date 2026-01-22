@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create New Page - Wiki</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+
+<body>
+    <header>
+        <nav>
+            <a href="/" class="logo">Wiki AI</a>
+            <div class="nav-links">
+                <a href="/">Home</a>
+                <% if (currentUser) { %>
+                    <span class="user-info" style="font-size: 0.9rem; color: #54595d;">Logged in as <strong>
+                            <%= currentUser.username %>
+                        </strong></span>
+                    <a href="/logout" style="font-size: 0.8rem; color: #54595d;">Logout</a>
+                    <% } %>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container">
+        <h1>Create a New Page</h1>
+        <form action="/create" method="POST" class="wiki-form">
+            <div class="form-group">
+                <label for="title">Page Title</label>
+                <input type="text" id="title" name="title" required placeholder="e.g. My New Page"
+                    value="<%= prefilledTitle %>">
+            </div>
+
+            <div class="form-group">
+                <label for="slug">URL Slug</label>
+                <input type="text" id="slug" name="slug" required placeholder="e.g. my-new-page">
+                <small>This determines the link to your page.</small>
+            </div>
+
+            <div class="form-group">
+                <label for="category">Category (Optional)</label>
+                <input type="text" id="category" name="category" placeholder="e.g. Technology, Science, History...">
+            </div>
+
+            <div class="form-group">
+                <label for="content">Markdown Content</label>
+                <textarea id="content" name="content" required placeholder="# Start writing here..."></textarea>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Create Page</button>
+                <a href="/" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </main>
+
+    <!-- Simple script to auto-generate slug from title -->
+    <script>
+        const titleInput = document.getElementById('title');
+        const slugInput = document.getElementById('slug');
+
+        function generateSlug(text) {
+            return text
+                .toString()
+                .toLowerCase()
+                .trim()
+                .replace(/\s+/g, '-')     // Replace spaces with -
+                .replace(/[^\w\-]+/g, '')  // Remove all non-word chars
+                .replace(/\-\-+/g, '-');   // Replace multiple - with single -
+        }
+
+        // Generate slug from initial value if exists
+        if (titleInput.value) {
+            slugInput.value = generateSlug(titleInput.value);
+        }
+
+        titleInput.addEventListener('input', () => {
+            slugInput.value = generateSlug(titleInput.value);
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,222 @@
+:root {
+    --primary-color: #36c;
+    --primary-hover: #447ff5;
+    --text-color: #202122;
+    --bg-color: #f8f9fa;
+    --content-bg: #fff;
+    --border-color: #a2a9b1;
+    --heading-font: 'Linux Libertine', 'Georgia', 'Times', serif;
+    --body-font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+body {
+    font-family: var(--body-font);
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    margin: 0;
+    line-height: 1.6;
+}
+
+header {
+    background-color: #fff;
+    border-bottom: 1px solid var(--border-color);
+    padding: 0.5rem 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+nav {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-color);
+    text-decoration: none;
+    letter-spacing: -0.5px;
+}
+
+.nav-links {
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+}
+
+.nav-links a {
+    text-decoration: none;
+    color: var(--primary-color);
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.nav-links a:hover {
+    text-decoration: underline;
+}
+
+.btn-create,
+.btn-edit,
+.btn-primary {
+    background-color: var(--primary-color);
+    color: white !important;
+    padding: 0.5rem 1rem;
+    border-radius: 2px;
+    text-decoration: none !important;
+    transition: background-color 0.2s;
+}
+
+.btn-create:hover,
+.btn-edit:hover,
+.btn-primary:hover {
+    background-color: var(--primary-hover);
+}
+
+.btn-secondary {
+    background-color: transparent;
+    color: var(--text-color) !important;
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 2px;
+    text-decoration: none !important;
+}
+
+.container {
+    max-width: 900px;
+    margin: 2rem auto;
+    background: var(--content-bg);
+    padding: 3rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--border-color);
+}
+
+h1,
+h2,
+h3 {
+    font-family: var(--heading-font);
+    font-weight: 400;
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 0.3rem;
+}
+
+h1 {
+    font-size: 2.5rem;
+    margin-top: 0;
+}
+
+.meta {
+    font-size: 0.85rem;
+    color: #54595d;
+    margin-bottom: 2rem;
+    font-style: italic;
+}
+
+.content {
+    font-size: 1.05rem;
+}
+
+.content p {
+    margin-bottom: 1rem;
+}
+
+.content a {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+.content a:hover {
+    text-decoration: underline;
+}
+
+/* Forms */
+.wiki-form .form-group {
+    margin-bottom: 1.5rem;
+}
+
+.wiki-form label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.wiki-form input[type="text"],
+.wiki-form textarea {
+    width: 100%;
+    padding: 0.8rem;
+    border: 1px solid var(--border-color);
+    border-radius: 2px;
+    background: #fff;
+    font-family: inherit;
+    font-size: 1rem;
+}
+
+.wiki-form input[type="text"]:focus,
+.wiki-form textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(51, 102, 204, 0.1);
+}
+
+.wiki-form textarea {
+    min-height: 400px;
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    font-size: 0.95rem;
+}
+
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+}
+
+/* Wiki Links */
+.wiki-link-new {
+    color: #ba0000;
+    /* Wikipedia red link color */
+}
+
+.wiki-link-new:hover {
+    text-decoration: underline;
+}
+
+.wiki-link-exists {
+    color: var(--primary-color);
+}
+
+/* Home list */
+.page-list {
+    list-style: none;
+    padding: 0;
+}
+
+.page-list li {
+    padding: 0.8rem 0;
+    border-bottom: 1px solid #eaecf0;
+}
+
+.page-list a {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+.page-list a:hover {
+    text-decoration: underline;
+}
+
+.page-list small {
+    display: block;
+    color: #72777d;
+    margin-top: 0.2rem;
+}

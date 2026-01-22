@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Categories - Wiki AI</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+
+<body>
+    <header>
+        <nav>
+            <a href="/" class="logo">Wiki AI</a>
+            <div class="nav-links">
+                <a href="/">Home</a>
+                <a href="/indice">Index</a>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container">
+        <h1>Categories</h1>
+        <p>Browse pages by topic.</p>
+
+        <div class="categories-list" style="display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 2rem;">
+            <% if (categories && categories.length> 0) { %>
+                <% categories.forEach(cat=> { %>
+                    <a href="/categoria/<%= cat.category %>" class="category-card"
+                        style="padding: 1rem 2rem; border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-color); font-weight: 500; transition: border-color 0.2s;">
+                        <%= cat.category %>
+                    </a>
+                    <% }); %>
+                        <% } else { %>
+                            <p style="color: #72777d; font-style: italic;">No categories created yet.</p>
+                            <% } %>
+        </div>
+    </main>
+</body>
+
+</html>

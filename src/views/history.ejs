@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>History: <%= page.title %> - Wiki AI</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+
+<body>
+    <header>
+        <nav>
+            <a href="/" class="logo">Wiki AI</a>
+            <div class="nav-links">
+                <a href="/">Home</a>
+                <a href="/wiki/<%= page.slug %>">Back to Page</a>
+                <% if (currentUser) { %>
+                    <a href="/logout" style="font-size: 0.8rem; color: #54595d; margin-left: 10px;">Logout</a>
+                    <% } %>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container">
+        <h1>Revision history of "<%= page.title %>"</h1>
+
+        <table class="history-table" style="width: 100%; border-collapse: collapse; margin-top: 1.5rem;">
+            <thead>
+                <tr style="border-bottom: 2px solid var(--border-color); text-align: left;">
+                    <th style="padding: 0.8rem;">Date</th>
+                    <th style="padding: 0.8rem;">User</th>
+                    <th style="padding: 0.8rem;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% if (revisions && revisions.length> 0) { %>
+                    <% revisions.forEach(function(rev) { %>
+                        <tr style="border-bottom: 1px solid #eaecf0;">
+                            <td style="padding: 0.8rem;">
+                                <%= new Date(rev.created_at).toLocaleString() %>
+                            </td>
+                            <td style="padding: 0.8rem;">
+                                <% if (rev.username) { %>
+                                    <a href="/profile/<%= rev.username %>"
+                                        style="color: var(--primary-color); font-weight: 500;">
+                                        <%= rev.username %>
+                                    </a>
+                                    <% } else { %>
+                                        <span style="color: #72777d; font-style: italic;">Anonymous</span>
+                                        <% } %>
+                            </td>
+                            <td style="padding: 0.8rem;">
+                                <a href="/wiki/<%= page.slug %>/v/<%= rev.id %>">View</a> |
+                                <a href="/wiki/<%= page.slug %>/v/<%= rev.id %>/diff">Diff</a>
+                            </td>
+                        </tr>
+                        <% }); %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="3" style="padding: 2rem; text-align: center; color: #72777d;">
+                                        No previous revisions yet.
+                                    </td>
+                                </tr>
+                                <% } %>
+            </tbody>
+        </table>
+    </main>
+</body>
+
+</html>

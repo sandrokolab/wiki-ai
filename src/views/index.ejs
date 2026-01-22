@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wiki - Home</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+
+<body>
+    <header>
+        <nav>
+            <a href="/" class="logo">Wiki AI</a>
+
+            <form action="/search" method="GET" class="search-form"
+                style="display: flex; gap: 0.5rem; flex: 1; max-width: 400px; margin: 0 2rem;">
+                <input type="text" name="q" placeholder="Search pages..." required
+                    style="width: 100%; padding: 0.4rem 0.8rem; border: 1px solid var(--border-color); border-radius: 2px;">
+            </form>
+
+            <div class="nav-links">
+                <% if (currentUser) { %>
+                    <a href="/profile/<%= currentUser.username %>">My Profile (<%= currentUser.username %>)</a>
+                    <a href="/indice">Index</a>
+                    <a href="/categorias">Categories</a>
+                    <a href="/create" class="btn-create">New Page</a>
+                    <a href="/logout">Logout</a>
+                    <% } else { %>
+                        <a href="/indice">Index</a>
+                        <a href="/categorias">Categories</a>
+                        <a href="/login">Login</a>
+                        <a href="/register">Sign Up</a>
+                        <% } %>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container">
+        <h1>Welcome to Wiki AI</h1>
+        <p class="subtitle">A clean, collaborative documentation platform.</p>
+
+        <section class="page-section">
+            <h2>Explore Pages</h2>
+            <% if (pages && pages.length> 0) { %>
+                <ul class="page-list">
+                    <% pages.forEach(function(page) { %>
+                        <li>
+                            <a href="/wiki/<%= page.slug %>">
+                                <%= page.title %>
+                            </a>
+                            <small>Last updated: <%= new Date(page.updated_at || page.created_at).toLocaleDateString()
+                                    %></small>
+                        </li>
+                        <% }); %>
+                </ul>
+                <% } else { %>
+                    <div class="empty-state">
+                        <p>No pages found yet.</p>
+                        <a href="/create" class="btn-primary">Create the first page</a>
+                    </div>
+                    <% } %>
+        </section>
+    </main>
+</body>
+
+</html>

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+        <%= page.title %> - Wiki
+    </title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+
+<body>
+    <header>
+        <nav>
+            <a href="/" class="logo">Wiki AI</a>
+
+            <form action="/search" method="GET" class="search-form"
+                style="display: flex; gap: 0.5rem; flex: 1; max-width: 400px; margin: 0 2rem;">
+                <input type="text" name="q" placeholder="Search pages..." required
+                    style="width: 100%; padding: 0.4rem 0.8rem; border: 1px solid var(--border-color); border-radius: 2px;">
+            </form>
+
+            <div class="nav-links">
+                <a href="/">Home</a>
+                <a href="/indice">Index</a>
+                <a href="/categorias">Categories</a>
+                <a href="/wiki/<%= page.slug %>/history">History</a>
+                <% if (currentUser) { %>
+                    <a href="/wiki/<%= page.slug %>/edit" class="btn-edit">Edit Page</a>
+                    <a href="/create" class="btn-create">New Page</a>
+                    <a href="/logout" style="margin-left: 10px; font-size: 0.8rem; color: #54595d;">Logout</a>
+                    <% } else { %>
+                        <a href="/login" class="btn-primary" style="padding: 0.3rem 0.8rem;">Log in to edit</a>
+                        <% } %>
+            </div>
+        </nav>
+    </header>
+
+    <div class="container">
+        <h1>
+            <%= page.title %>
+        </h1>
+        <div class="meta"
+            style="display: flex; gap: 1rem; align-items: center; justify-content: space-between; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1px solid #eaecf0;">
+            <div>Created on: <%= new Date(page.created_at).toLocaleDateString() %>
+            </div>
+            <% if (page.category) { %>
+                <div class="category-tag">
+                    Category: <a href="/categoria/<%= page.category %>"
+                        style="color: var(--primary-color); font-weight: 500;">
+                        <%= page.category %>
+                    </a>
+                </div>
+                <% } %>
+        </div>
+
+        <div class="content">
+            <%- page.htmlContent %>
+        </div>
+
+        <% if (page.backlinks && page.backlinks.length> 0) { %>
+            <div class="backlinks" style="margin-top: 4rem; padding-top: 1rem; border-top: 1px solid #c8ccd1;">
+                <h3 style="font-size: 0.9rem; color: #54595d; text-transform: uppercase; letter-spacing: 0.05em;">Pages
+                    that link here</h3>
+                <ul
+                    style="list-style: none; padding: 0; display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 0.5rem;">
+                    <% page.backlinks.forEach(function(link) { %>
+                        <li style="font-size: 0.9rem;">
+                            <a href="/wiki/<%= link.slug %>" class="wiki-link-exists">
+                                <%= link.title %>
+                            </a>
+                        </li>
+                        <% }); %>
+                </ul>
+            </div>
+            <% } %>
+    </div>
+</body>
+
+</html>

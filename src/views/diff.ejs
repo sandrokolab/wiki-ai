@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Differences: <%= page.title %> - Wiki AI</title>
+    <link rel="stylesheet" href="/style.css">
+    <style>
+        .diff-added {
+            background-color: #e6ffec;
+            color: #24292f;
+            text-decoration: none;
+        }
+
+        .diff-removed {
+            background-color: #ffebe9;
+            color: #24292f;
+            text-decoration: line-through;
+        }
+
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            background: #f6f8fa;
+            padding: 1rem;
+            border-radius: 6px;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <nav>
+            <a href="/" class="logo">Wiki AI</a>
+            <div class="nav-links">
+                <a href="/">Home</a>
+                <a href="/wiki/<%= page.slug %>/history">Back to History</a>
+                <% if (currentUser) { %>
+                    <a href="/logout" style="font-size: 0.8rem; color: #54595d; margin-left: 10px;">Logout</a>
+                    <% } %>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container">
+        <h1>Compare revisions</h1>
+        <p>Comparing archived version (<%= new Date(revision.created_at).toLocaleString() %>) with current version.</p>
+
+        <div class="diff-container">
+            <pre><% changes.forEach(function(part) { %><span class="<%= part.added ? 'diff-added' : part.removed ? 'diff-removed' : '' %>"><%= part.value %></span><% }); %></pre>
+        </div>
+
+        <div class="form-actions" style="margin-top: 2rem;">
+            <form action="/wiki/<%= page.slug %>/v/<%= revision.id %>/revert" method="POST" style="display: inline;">
+                <button type="submit" class="btn btn-primary">Revert to archived version</button>
+            </form>
+            <a href="/wiki/<%= page.slug %>/history" class="btn btn-secondary">Cancel</a>
+        </div>
+    </main>
+</body>
+
+</html>

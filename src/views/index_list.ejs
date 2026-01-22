@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alphabetical Index - Wiki AI</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+
+<body>
+    <header>
+        <nav>
+            <a href="/" class="logo">Wiki AI</a>
+            <div class="nav-links">
+                <a href="/">Home</a>
+                <a href="/categorias">Categories</a>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container">
+        <h1>All pages (A-Z)</h1>
+
+        <div class="index-grid"
+            style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 2rem; margin-top: 2rem;">
+            <% const groups={}; pages.forEach(p=> {
+                const firstChar = p.title[0].toUpperCase();
+                if (!groups[firstChar]) groups[firstChar] = [];
+                groups[firstChar].push(p);
+                });
+                const sortedLetters = Object.keys(groups).sort();
+                %>
+
+                <% sortedLetters.forEach(letter=> { %>
+                    <section class="index-section">
+                        <h2 style="border-bottom: 2px solid var(--primary-color); padding-bottom: 0.3rem;">
+                            <%= letter %>
+                        </h2>
+                        <ul style="list-style: none; padding: 0.5rem 0;">
+                            <% groups[letter].forEach(page=> { %>
+                                <li style="margin-bottom: 0.5rem;">
+                                    <a href="/wiki/<%= page.slug %>" style="color: var(--text-color);">
+                                        <%= page.title %>
+                                    </a>
+                                </li>
+                                <% }); %>
+                        </ul>
+                    </section>
+                    <% }); %>
+        </div>
+    </main>
+</body>
+
+</html>

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+        <%= user.username %> - Profile - Wiki AI
+    </title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+
+<body>
+    <header>
+        <nav>
+            <a href="/" class="logo">Wiki AI</a>
+            <div class="nav-links">
+                <a href="/">Home</a>
+                <% if (currentUser && currentUser.id===user.id) { %>
+                    <a href="/logout">Logout</a>
+                    <% } %>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container">
+        <div class="profile-header"
+            style="display: flex; align-items: center; gap: 2rem; margin-bottom: 3rem; padding-bottom: 2rem; border-bottom: 1px solid var(--border-color);">
+            <div class="profile-avatar"
+                style="width: 100px; height: 100px; background: #eaecf0; display: flex; align-items: center; justify-content: center; font-size: 3rem; border-radius: 4px; color: #72777d;">
+                <%= user.username[0].toUpperCase() %>
+            </div>
+            <div class="profile-info">
+                <h1 style="border: none; margin: 0;">
+                    <%= user.username %>
+                </h1>
+                <p style="color: #54595d; margin: 0.5rem 0;">Member since <%= new
+                        Date(user.created_at).toLocaleDateString() %>
+                </p>
+                <% if (currentUser && currentUser.id===user.id) { %>
+                    <p style="font-size: 0.9rem; color: #54595d;">Email: <%= user.email %>
+                    </p>
+                    <% } %>
+            </div>
+        </div>
+
+        <section class="contributions">
+            <h2>Contributions</h2>
+            <p style="color: #72777d; font-style: italic;">User contributions will appear here once tracked in the
+                database.</p>
+            <!-- Future work: Add query for pages/revisions by this user -->
+        </section>
+    </main>
+</body>
+
+</html>

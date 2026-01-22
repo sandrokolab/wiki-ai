@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Error - Wiki AI</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+
+<body>
+    <header>
+        <nav>
+            <a href="/" class="logo">Wiki AI</a>
+        </nav>
+    </header>
+
+    <main class="container">
+        <div class="empty-state" style="text-align: center; margin-top: 4rem;">
+            <h1 style="border: none; font-size: 3rem; color: #ba0000; margin: 0;">Oops!</h1>
+            <p style="font-size: 1.2rem; color: #54595d; margin: 1rem 0;">Error <%= status %>: <%= message %>
+            </p>
+            <a href="/" class="btn-primary" style="margin-top: 2rem; display: inline-block;">Return to Safety</a>
+        </div>
+    </main>
+</body>
+
+</html>
