@@ -1,0 +1,69 @@
+<!-- Topic Creation Modal -->
+<div id="topicModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeTopicModal()">&times;</span>
+        <h2>Create New Topic</h2>
+        <form id="createTopicForm" onsubmit="handleCreateTopic(event)">
+            <div class="form-group">
+                <label>Name</label>
+                <input type="text" name="name" required placeholder="Project Alpha, Research...">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Color</label>
+                    <input type="color" name="color" value="#6366f1">
+                </div>
+                <div class="form-group">
+                    <label>Icon (Phosphor class)</label>
+                    <input type="text" name="icon" value="ph-hash" placeholder="ph-brain, ph-code...">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Description</label>
+                <textarea name="description" placeholder="What is this topic about?"></textarea>
+            </div>
+            <button type="submit" class="btn-primary" style="width: 100%;">Save Topic</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openTopicModal() {
+        const modal = document.getElementById('topicModal');
+        if (modal) modal.style.display = 'block';
+    }
+
+    function closeTopicModal() {
+        const modal = document.getElementById('topicModal');
+        if (modal) modal.style.display = 'none';
+    }
+
+    async function handleCreateTopic(e) {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const data = Object.fromEntries(formData.entries());
+
+        try {
+            const res = await fetch('/topics/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            if (res.ok) {
+                location.reload();
+            } else {
+                alert('Error creating topic. Make sure the name is unique.');
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    // Close on click outside
+    window.addEventListener('click', (event) => {
+        const modal = document.getElementById('topicModal');
+        if (event.target == modal) {
+            closeTopicModal();
+        }
+    });
+</script>

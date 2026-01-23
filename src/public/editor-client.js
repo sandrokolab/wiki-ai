@@ -20,6 +20,7 @@
     const backBtn = document.getElementById('backBtn');
     const unsavedIndicator = document.getElementById('unsavedIndicator');
     const draftStatus = document.getElementById('draftStatus');
+    const topicSelect = document.getElementById('topic_id');
 
     let tags = [];
     let isDirty = false;
@@ -243,6 +244,18 @@
     });
 
     // --- Init ---
+    if (topicSelect) {
+        topicSelect.addEventListener('change', (e) => {
+            if (e.target.value === 'new') {
+                if (typeof openTopicModal === 'function') {
+                    openTopicModal();
+                    // Reset select
+                    e.target.value = '';
+                }
+            }
+        });
+    }
+
     // Load from local storage if exists and empty
     if (!contentTextarea.value && localStorage.getItem('wiki_draft_content')) {
         if (confirm('Load unsaved draft from your last session?')) {
