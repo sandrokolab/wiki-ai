@@ -81,13 +81,17 @@ const initialize = async () => {
 
     await client.query(`
       CREATE TABLE IF NOT EXISTS page_revisions(
-  id SERIAL PRIMARY KEY,
-  page_id INTEGER REFERENCES pages(id),
-  content TEXT,
-  author_id INTEGER REFERENCES users(id),
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-)
+        id SERIAL PRIMARY KEY,
+        page_id INTEGER REFERENCES pages(id),
+        content TEXT,
+        author_id INTEGER REFERENCES users(id),
+        change_summary TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
     `);
+
+    // Migration for page_revisions
+    await client.query(`ALTER TABLE page_revisions ADD COLUMN IF NOT EXISTS change_summary TEXT`);
 
     await client.query(`
       CREATE TABLE IF NOT EXISTS activity_log (

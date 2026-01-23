@@ -6,7 +6,7 @@
             <h2>Create a New Page</h2>
         </header>
 
-        <form action="/create" method="POST" class="wiki-form">
+        <form id="editorForm" action="/create" method="POST" class="wiki-form">
             <!-- Metadata Section -->
             <div class="metadata-grid">
                 <div class="form-group-full">
@@ -19,7 +19,6 @@
                         <button type="button" class="btn-text-small" id="editSlugBtn"
                             style="margin-left: 8px; color: var(--primary-color); background: none; border: none; font-size: 0.75rem; cursor: pointer; font-weight: 600;">Edit</button>
                     </div>
-                    <!-- Hidden by default, shown when 'Edit' is clicked -->
                     <div class="form-group" style="display: none; margin-top: 8px;">
                         <input type="text" id="slug" name="slug" class="editor-input" required
                             placeholder="URL slug...">
@@ -53,11 +52,11 @@
                 </div>
             </div>
 
-            <!-- Mobile Tabs -->
-            <div class="editor-mobile-tabs">
-                <button type="button" class="tab-btn active" id="mobileEditTab">Edit</button>
-                <button type="button" class="tab-btn" id="mobilePreviewTab">Preview</button>
-            </div>
+            <!-- Mobile History Toggle -->
+            <button type="button" class="btn-secondary mobile-only" onclick="toggleMobileHistory()"
+                style="width: 100%; margin-bottom: 1rem; display: none;">
+                <i class="ph ph-clock-counter-clockwise"></i> View History
+            </button>
 
             <!-- Main Editor Grid -->
             <div class="editor-grid">
@@ -89,13 +88,10 @@
                                 class="ph ph-image"></i></button>
                         <button type="button" class="toolbar-btn" onclick="insertFormatting('code')" title="Code"><i
                                 class="ph ph-code"></i></button>
-                        <div class="toolbar-divider"></div>
-                        <button type="button" class="toolbar-btn" title="Markdown Help"><i
-                                class="ph ph-question"></i></button>
                     </div>
                     <div class="editor-textarea-wrapper">
                         <textarea id="content" name="content" class="editor-textarea" required
-                            placeholder="# Mi T&iacute;tulo&#10;&#10;Escribe tu contenido aqu&iacute;...&#10;&#10;Tip: Usa **negrita**, *cursiva*, y [[enlaces internos]]"></textarea>
+                            placeholder="# Mi T&iacute;tulo&#10;&#10;Escribe tu contenido aqu&iacute;..."></textarea>
                         <div class="editor-stats">
                             <span id="charCount">0 characters</span>
                             <span class="toolbar-divider"
@@ -105,10 +101,12 @@
                     </div>
 
                     <!-- Advanced Options -->
-                    <button type="button" class="advanced-options-trigger" id="advancedOptionsBtn">
+                    <button type="button" class="advanced-options-trigger" id="advancedOptionsBtn"
+                        style="padding: 12px 24px;">
                         <i class="ph ph-caret-down"></i> Advanced Options
                     </button>
                     <div class="options-content" id="optionsContent">
+                        <!-- ... existing options ... -->
                         <div class="metadata-grid" style="grid-template-columns: 1fr 1fr; gap: 20px;">
                             <div class="form-group">
                                 <label class="form-label">Allow comments</label>
@@ -128,24 +126,29 @@
                                     </label>
                                 </div>
                             </div>
-                            <div class="form-group-full">
-                                <label class="form-label">Meta description (SEO)</label>
-                                <textarea name="meta_description" class="editor-input"
-                                    style="height: 80px; resize: none;"
-                                    placeholder="Brief summary for search engines..."></textarea>
-                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Right Column: Preview -->
-                <div class="editor-column preview-col" id="previewCol">
-                    <div class="preview-pane">
-                        <div class="preview-header">
-                            <i class="ph ph-eye"></i> Preview
+                <!-- Right Column: Version History -->
+                <div class="editor-column version-col" id="versionCol">
+                    <div class="version-panel">
+                        <div class="version-header">
+                            <i class="ph ph-clock-counter-clockwise"></i> Version History
                         </div>
-                        <div class="preview-content markdown-body" id="previewContent">
-                            <div class="preview-placeholder">Your content preview will appear here...</div>
+                        <div class="version-list" id="versionList">
+                            <div class="version-placeholder"
+                                style="padding: 40px 20px; text-align: center; color: var(--text-secondary);">
+                                <i class="ph ph-sparkle"
+                                    style="font-size: 2rem; display: block; margin-bottom: 12px; color: var(--primary-color);"></i>
+                                <p style="font-weight: 600; font-size: 0.875rem;">No history yet</p>
+                                <p style="font-size: 0.75rem;">This will be the first version when you publish.</p>
+                            </div>
+                        </div>
+                        <div class="version-footer"
+                            style="padding: 16px; border-top: 1px solid var(--border-color); display: flex; justify-content: center;">
+                            <button type="button" class="btn-version-action" style="width: 100%;" disabled>Compare
+                                versions</button>
                         </div>
                     </div>
                 </div>
@@ -167,15 +170,47 @@
                         <i class="ph ph-warning-circle"></i> Unsaved changes
                     </span>
                     <div class="footer-actions">
-                        <button type="submit" name="status" value="draft" class="btn-magenta"
+                        <button type="button" onclick="showCommitModal('draft')" class="btn-magenta"
                             style="background: transparent; border: 1px solid var(--border-color); color: var(--text-main) !important;">Save
                             as Draft</button>
-                        <button type="submit" name="status" value="published" class="btn-primary"
+                        <button type="button" onclick="showCommitModal('published')" class="btn-primary"
                             style="padding: 12px 24px;">Publish</button>
                     </div>
                 </div>
             </footer>
+
+            <!-- Commit Modal -->
+            <div id="commitModal" class="modal">
+                <div class="modal-content" style="max-width: 500px;">
+                    <h2>Describe your changes</h2>
+                    <p style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 1rem;">This helps others
+                        understand what you modified.</p>
+                    <textarea id="changeSummary" name="change_summary" class="commit-message-input"
+                        placeholder="e.g. Fixed typos, added examples..."></textarea>
+                    <input type="hidden" id="submitStatus" name="status" value="published">
+                    <div class="modal-footer">
+                        <button type="button" onclick="closeCommitModal()" class="btn-secondary">Cancel</button>
+                        <button type="submit" class="btn-primary">Confirm & Save</button>
+                    </div>
+                </div>
+            </div>
         </form>
+    </div>
+
+    <!-- Version Preview Modal -->
+    <div id="versionPreviewModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeVersionPreview()">&times;</span>
+            <h2 id="previewVersionTitle">Version Details</h2>
+            <div id="previewMeta" style="margin-bottom: 20px; font-size: 0.875rem; color: var(--text-secondary);"></div>
+            <div id="previewBody" class="markdown-body"
+                style="background: white; padding: 24px; border-radius: 8px; border: 1px solid var(--border-color); max-height: 500px; overflow-y: auto;">
+            </div>
+            <div class="modal-footer">
+                <button type="button" id="restoreBtn" class="btn-primary">Restore this version</button>
+                <button type="button" onclick="closeVersionPreview()" class="btn-secondary">Close</button>
+            </div>
+        </div>
     </div>
 
     <%- include('partials/layout_end') %>

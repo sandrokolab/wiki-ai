@@ -192,22 +192,29 @@ router.get('/wiki/:slug/edit', isAuthenticated, (req, res) => {
 // Edit page submit
 router.post('/wiki/:slug/edit', isAuthenticated, (req, res) => {
     const oldSlug = req.params.slug;
-    let { title, slug, content, category, topic_id } = req.body;
+    let { title, slug, content, category, topic_id, change_summary, status } = req.body;
     const userId = req.session.userId;
 
     // XSS Sanitization
     title = xss(title);
     content = xss(content);
     category = xss(category);
+    change_summary = xss(change_summary);
 
     Page.getBySlug(oldSlug, (err, page) => {
         if (err || !page) return res.status(500).send('Error fetching page');
 
-        // Save current as revision
-        Revision.create(page.id, page.content, userId, (revErr) => {
+        // Save current as revision with the provided summary
+        Revision.create(page.id, page.content, userId, change_summary, (revErr) => {
             Page.update(oldSlug, title, slug, content, userId, category, topic_id || null, (upErr) => {
                 if (upErr) return res.status(500).send('Update failed');
-                Activity.log(userId, 'edited', page.id, { title, slug });
+
+                // If status was changed to published, update it
+                if (status === 'published' && page.status === 'draft') {
+                    Page.publish(slug, () => { });
+                }
+
+                Activity.log(userId, 'edited', page.id, { title, slug, change_summary });
                 res.redirect(`/wiki/${slug}`);
             });
         });
@@ -395,6 +402,22 @@ router.post('/wiki/:slug/verify', isAuthenticated, (req, res) => {
     Page.verify(slug, true, (err) => {
         if (err) return res.status(500).json({ error: 'Verification failed' });
         res.json({ success: true });
+    });
+});
+
+// API: Get page history
+router.get('/api/wiki/:id/history', (req, res) => {
+    Revision.getByPageId(req.params.id, (err, revisions) => {
+        if (err) return res.status(500).json({ error: 'DB error' });
+        res.json(revisions);
+    });
+});
+
+// API: Get specific revision
+router.get('/api/wiki/revision/:id', (req, res) => {
+    Revision.getById(req.params.id, (err, revision) => {
+        if (err || !revision) return res.status(404).json({ error: 'Not found' });
+        res.json(revision);
     });
 });
 

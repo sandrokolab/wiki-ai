@@ -1,10 +1,10 @@
 const pool = require('../../database');
 
 class Revision {
-    static async create(pageId, content, authorId, callback) {
+    static async create(pageId, content, authorId, changeSummary, callback) {
         try {
-            const sql = 'INSERT INTO page_revisions (page_id, content, author_id) VALUES ($1, $2, $3) RETURNING id';
-            const res = await pool.query(sql, [pageId, content, authorId]);
+            const sql = 'INSERT INTO page_revisions (page_id, content, author_id, change_summary) VALUES ($1, $2, $3, $4) RETURNING id';
+            const res = await pool.query(sql, [pageId, content, authorId, changeSummary || null]);
             callback(null, res.rows[0].id);
         } catch (err) {
             callback(err);

@@ -1,68 +1,208 @@
 <%- include('partials/layout_start', { title: 'Editing: ' + page.title }) %>
 
-    <article class="wiki-article">
-        <h1 style="border: none; margin-bottom: 2rem;">Editing: <%= page.title %>
-        </h1>
+    <div class="editor-container">
+        <header class="editor-header">
+            <nav class="breadcrumb">Home > Edit Page</nav>
+            <h2>Editing Page</h2>
+        </header>
 
-        <form action="/wiki/<%= page.slug %>/edit" method="POST" class="wiki-form">
-            <div class="form-group">
-                <label for="title">Page Title</label>
-                <input type="text" id="title" name="title" value="<%= page.title %>" required>
-            </div>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="slug">Slug (URL Name)</label>
-                    <input type="text" id="slug" name="slug" value="<%= page.slug %>" required>
+        <form id="editorForm" action="/wiki/<%= page.slug %>/edit" method="POST" class="wiki-form">
+            <!-- Metadata Section -->
+            <div class="metadata-grid">
+                <div class="form-group-full">
+                    <label class="form-label" for="title">Page Title <span class="required">*</span></label>
+                    <input type="text" id="title" name="title" class="editor-input" required
+                        placeholder="Enter page title..." value="<%= page.title %>">
+                    <div class="slug-preview" id="slugPreview">
+                        tu-wiki.com/wiki/<span class="slug-value" id="slugPreviewValue">
+                            <%= page.slug %>
+                        </span>
+                        <button type="button" class="btn-text-small" id="editSlugBtn"
+                            style="margin-left: 8px; color: var(--primary-color); background: none; border: none; font-size: 0.75rem; cursor: pointer; font-weight: 600;">Edit</button>
+                    </div>
+                    <div class="form-group" style="display: none; margin-top: 8px;">
+                        <input type="text" id="slug" name="slug" class="editor-input" required value="<%= page.slug %>"
+                            placeholder="URL slug...">
+                    </div>
                 </div>
+
                 <div class="form-group">
-                    <label for="topic_id">Topic</label>
-                    <select id="topic_id" name="topic_id">
-                        <option value="">No Topic</option>
+                    <label class="form-label" for="topic_id">Topic <span class="required">*</span></label>
+                    <select id="topic_id" name="topic_id" class="editor-input" required>
+                        <option value="">Select a topic...</option>
                         <% allTopics.forEach(function(topic) { %>
-                            <option value="<%= topic.id %>" <%=(page.topic_id==topic.id) ? 'selected' : '' %>><%=
-                                    topic.name %>
+                            <option value="<%= topic.id %>" <%=page.topic_id==topic.id ? 'selected' : '' %> data-color="
+                                <%= topic.color %>">
+                                    <%= topic.name %>
                             </option>
                             <% }); %>
+                                <option disabled>──────────</option>
+                                <option value="new">+ Create new topic</option>
                     </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Tags / Labels</label>
+                    <div class="tag-input-container" id="tagsContainer">
+                        <input type="text" id="tagInput" class="tag-input" placeholder="Add tags...">
+                    </div>
+                    <input type="hidden" name="category" id="category" value="<%= page.category || '' %>">
                 </div>
             </div>
 
-            <div class="form-group">
-                <label for="category">Custom Category Label (Optional)</label>
-                <input type="text" id="category" name="category" value="<%= page.category || '' %>"
-                    placeholder="e.g. Technology...">
+            <!-- Main Editor Grid -->
+            <div class="editor-grid">
+                <!-- Left Column: Editor -->
+                <div class="editor-column edit-col" id="editCol">
+                    <div class="editor-toolbar">
+                        <button type="button" class="toolbar-btn" onclick="insertFormatting('bold')"
+                            title="Bold (Ctrl+B)"><i class="ph ph-text-b"></i></button>
+                        <button type="button" class="toolbar-btn" onclick="insertFormatting('italic')"
+                            title="Italic (Ctrl+I)"><i class="ph ph-text-italic"></i></button>
+                        <button type="button" class="toolbar-btn" onclick="insertFormatting('quote')" title="Quote"><i
+                                class="ph ph-quotes"></i></button>
+                        <div class="toolbar-divider"></div>
+                        <button type="button" class="toolbar-btn" onclick="insertFormatting('h1')" title="Heading 1"><i
+                                class="ph ph-text-h-one"></i></button>
+                        <button type="button" class="toolbar-btn" onclick="insertFormatting('h2')" title="Heading 2"><i
+                                class="ph ph-text-h-two"></i></button>
+                        <div class="toolbar-divider"></div>
+                        <button type="button" class="toolbar-btn" onclick="insertFormatting('list-bullet')"
+                            title="Bullet List"><i class="ph ph-list-bullets"></i></button>
+                        <button type="button" class="toolbar-btn" onclick="insertFormatting('list-number')"
+                            title="Numbered List"><i class="ph ph-list-numbers"></i></button>
+                        <button type="button" class="toolbar-btn" onclick="insertFormatting('check')"
+                            title="Task List"><i class="ph ph-check-square"></i></button>
+                        <div class="toolbar-divider"></div>
+                        <button type="button" class="toolbar-btn" onclick="insertFormatting('link')"
+                            title="Link (Ctrl+K)"><i class="ph ph-link"></i></button>
+                        <button type="button" class="toolbar-btn" onclick="insertFormatting('image')" title="Image"><i
+                                class="ph ph-image"></i></button>
+                        <button type="button" class="toolbar-btn" onclick="insertFormatting('code')" title="Code"><i
+                                class="ph ph-code"></i></button>
+                    </div>
+                    <div class="editor-textarea-wrapper">
+                        <textarea id="content" name="content" class="editor-textarea"
+                            required><%= page.content %></textarea>
+                        <div class="editor-stats">
+                            <span id="charCount">0 characters</span>
+                            <span class="toolbar-divider"
+                                style="height: 10px; margin: 0 4px; display: inline-block;"></span>
+                            <span id="readTime"></span>
+                        </div>
+                    </div>
+
+                    <!-- Advanced Options -->
+                    <button type="button" class="advanced-options-trigger" id="advancedOptionsBtn"
+                        style="padding: 12px 24px;">
+                        <i class="ph ph-caret-down"></i> Advanced Options
+                    </button>
+                    <div class="options-content" id="optionsContent">
+                        <div class="metadata-grid" style="grid-template-columns: 1fr 1fr; gap: 20px;">
+                            <div class="form-group">
+                                <label class="form-label">Allow comments</label>
+                                <label class="switch">
+                                    <input type="checkbox" name="allow_comments" <%=page.allow_comments !==false
+                                        ? 'checked' : '' %>>
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Status</label>
+                                <div style="display: flex; gap: 12px; margin-top: 8px;">
+                                    <label style="display: flex; align-items: center; gap: 4px; font-size: 0.875rem;">
+                                        <input type="radio" name="status" value="draft" <%=page.status==='draft'
+                                            ? 'checked' : '' %>> Draft
+                                    </label>
+                                    <label style="display: flex; align-items: center; gap: 4px; font-size: 0.875rem;">
+                                        <input type="radio" name="status" value="published" <%=page.status==='published'
+                                            ? 'checked' : '' %>> Published
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Version History -->
+                <div class="editor-column version-col" id="versionCol">
+                    <div class="version-panel">
+                        <div class="version-header">
+                            <i class="ph ph-clock-counter-clockwise"></i> Version History
+                        </div>
+                        <div class="version-list" id="versionList">
+                            <!-- Loaded via JS -->
+                            <div class="version-placeholder"
+                                style="padding: 20px; text-align: center; color: var(--text-secondary);">
+                                Loading history...
+                            </div>
+                        </div>
+                        <div class="version-footer"
+                            style="padding: 16px; border-top: 1px solid var(--border-color); display: flex; justify-content: center;">
+                            <button type="button" class="btn-version-action" style="width: 100%;" disabled>Compare
+                                versions</button>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <div class="form-group">
-                <label for="content">Page Content (Markdown)</label>
-                <textarea id="content" name="content" required style="min-height: 400px;"><%= page.content %></textarea>
-            </div>
+            <input type="hidden" name="page_id" id="pageId" value="<%= page.id %>">
 
-            <div class="form-actions" style="display: flex; gap: 1rem; margin-top: 2rem;">
-                <button type="submit" class="btn-primary">Save Changes</button>
-                <a href="/wiki/<%= page.slug %>" class="btn-secondary"
-                    style="background: #f1f3f5; padding: 0.6rem 1.25rem; border-radius: var(--radius); text-decoration: none; color: var(--text-main); font-weight: 600;">Cancel</a>
+            <!-- Sticky Footer -->
+            <footer class="editor-sticky-footer">
+                <div class="footer-left">
+                    <a href="/wiki/<%= page.slug %>" id="backBtn"
+                        style="color: var(--text-secondary); text-decoration: none; font-weight: 500; display: flex; align-items: center; gap: 2px;">
+                        <i class="ph ph-arrow-left"></i> Back
+                    </a>
+                </div>
+                <div class="footer-right">
+                    <span id="draftStatus"
+                        style="font-size: 0.75rem; color: var(--success-color); font-weight: 500; margin-right: 16px;"></span>
+                    <span id="unsavedIndicator"
+                        style="font-size: 0.75rem; color: #f59e0b; font-weight: 600; margin-right: 16px; display: none;">
+                        <i class="ph ph-warning-circle"></i> Unsaved changes
+                    </span>
+                    <div class="footer-actions">
+                        <button type="button" onclick="showCommitModal('draft')" class="btn-magenta"
+                            style="background: transparent; border: 1px solid var(--border-color); color: var(--text-main) !important;">Save
+                            as Draft</button>
+                        <button type="button" onclick="showCommitModal('published')" class="btn-primary"
+                            style="padding: 12px 24px;">Publish</button>
+                    </div>
+                </div>
+            </footer>
+
+            <!-- Commit Modal -->
+            <div id="commitModal" class="modal">
+                <div class="modal-content" style="max-width: 500px;">
+                    <h2>Describe your changes</h2>
+                    <textarea id="changeSummary" name="change_summary" class="commit-message-input"
+                        placeholder="e.g. Fixed typos, added examples..."></textarea>
+                    <input type="hidden" id="submitStatus" name="status" value="published">
+                    <div class="modal-footer">
+                        <button type="button" onclick="closeCommitModal()" class="btn-secondary">Cancel</button>
+                        <button type="submit" class="btn-primary">Confirm & Save</button>
+                    </div>
+                </div>
             </div>
         </form>
-    </article>
+    </div>
 
-    <script>
-    const titleInput = document.getElementById('title');
-    const slugInput = document.getElementById('slug');
-
-    let slugEdited = false;
-    slugInput.addEventListener('input', () => slugEdited = true);
-
-    titleInput.addEventListener('input', function () {
-        if (slugEdited) return;
-        const val = this.value;
-        const slug = val.toLowerCase()
-            .replace(/[^a-z0-9 -]/g, '')
-            .replace(/\s+/g, '-')
-            .replace(/-+/g, '-');
-        slugInput.value = slug;
-    });
-    </script>
+    <!-- Version Preview Modal -->
+    <div id="versionPreviewModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeVersionPreview()">&times;</span>
+            <h2 id="previewVersionTitle">Version Details</h2>
+            <div id="previewMeta" style="margin-bottom: 20px; font-size: 0.875rem; color: var(--text-secondary);"></div>
+            <div id="previewBody" class="markdown-body"
+                style="background: white; padding: 24px; border-radius: 8px; border: 1px solid var(--border-color); max-height: 500px; overflow-y: auto;">
+            </div>
+            <div class="modal-footer">
+                <button type="button" id="restoreBtn" class="btn-primary">Restore this version</button>
+                <button type="button" onclick="closeVersionPreview()" class="btn-secondary">Close</button>
+            </div>
+        </div>
+    </div>
 
     <%- include('partials/layout_end') %>
