@@ -1055,10 +1055,6 @@ h1 {
     min-width: 0;
 }
 
-min-width: 0;
-/* Prevents overflow in flex/grid */
-}
-
 /* Metadata Grid */
 .metadata-grid {
     display: grid;
