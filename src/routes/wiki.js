@@ -72,11 +72,13 @@ router.get('/indice', (req, res) => {
     });
 });
 
-// List all categories
+// List all topics and categories (Content Map)
 router.get('/categorias', (req, res) => {
-    Page.getCategories((err, categories) => {
-        if (err) return res.status(500).send('Error');
-        res.render('categories', { categories });
+    Topic.getAll((tErr, topics) => {
+        Page.getCategories((cErr, categories) => {
+            if (tErr || cErr) return res.status(500).send('Error');
+            res.render('categories', { topics: topics || [], allCategories: categories || [] });
+        });
     });
 });
 
