@@ -30,7 +30,7 @@
                     <label class="form-label" for="topic_id">Topic <span class="required">*</span></label>
                     <select id="topic_id" name="topic_id" class="editor-input" required>
                         <% if (allTopics.length===0) { %>
-                            <option value="">+ Create new topic</option>
+                            <option value="new">+ Create new topic</option>
                             <% } else { %>
                                 <option value="">Select a topic...</option>
                                 <% allTopics.forEach(function(topic) { %>
