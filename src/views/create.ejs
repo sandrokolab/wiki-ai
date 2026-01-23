@@ -1,73 +1,181 @@
 <%- include('partials/layout_start', { title: 'Create New Page' }) %>
 
-    <article class="wiki-article">
-        <h1 style="border: none; margin-bottom: 2rem;">Create a New Page</h1>
+    <div class="editor-container">
+        <header class="editor-header">
+            <nav class="breadcrumb">Home > Create New Page</nav>
+            <h2>Create a New Page</h2>
+        </header>
 
         <form action="/create" method="POST" class="wiki-form">
-            <div class="form-group">
-                <label for="title">Page Title</label>
-                <input type="text" id="title" name="title" required placeholder="e.g. My New Page"
-                    value="<%= prefilledTitle %>">
-            </div>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="slug">URL Slug</label>
-                    <input type="text" id="slug" name="slug" required placeholder="e.g. my-new-page">
+            <!-- Metadata Section -->
+            <div class="metadata-grid">
+                <div class="form-group-full">
+                    <label class="form-label" for="title">Page Title <span class="required">*</span></label>
+                    <input type="text" id="title" name="title" class="editor-input" required
+                        placeholder="Enter page title..."
+                        value="<%= typeof prefilledTitle !== 'undefined' ? prefilledTitle : '' %>">
+                    <div class="slug-preview" id="slugPreview">
+                        tu-wiki.com/wiki/<span class="slug-value" id="slugPreviewValue">[slug]</span>
+                        <button type="button" class="btn-text-small" id="editSlugBtn"
+                            style="margin-left: 8px; color: var(--primary-color); background: none; border: none; font-size: 0.75rem; cursor: pointer; font-weight: 600;">Edit</button>
+                    </div>
+                    <!-- Hidden by default, shown when 'Edit' is clicked -->
+                    <div class="form-group" style="display: none; margin-top: 8px;">
+                        <input type="text" id="slug" name="slug" class="editor-input" required
+                            placeholder="URL slug...">
+                    </div>
                 </div>
+
                 <div class="form-group">
-                    <label for="topic_id">Topic</label>
-                    <select id="topic_id" name="topic_id">
-                        <option value="">No Topic</option>
-                        <% allTopics.forEach(function(topic) { %>
-                            <option value="<%= topic.id %>">
-                                <%= topic.name %>
-                            </option>
-                            <% }); %>
+                    <label class="form-label" for="topic_id">Topic <span class="required">*</span></label>
+                    <select id="topic_id" name="topic_id" class="editor-input" required>
+                        <% if (allTopics.length===0) { %>
+                            <option value="">+ Create new topic</option>
+                            <% } else { %>
+                                <option value="">Select a topic...</option>
+                                <% allTopics.forEach(function(topic) { %>
+                                    <option value="<%= topic.id %>" data-color="<%= topic.color %>">
+                                        <%= topic.name %>
+                                    </option>
+                                    <% }); %>
+                                        <option disabled>──────────</option>
+                                        <option value="new">+ Create new topic</option>
+                                        <% } %>
                     </select>
                 </div>
+
+                <div class="form-group">
+                    <label class="form-label">Tags / Labels</label>
+                    <div class="tag-input-container" id="tagsContainer">
+                        <input type="text" id="tagInput" class="tag-input" placeholder="Add tags...">
+                    </div>
+                    <input type="hidden" name="category" id="category">
+                </div>
             </div>
 
-            <div class="form-group">
-                <label for="category">Custom Category Label (Optional)</label>
-                <input type="text" id="category" name="category" placeholder="e.g. Technology, Science, History...">
+            <!-- Mobile Tabs -->
+            <div class="editor-mobile-tabs">
+                <button type="button" class="tab-btn active" id="mobileEditTab">Edit</button>
+                <button type="button" class="tab-btn" id="mobilePreviewTab">Preview</button>
             </div>
 
-            <div class="form-group">
-                <label for="content">Markdown Content</label>
-                <textarea id="content" name="content" required placeholder="# Start writing here..."
-                    style="min-height: 400px;"></textarea>
+            <!-- Main Editor Grid -->
+            <div class="editor-grid">
+                <!-- Left Column: Editor -->
+                <div class="editor-column edit-col" id="editCol">
+                    <div class="editor-toolbar">
+                        <button type="button" class="toolbar-btn" onclick="insertFormatting('bold')"
+                            title="Bold (Ctrl+B)"><i class="ph ph-text-b"></i></button>
+                        <button type="button" class="toolbar-btn" onclick="insertFormatting('italic')"
+                            title="Italic (Ctrl+I)"><i class="ph ph-text-italic"></i></button>
+                        <button type="button" class="toolbar-btn" onclick="insertFormatting('quote')" title="Quote"><i
+                                class="ph ph-quotes"></i></button>
+                        <div class="toolbar-divider"></div>
+                        <button type="button" class="toolbar-btn" onclick="insertFormatting('h1')" title="Heading 1"><i
+                                class="ph ph-text-h-one"></i></button>
+                        <button type="button" class="toolbar-btn" onclick="insertFormatting('h2')" title="Heading 2"><i
+                                class="ph ph-text-h-two"></i></button>
+                        <div class="toolbar-divider"></div>
+                        <button type="button" class="toolbar-btn" onclick="insertFormatting('list-bullet')"
+                            title="Bullet List"><i class="ph ph-list-bullets"></i></button>
+                        <button type="button" class="toolbar-btn" onclick="insertFormatting('list-number')"
+                            title="Numbered List"><i class="ph ph-list-numbers"></i></button>
+                        <button type="button" class="toolbar-btn" onclick="insertFormatting('check')"
+                            title="Task List"><i class="ph ph-check-square"></i></button>
+                        <div class="toolbar-divider"></div>
+                        <button type="button" class="toolbar-btn" onclick="insertFormatting('link')"
+                            title="Link (Ctrl+K)"><i class="ph ph-link"></i></button>
+                        <button type="button" class="toolbar-btn" onclick="insertFormatting('image')" title="Image"><i
+                                class="ph ph-image"></i></button>
+                        <button type="button" class="toolbar-btn" onclick="insertFormatting('code')" title="Code"><i
+                                class="ph ph-code"></i></button>
+                        <div class="toolbar-divider"></div>
+                        <button type="button" class="toolbar-btn" title="Markdown Help"><i
+                                class="ph ph-question"></i></button>
+                    </div>
+                    <div class="editor-textarea-wrapper">
+                        <textarea id="content" name="content" class="editor-textarea" required
+                            placeholder="# Mi T&iacute;tulo&#10;&#10;Escribe tu contenido aqu&iacute;...&#10;&#10;Tip: Usa **negrita**, *cursiva*, y [[enlaces internos]]"></textarea>
+                        <div class="editor-stats">
+                            <span id="charCount">0 characters</span>
+                            <span class="toolbar-divider"
+                                style="height: 10px; margin: 0 4px; display: inline-block;"></span>
+                            <span id="readTime"></span>
+                        </div>
+                    </div>
+
+                    <!-- Advanced Options -->
+                    <button type="button" class="advanced-options-trigger" id="advancedOptionsBtn">
+                        <i class="ph ph-caret-down"></i> Advanced Options
+                    </button>
+                    <div class="options-content" id="optionsContent">
+                        <div class="metadata-grid" style="grid-template-columns: 1fr 1fr; gap: 20px;">
+                            <div class="form-group">
+                                <label class="form-label">Allow comments</label>
+                                <label class="switch">
+                                    <input type="checkbox" name="allow_comments" checked>
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Status</label>
+                                <div style="display: flex; gap: 12px; margin-top: 8px;">
+                                    <label style="display: flex; align-items: center; gap: 4px; font-size: 0.875rem;">
+                                        <input type="radio" name="status" value="draft" checked> Draft
+                                    </label>
+                                    <label style="display: flex; align-items: center; gap: 4px; font-size: 0.875rem;">
+                                        <input type="radio" name="status" value="published"> Published
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="form-group-full">
+                                <label class="form-label">Meta description (SEO)</label>
+                                <textarea name="meta_description" class="editor-input"
+                                    style="height: 80px; resize: none;"
+                                    placeholder="Brief summary for search engines..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Preview -->
+                <div class="editor-column preview-col" id="previewCol">
+                    <div class="preview-pane">
+                        <div class="preview-header">
+                            <i class="ph ph-eye"></i> Preview
+                        </div>
+                        <div class="preview-content markdown-body" id="previewContent">
+                            <div class="preview-placeholder">Your content preview will appear here...</div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <div class="form-actions" style="display: flex; gap: 1rem; margin-top: 2rem;">
-                <button type="submit" class="btn-primary">Create Page</button>
-                <a href="/" class="btn-secondary"
-                    style="background: #f1f3f5; padding: 0.6rem 1.25rem; border-radius: var(--radius); text-decoration: none; color: var(--text-main); font-weight: 600;">Cancel</a>
-            </div>
+            <!-- Sticky Footer -->
+            <footer class="editor-sticky-footer">
+                <div class="footer-left">
+                    <a href="/" id="backBtn"
+                        style="color: var(--text-secondary); text-decoration: none; font-weight: 500; display: flex; align-items: center; gap: 2px;">
+                        <i class="ph ph-arrow-left"></i> Back
+                    </a>
+                </div>
+                <div class="footer-right">
+                    <span id="draftStatus"
+                        style="font-size: 0.75rem; color: var(--success-color); font-weight: 500; margin-right: 16px;"></span>
+                    <span id="unsavedIndicator"
+                        style="font-size: 0.75rem; color: #f59e0b; font-weight: 600; margin-right: 16px; display: none;">
+                        <i class="ph ph-warning-circle"></i> Unsaved changes
+                    </span>
+                    <div class="footer-actions">
+                        <button type="submit" name="status" value="draft" class="btn-magenta"
+                            style="background: transparent; border: 1px solid var(--border-color); color: var(--text-main) !important;">Save
+                            as Draft</button>
+                        <button type="submit" name="status" value="published" class="btn-primary"
+                            style="padding: 12px 24px;">Publish</button>
+                    </div>
+                </div>
+            </footer>
         </form>
-    </article>
-
-    <script>
-        const titleInput = document.getElementById('title');
-        const slugInput = document.getElementById('slug');
-
-        function generateSlug(text) {
-            return text
-                .toString()
-                .toLowerCase()
-                .trim()
-                .replace(/\s+/g, '-')
-                .replace(/[^\w\-]+/g, '')
-                .replace(/\-\-+/g, '-');
-        }
-
-        if (titleInput.value) {
-            slugInput.value = generateSlug(titleInput.value);
-        }
-
-        titleInput.addEventListener('input', () => {
-            slugInput.value = generateSlug(titleInput.value);
-        });
-    </script>
+    </div>
 
     <%- include('partials/layout_end') %>

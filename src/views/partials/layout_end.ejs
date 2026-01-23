@@ -2,10 +2,14 @@
 </main>
 
 <%- include('sidebar_right') %>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="/search-client.js"></script>
     <script src="/activity-client.js"></script>
     <script src="/dropdowns.js"></script>
-    </div> <!-- end app-layout -->
-    </body>
+    <% if (typeof title !=='undefined' && (title.includes('Create') || title.includes('Edit'))) { %>
+        <script src="/editor-client.js"></script>
+        <% } %>
+            </div> <!-- end app-layout -->
+            </body>
 
-    </html>
+            </html>
