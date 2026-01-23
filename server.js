@@ -83,6 +83,8 @@ app.use((req, res, next) => {
                     res.locals.currentUser = null;
                     res.locals.userTopics = [];
                     res.locals.favoriteTopics = [];
+                    res.locals.favoritePages = [];
+                    res.locals.userDrafts = [];
                     next();
                 }
             });
