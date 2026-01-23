@@ -49,6 +49,10 @@ const initialize = async () => {
     )
     `);
 
+    // Migrations for existing pages table
+    await client.query(`ALTER TABLE pages ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'draft'`);
+    await client.query(`ALTER TABLE pages ADD COLUMN IF NOT EXISTS is_verified BOOLEAN DEFAULT false`);
+
     await client.query(`
       CREATE TABLE IF NOT EXISTS user_favorites(
       id SERIAL PRIMARY KEY,

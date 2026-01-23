@@ -16,6 +16,9 @@ const Favorite = require('./src/models/favorite');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Trust proxy for rate-limiting on Railway
+app.set('trust proxy', 1);
+
 // Security Middlewares
 app.use(helmet({
     contentSecurityPolicy: {
