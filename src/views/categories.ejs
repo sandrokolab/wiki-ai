@@ -1,14 +1,15 @@
 <%- include('partials/layout_start', { title: 'Topics & Categories' }) %>
 
-    <div class="content-container">
+    <div class="content-container" style="position: relative; z-index: 1;">
         <header class="page-header"
-            style="margin-bottom: 2.5rem; display: flex; justify-content: space-between; align-items: flex-end;">
-            <div>
+            style="margin-bottom: 2.5rem; display: flex; justify-content: space-between; align-items: center; position: relative;">
+            <div style="flex: 1;">
                 <nav class="breadcrumb">Home > Content Map</nav>
                 <h1 style="border: none; margin-bottom: 0.5rem; font-size: 2.25rem;">Content Map</h1>
                 <p style="color: var(--text-secondary);">Browse by structured topics or community labels.</p>
             </div>
-            <button class="btn-primary" onclick="openTopicModal()">
+            <button class="btn-primary" onclick="openTopicModal()"
+                style="position: relative; z-index: 10; margin-left: 20px;">
                 <i class="ph ph-plus-circle"></i> Create Topic
             </button>
         </header>
@@ -28,7 +29,7 @@
                             style="background: white; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.5rem; transition: var(--transition); display: flex; flex-direction: column; gap: 1rem;">
                             <div style="display: flex; align-items: flex-start; justify-content: space-between;">
                                 <div
-                                    style="width: 48px; height: 48px; border-radius: 12px; background: <%= topic.color %>15; color: <%= topic.color %>; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+                                    style="width: 48px; height: 48px; border-radius: 12px; background: <%= (topic.color && topic.color.startsWith('#')) ? topic.color + '15' : 'rgba(99, 102, 241, 0.1)' %>; color: <%= topic.color || 'var(--primary-color)' %>; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
                                     <i class="<%= topic.icon || 'ph ph-hash' %>"></i>
                                 </div>
                                 <a href="/categoria/<%= topic.name %>" class="btn-text-small"
