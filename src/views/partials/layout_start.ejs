@@ -51,7 +51,7 @@
                                     <i class="ph ph-download-simple"></i> Import
                                 </div>
                                 <div class="slab-menu-divider"></div>
-                                <button onclick="openCreateTopicModal()" class="slab-menu-item">
+                                <button onclick="openTopicModal()" class="slab-menu-item">
                                     <i class="ph ph-plus-circle"></i> Create topic
                                 </button>
                                 <div class="slab-menu-item">
@@ -61,4 +61,5 @@
                         </div>
                     </div>
                 </header>
-                <div class="content-wrapper">
+                <%- include('topic_modal') %>
+                    <div class="content-wrapper">
