@@ -96,7 +96,10 @@ router.get('/categoria/:name', (req, res) => {
 // Create page route (form)
 router.get('/create', isAuthenticated, (req, res) => {
     const title = req.query.title || '';
-    res.render('create', { prefilledTitle: title });
+    res.render('create', {
+        title: 'Create New Page',
+        prefilledTitle: title
+    });
 });
 
 // Create page submit
@@ -190,7 +193,10 @@ router.get('/wiki/:slug/edit', isAuthenticated, (req, res) => {
     Page.getBySlug(slug, (err, page) => {
         if (err) return res.status(500).send('Database error');
         if (!page) return res.status(404).send('Page not found');
-        res.render('edit', { page });
+        res.render('edit', {
+            title: 'Edit Page',
+            page
+        });
     });
 });
 

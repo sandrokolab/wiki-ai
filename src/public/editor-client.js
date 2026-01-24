@@ -336,30 +336,57 @@
     fetchHistory();
 
     // Event Listeners for Editor Buttons (CSP Compliance)
-    document.addEventListener('DOMContentLoaded', () => {
+    // Event Listeners for Editor Buttons (CSP Compliance)
+    function attachEventListeners() {
+        console.log('Attaching event listeners...');
+
         // Formatting Buttons
-        document.querySelectorAll('.toolbar-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
+        const toolbarBtns = document.querySelectorAll('.toolbar-btn');
+        console.log(`Found ${toolbarBtns.length} toolbar buttons`);
+        toolbarBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
                 const type = btn.getAttribute('data-format') ||
                     btn.querySelector('i')?.className.replace('ph ph-text-', '').replace('ph ph-', '');
+                console.log('Toolbar button clicked:', type);
                 insertFormatting(type);
             });
         });
 
         // Publish / Draft Buttons
         const saveDraftBtn = document.getElementById('saveDraftBtn');
-        if (saveDraftBtn) saveDraftBtn.addEventListener('click', () => showCommitModal('draft'));
+        if (saveDraftBtn) {
+            console.log('Found saveDraftBtn');
+            saveDraftBtn.addEventListener('click', (e) => {
+                console.log('Save Draft clicked');
+                e.preventDefault();
+                showCommitModal('draft');
+            });
+        } else {
+            console.warn('saveDraftBtn not found');
+        }
 
         const publishBtn = document.getElementById('publishBtn');
-        if (publishBtn) publishBtn.addEventListener('click', () => showCommitModal('published'));
+        if (publishBtn) {
+            console.log('Found publishBtn');
+            publishBtn.addEventListener('click', (e) => {
+                console.log('Publish clicked');
+                e.preventDefault();
+                showCommitModal('published');
+            });
+        } else {
+            console.warn('publishBtn not found');
+        }
 
         // Modal Buttons
         const cancelCommitBtn = document.getElementById('cancelCommitBtn');
-        if (cancelCommitBtn) cancelCommitBtn.addEventListener('click', closeCommitModal);
+        if (cancelCommitBtn) {
+            cancelCommitBtn.addEventListener('click', closeCommitModal);
+        }
 
         const closeVersionPreviewBtn = document.getElementById('closeVersionPreviewBtn');
         if (closeVersionPreviewBtn) closeVersionPreviewBtn.addEventListener('click', closeVersionPreview);
 
+        const closeVersionPreviewX = document.querySelector('#versionPreviewModal .close');
         if (closeVersionPreviewX) closeVersionPreviewX.addEventListener('click', closeVersionPreview);
 
         const mobileHistoryToggleBtn = document.getElementById('mobileHistoryToggleBtn');
@@ -369,7 +396,14 @@
         if (slugInput && slugInput.parentElement.style.display === 'none') {
             slugInput.required = false;
         }
-    });
+    }
+
+    // Run immediately if DOM is ready, otherwise wait
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', attachEventListeners);
+    } else {
+        attachEventListeners();
+    }
 
     // Make functions globally available for legacy or external calls if strictly needed
     window.insertFormatting = insertFormatting;
