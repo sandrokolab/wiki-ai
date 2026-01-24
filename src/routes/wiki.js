@@ -340,6 +340,14 @@ router.post('/topics/:id/favorite', isAuthenticated, (req, res) => {
     });
 });
 
+// GET Recent Activity API
+router.get('/api/activity', (req, res) => {
+    Activity.getRecent(10, (err, activity) => {
+        if (err) return res.status(500).json({ error: 'Failed to fetch activity' });
+        res.json(activity || []);
+    });
+});
+
 // API Search (Grouped results)
 router.get('/api/search', (req, res) => {
     const query = req.query.q;

@@ -1,9 +1,9 @@
 <!-- Topic Creation Modal -->
 <div id="topicModal" class="modal">
     <div class="modal-content">
-        <span class="close" onclick="closeTopicModal()">&times;</span>
+        <span class="close" id="closeTopicModalBtn">&times;</span>
         <h2>Create New Topic</h2>
-        <form id="createTopicForm" onsubmit="handleCreateTopic(event)">
+        <form id="createTopicForm">
             <div class="form-group">
                 <label>Name</label>
                 <input type="text" name="name" required placeholder="Project Alpha, Research...">
@@ -58,6 +58,27 @@
             console.error(err);
         }
     }
+
+    // Event Listeners
+    document.addEventListener('DOMContentLoaded', () => {
+        const closeBtn = document.getElementById('closeTopicModalBtn');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', closeTopicModal);
+        }
+
+        const form = document.getElementById('createTopicForm');
+        if (form) {
+            form.addEventListener('submit', handleCreateTopic);
+        }
+
+        // Trigger buttons
+        ['sidebarCreateTopicBtn', 'mainCreateTopicBtn', 'topBarCreateTopicBtn'].forEach(id => {
+            const btn = document.getElementById(id);
+            if (btn) {
+                btn.addEventListener('click', openTopicModal);
+            }
+        });
+    });
 
     // Close on click outside
     window.addEventListener('click', (event) => {

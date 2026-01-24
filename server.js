@@ -39,6 +39,7 @@ const limiter = rateLimit({
 app.use(limiter);
 
 // Middleware
+app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'src', 'public')));
 
