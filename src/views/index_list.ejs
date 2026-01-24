@@ -5,44 +5,47 @@
         <p style="color: var(--text-muted); margin-top: 0.5rem;">Browse all content alphabetically.</p>
     </section>
 
-    <% if (pages && pages.length> 0) { %>
-        <% // Group pages by first letter const grouped={}; pages.forEach(p=> {
-            const letter = p.title.charAt(0).toUpperCase();
-            if (!grouped[letter]) grouped[letter] = [];
-            grouped[letter].push(p);
-            });
-            const letters = Object.keys(grouped).sort();
-            %>
+    <% if (pages && pages.length> 0) {
+        // Group pages by first letter
+        const grouped = {};
+        pages.forEach(p => {
+        const title = p.title || 'Untitled';
+        const letter = title.charAt(0).toUpperCase();
+        if (!grouped[letter]) grouped[letter] = [];
+        grouped[letter].push(p);
+        });
+        const letters = Object.keys(grouped).sort();
+        %>
 
-            <div class="alphabet-nav"
-                style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 3rem; padding: 1rem; background: #f8f9fa; border-radius: var(--radius); border: 1px solid var(--border-color);">
-                <% letters.forEach(function(letter) { %>
-                    <a href="#letter-<%= letter %>"
-                        style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: white; border: 1px solid var(--border-color); border-radius: 4px; text-decoration: none; color: var(--primary-color); font-weight: 700; font-size: 0.9rem;">
+        <div class="alphabet-nav"
+            style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 3rem; padding: 1rem; background: #f8f9fa; border-radius: var(--radius); border: 1px solid var(--border-color);">
+            <% letters.forEach(function(letter) { %>
+                <a href="#letter-<%= letter %>"
+                    style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: white; border: 1px solid var(--border-color); border-radius: 4px; text-decoration: none; color: var(--primary-color); font-weight: 700; font-size: 0.9rem;">
+                    <%= letter %>
+                </a>
+                <% }); %>
+        </div>
+
+        <div class="index-grid" style="display: flex; flex-direction: column; gap: 3rem;">
+            <% letters.forEach(function(letter) { %>
+                <div id="letter-<%= letter %>" class="index-group">
+                    <h3
+                        style="font-size: 1.5rem; font-weight: 800; color: var(--primary-color); margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--border-color);">
                         <%= letter %>
-                    </a>
-                    <% }); %>
-            </div>
-
-            <div class="index-grid" style="display: flex; flex-direction: column; gap: 3rem;">
-                <% letters.forEach(function(letter) { %>
-                    <div id="letter-<%= letter %>" class="index-group">
-                        <h3
-                            style="font-size: 1.5rem; font-weight: 800; color: var(--primary-color); margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--border-color);">
-                            <%= letter %>
-                        </h3>
-                        <div
-                            style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem;">
-                            <% grouped[letter].forEach(function(page) { %>
-                                <a href="/wiki/<%= page.slug %>"
-                                    style="text-decoration: none; color: var(--text-main); font-size: 1rem; font-weight: 500;">
-                                    <%= page.title %>
-                                </a>
-                                <% }); %>
-                        </div>
+                    </h3>
+                    <div
+                        style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem;">
+                        <% grouped[letter].forEach(function(page) { %>
+                            <a href="/wiki/<%= page.slug %>"
+                                style="text-decoration: none; color: var(--text-main); font-size: 1rem; font-weight: 500;">
+                                <%= page.title %>
+                            </a>
+                            <% }); %>
                     </div>
-                    <% }); %>
-            </div>
-            <% } %>
+                </div>
+                <% }); %>
+        </div>
+        <% } %>
 
-                <%- include('partials/layout_end') %>
+            <%- include('partials/layout_end') %>

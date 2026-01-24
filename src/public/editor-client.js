@@ -1,6 +1,4 @@
 (function () {
-    console.log('=== EDITOR CLIENT LOADED ===');
-    console.log('Document readyState:', document.readyState);
     // DOM Elements - Using let and checking for existence
     const getEl = (id) => document.getElementById(id);
 
@@ -25,14 +23,6 @@
     const commitModal = getEl('commitModal');
     const submitStatusInput = getEl('submitStatus');
     const changeSummary = getEl('changeSummary');
-
-    console.log('Essential elements found:', {
-        titleInput: !!titleInput,
-        slugInput: !!slugInput,
-        contentTextarea: !!contentTextarea,
-        publishBtn: !!getEl('publishBtn'),
-        commitModal: !!commitModal
-    });
 
     let tags = [];
     let isDirty = false;
@@ -217,17 +207,14 @@
 
     // Export internal functions if needed or handle internally
     function showCommitModal(status) {
-        console.log('Showing commit modal for status:', status);
         if (submitStatusInput) {
             submitStatusInput.value = status;
-            console.log('Set submitStatusInput to:', status);
         } else {
             console.error('submitStatusInput NOT FOUND in showCommitModal');
         }
 
         if (commitModal) {
             commitModal.style.display = 'block';
-            console.log('Set commitModal.style.display to block');
         } else {
             console.error('commitModal NOT FOUND in showCommitModal');
         }
@@ -371,25 +358,13 @@
     updateStats();
     fetchHistory();
 
-    // Event Listeners for Editor Buttons (CSP Compliance)
     function attachEventListeners() {
-        console.log('=== ATTACHING EVENT LISTENERS ===');
-
-        // Listar todos los botones en la página para diagnóstico
-        const allButtons = document.querySelectorAll('button');
-        console.log('All buttons found:', allButtons.length);
-        allButtons.forEach((btn, i) => {
-            console.log(`Button ${i}: ID="${btn.id}", Class="${btn.className}", Text="${btn.textContent.trim()}"`);
-        });
-
         // Formatting Buttons
         const toolbarBtns = document.querySelectorAll('.toolbar-btn');
-        console.log(`Found ${toolbarBtns.length} toolbar buttons`);
         toolbarBtns.forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const type = btn.getAttribute('data-format') ||
                     btn.querySelector('i')?.className.replace('ph ph-text-', '').replace('ph ph-', '');
-                console.log('Toolbar button clicked:', type);
                 insertFormatting(type);
             });
         });
@@ -398,27 +373,18 @@
         const saveDraftBtn = document.getElementById('saveDraftBtn');
         const publishBtn = document.getElementById('publishBtn');
 
-        console.log('Publish button by ID (publishBtn):', publishBtn);
-        console.log('Save Draft button by ID (saveDraftBtn):', saveDraftBtn);
-
         if (saveDraftBtn) {
             saveDraftBtn.addEventListener('click', (e) => {
-                console.log('Save Draft clicked');
                 e.preventDefault();
                 showCommitModal('draft');
             });
-        } else {
-            console.warn('saveDraftBtn NOT FOUND by ID');
         }
 
         if (publishBtn) {
             publishBtn.addEventListener('click', (e) => {
-                console.log('Publish clicked!');
                 e.preventDefault();
                 showCommitModal('published');
             });
-        } else {
-            console.warn('publishBtn NOT FOUND by ID');
         }
 
         // Modal Buttons
