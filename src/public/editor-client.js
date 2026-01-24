@@ -20,6 +20,7 @@
     const editorForm = document.getElementById('editorForm');
     const commitModal = document.getElementById('commitModal');
     const submitStatusInput = document.getElementById('submitStatus');
+    const changeSummary = document.getElementById('changeSummary');
 
     let tags = [];
     let isDirty = false;
@@ -187,19 +188,26 @@
         }
     };
 
+    function toggleMobileHistory() {
+        const versionCol = document.getElementById('versionCol');
+        if (versionCol) {
+            versionCol.classList.toggle('show');
+        }
+    }
+
     window.closeVersionPreview = function () {
         document.getElementById('versionPreviewModal').style.display = 'none';
     };
 
-    // --- Commit Modal ---
-    window.showCommitModal = function (status) {
-        submitStatusInput.value = status;
-        commitModal.style.display = 'block';
-    };
+    function closeCommitModal() {
+        if (commitModal) commitModal.style.display = 'none';
+    }
 
-    window.closeCommitModal = function () {
-        commitModal.style.display = 'none';
-    };
+    // Export internal functions if needed or handle internally
+    function showCommitModal(status) {
+        if (submitStatusInput) submitStatusInput.value = status;
+        if (commitModal) commitModal.style.display = 'block';
+    }
 
     // --- Slug Logic ---
     let manualSlug = false;
@@ -258,7 +266,7 @@
     });
 
     // Toolbar Formatting
-    window.insertFormatting = function (type) {
+    function insertFormatting(type) {
         const start = contentTextarea.selectionStart;
         const end = contentTextarea.selectionEnd;
         const text = contentTextarea.value;
@@ -283,7 +291,7 @@
         updateStats();
         setDirty();
         contentTextarea.focus();
-    };
+    }
 
     // --- Advanced Options ---
     advancedOptionsBtn?.addEventListener('click', () => {
@@ -326,4 +334,49 @@
 
     updateStats();
     fetchHistory();
+
+    // Event Listeners for Editor Buttons (CSP Compliance)
+    document.addEventListener('DOMContentLoaded', () => {
+        // Formatting Buttons
+        document.querySelectorAll('.toolbar-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const type = btn.getAttribute('data-format') ||
+                    btn.querySelector('i')?.className.replace('ph ph-text-', '').replace('ph ph-', '');
+                insertFormatting(type);
+            });
+        });
+
+        // Publish / Draft Buttons
+        const saveDraftBtn = document.getElementById('saveDraftBtn');
+        if (saveDraftBtn) saveDraftBtn.addEventListener('click', () => showCommitModal('draft'));
+
+        const publishBtn = document.getElementById('publishBtn');
+        if (publishBtn) publishBtn.addEventListener('click', () => showCommitModal('published'));
+
+        // Modal Buttons
+        const cancelCommitBtn = document.getElementById('cancelCommitBtn');
+        if (cancelCommitBtn) cancelCommitBtn.addEventListener('click', closeCommitModal);
+
+        const closeVersionPreviewBtn = document.getElementById('closeVersionPreviewBtn');
+        if (closeVersionPreviewBtn) closeVersionPreviewBtn.addEventListener('click', closeVersionPreview);
+
+        if (closeVersionPreviewX) closeVersionPreviewX.addEventListener('click', closeVersionPreview);
+
+        const mobileHistoryToggleBtn = document.getElementById('mobileHistoryToggleBtn');
+        if (mobileHistoryToggleBtn) mobileHistoryToggleBtn.addEventListener('click', toggleMobileHistory);
+
+        // Fix for required hidden slug
+        if (slugInput && slugInput.parentElement.style.display === 'none') {
+            slugInput.required = false;
+        }
+    });
+
+    // Make functions globally available for legacy or external calls if strictly needed
+    window.insertFormatting = insertFormatting;
+    window.showCommitModal = showCommitModal;
+    window.closeCommitModal = closeCommitModal;
+    window.closeVersionPreview = closeVersionPreview;
+    window.previewVersion = previewVersion;
+    window.confirmRestore = confirmRestore;
+    window.discardChanges = discardChanges;
 })();

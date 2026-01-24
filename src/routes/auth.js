@@ -19,7 +19,8 @@ router.post('/register', (req, res) => {
     User.create(username, email, password, (err, userId) => {
         if (err) {
             console.error('Registration error:', err);
-            return res.render('register', { error: 'Username or email already exists.' });
+            const msg = err.code === '23505' ? 'Username or email already exists.' : 'Database error during registration.';
+            return res.render('register', { error: msg });
         }
         req.session.userId = userId;
         res.redirect('/');

@@ -20,8 +20,7 @@
                             style="margin-left: 8px; color: var(--primary-color); background: none; border: none; font-size: 0.75rem; cursor: pointer; font-weight: 600;">Edit</button>
                     </div>
                     <div class="form-group" style="display: none; margin-top: 8px;">
-                        <input type="text" id="slug" name="slug" class="editor-input" required
-                            placeholder="URL slug...">
+                        <input type="text" id="slug" name="slug" class="editor-input" placeholder="URL slug...">
                     </div>
                 </div>
 
@@ -53,7 +52,7 @@
             </div>
 
             <!-- Mobile History Toggle -->
-            <button type="button" class="btn-secondary mobile-only" onclick="toggleMobileHistory()"
+            <button type="button" id="mobileHistoryToggleBtn" class="btn-secondary mobile-only"
                 style="width: 100%; margin-bottom: 1rem; display: none;">
                 <i class="ph ph-clock-counter-clockwise"></i> View History
             </button>
@@ -63,30 +62,30 @@
                 <!-- Left Column: Editor -->
                 <div class="editor-column edit-col" id="editCol">
                     <div class="editor-toolbar">
-                        <button type="button" class="toolbar-btn" onclick="insertFormatting('bold')"
-                            title="Bold (Ctrl+B)"><i class="ph ph-text-b"></i></button>
-                        <button type="button" class="toolbar-btn" onclick="insertFormatting('italic')"
-                            title="Italic (Ctrl+I)"><i class="ph ph-text-italic"></i></button>
-                        <button type="button" class="toolbar-btn" onclick="insertFormatting('quote')" title="Quote"><i
+                        <button type="button" class="toolbar-btn" data-format="bold" title="Bold (Ctrl+B)"><i
+                                class="ph ph-text-b"></i></button>
+                        <button type="button" class="toolbar-btn" data-format="italic" title="Italic (Ctrl+I)"><i
+                                class="ph ph-text-italic"></i></button>
+                        <button type="button" class="toolbar-btn" data-format="quote" title="Quote"><i
                                 class="ph ph-quotes"></i></button>
                         <div class="toolbar-divider"></div>
-                        <button type="button" class="toolbar-btn" onclick="insertFormatting('h1')" title="Heading 1"><i
+                        <button type="button" class="toolbar-btn" data-format="h1" title="Heading 1"><i
                                 class="ph ph-text-h-one"></i></button>
-                        <button type="button" class="toolbar-btn" onclick="insertFormatting('h2')" title="Heading 2"><i
+                        <button type="button" class="toolbar-btn" data-format="h2" title="Heading 2"><i
                                 class="ph ph-text-h-two"></i></button>
                         <div class="toolbar-divider"></div>
-                        <button type="button" class="toolbar-btn" onclick="insertFormatting('list-bullet')"
-                            title="Bullet List"><i class="ph ph-list-bullets"></i></button>
-                        <button type="button" class="toolbar-btn" onclick="insertFormatting('list-number')"
-                            title="Numbered List"><i class="ph ph-list-numbers"></i></button>
-                        <button type="button" class="toolbar-btn" onclick="insertFormatting('check')"
-                            title="Task List"><i class="ph ph-check-square"></i></button>
+                        <button type="button" class="toolbar-btn" data-format="list-bullet" title="Bullet List"><i
+                                class="ph ph-list-bullets"></i></button>
+                        <button type="button" class="toolbar-btn" data-format="list-number" title="Numbered List"><i
+                                class="ph ph-list-numbers"></i></button>
+                        <button type="button" class="toolbar-btn" data-format="check" title="Task List"><i
+                                class="ph ph-check-square"></i></button>
                         <div class="toolbar-divider"></div>
-                        <button type="button" class="toolbar-btn" onclick="insertFormatting('link')"
-                            title="Link (Ctrl+K)"><i class="ph ph-link"></i></button>
-                        <button type="button" class="toolbar-btn" onclick="insertFormatting('image')" title="Image"><i
+                        <button type="button" class="toolbar-btn" data-format="link" title="Link (Ctrl+K)"><i
+                                class="ph ph-link"></i></button>
+                        <button type="button" class="toolbar-btn" data-format="image" title="Image"><i
                                 class="ph ph-image"></i></button>
-                        <button type="button" class="toolbar-btn" onclick="insertFormatting('code')" title="Code"><i
+                        <button type="button" class="toolbar-btn" data-format="code" title="Code"><i
                                 class="ph ph-code"></i></button>
                     </div>
                     <div class="editor-textarea-wrapper">
@@ -170,10 +169,10 @@
                         <i class="ph ph-warning-circle"></i> Unsaved changes
                     </span>
                     <div class="footer-actions">
-                        <button type="button" onclick="showCommitModal('draft')" class="btn-magenta"
+                        <button type="button" id="saveDraftBtn" class="btn-magenta"
                             style="background: transparent; border: 1px solid var(--border-color); color: var(--text-main) !important;">Save
                             as Draft</button>
-                        <button type="button" onclick="showCommitModal('published')" class="btn-primary"
+                        <button type="button" id="publishBtn" class="btn-primary"
                             style="padding: 12px 24px;">Publish</button>
                     </div>
                 </div>
@@ -189,7 +188,7 @@
                         placeholder="e.g. Fixed typos, added examples..."></textarea>
                     <input type="hidden" id="submitStatus" name="status" value="published">
                     <div class="modal-footer">
-                        <button type="button" onclick="closeCommitModal()" class="btn-secondary">Cancel</button>
+                        <button type="button" id="cancelCommitBtn" class="btn-secondary">Cancel</button>
                         <button type="submit" class="btn-primary">Confirm & Save</button>
                     </div>
                 </div>
@@ -200,7 +199,7 @@
     <!-- Version Preview Modal -->
     <div id="versionPreviewModal" class="modal">
         <div class="modal-content">
-            <span class="close" onclick="closeVersionPreview()">&times;</span>
+            <span class="close" id="closeVersionPreviewX">&times;</span>
             <h2 id="previewVersionTitle">Version Details</h2>
             <div id="previewMeta" style="margin-bottom: 20px; font-size: 0.875rem; color: var(--text-secondary);"></div>
             <div id="previewBody" class="markdown-body"
