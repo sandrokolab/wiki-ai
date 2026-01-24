@@ -35,23 +35,26 @@ const initialize = async () => {
 
     await client.query(`
       CREATE TABLE IF NOT EXISTS pages(
-      id SERIAL PRIMARY KEY,
-      slug TEXT UNIQUE,
-      title TEXT,
-      content TEXT,
-      category TEXT,
-      topic_id INTEGER REFERENCES topics(id),
-      author_id INTEGER REFERENCES users(id),
-      status TEXT DEFAULT 'draft',
-      is_verified BOOLEAN DEFAULT false,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )
+        id SERIAL PRIMARY KEY,
+        slug TEXT UNIQUE,
+        title TEXT,
+        content TEXT,
+        category TEXT,
+        topic_id INTEGER REFERENCES topics(id),
+        author_id INTEGER REFERENCES users(id),
+        status TEXT DEFAULT 'draft',
+        is_verified BOOLEAN DEFAULT false,
+        allow_comments BOOLEAN DEFAULT true,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
     `);
 
     // Migrations for existing pages table
     await client.query(`ALTER TABLE pages ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'draft'`);
     await client.query(`ALTER TABLE pages ADD COLUMN IF NOT EXISTS is_verified BOOLEAN DEFAULT false`);
+    await client.query(`ALTER TABLE pages ADD COLUMN IF NOT EXISTS topic_id INTEGER REFERENCES topics(id)`);
+    await client.query(`ALTER TABLE pages ADD COLUMN IF NOT EXISTS allow_comments BOOLEAN DEFAULT true`);
 
     await client.query(`
       CREATE TABLE IF NOT EXISTS user_favorites(

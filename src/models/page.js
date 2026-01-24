@@ -1,10 +1,10 @@
 const pool = require('../../database');
 
 class Page {
-    static async create(title, slug, content, authorId, category, topicId, status, callback) {
+    static async create(title, slug, content, authorId, category, topicId, status, allowComments, callback) {
         try {
-            const sql = 'INSERT INTO pages (title, slug, content, author_id, category, topic_id, status) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id';
-            const res = await pool.query(sql, [title, slug, content, authorId, category || null, topicId || null, status || 'draft']);
+            const sql = 'INSERT INTO pages (title, slug, content, author_id, category, topic_id, status, allow_comments) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id';
+            const res = await pool.query(sql, [title, slug, content, authorId, category || null, topicId || null, status || 'draft', allowComments === undefined ? true : allowComments]);
             callback(null, res.rows[0].id);
         } catch (err) {
             callback(err);
@@ -103,10 +103,10 @@ class Page {
         }
     }
 
-    static async update(slug, title, newSlug, content, authorId, category, topicId, status, callback) {
+    static async update(slug, title, newSlug, content, authorId, category, topicId, status, allowComments, callback) {
         try {
-            const sql = 'UPDATE pages SET title = $1, slug = $2, content = $3, category = $4, author_id = $5, topic_id = $6, status = $7, updated_at = CURRENT_TIMESTAMP WHERE slug = $8';
-            const res = await pool.query(sql, [title, newSlug, content, category || null, authorId, topicId || null, status || 'published', slug]);
+            const sql = 'UPDATE pages SET title = $1, slug = $2, content = $3, category = $4, author_id = $5, topic_id = $6, status = $7, allow_comments = $8, updated_at = CURRENT_TIMESTAMP WHERE slug = $9';
+            const res = await pool.query(sql, [title, newSlug, content, category || null, authorId, topicId || null, status || 'published', allowComments === undefined ? true : allowComments, slug]);
             callback(null, res.rowCount);
         } catch (err) {
             callback(err);

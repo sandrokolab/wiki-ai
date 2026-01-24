@@ -99,15 +99,16 @@ router.get('/create', isAuthenticated, (req, res) => {
 
 // Create page submit
 router.post('/create', isAuthenticated, (req, res) => {
-    let { title, slug, content, category, topic_id } = req.body;
+    let { title, slug, content, category, topic_id, allow_comments } = req.body;
     const userId = req.session.userId;
+    const allowComments = allow_comments === 'on' || allow_comments === true;
 
     // XSS Sanitization
     title = xss(title);
     content = xss(content);
     category = xss(category);
 
-    Page.create(title, slug, content, userId, category, topic_id || null, 'draft', (err, id) => {
+    Page.create(title, slug, content, userId, category, topic_id || null, 'draft', allowComments, (err, id) => {
         if (err) {
             console.error(err);
             return res.status(500).send('Error creating page');
@@ -194,8 +195,9 @@ router.get('/wiki/:slug/edit', isAuthenticated, (req, res) => {
 // Edit page submit
 router.post('/wiki/:slug/edit', isAuthenticated, (req, res) => {
     const oldSlug = req.params.slug;
-    let { title, slug, content, category, topic_id, change_summary, status } = req.body;
+    let { title, slug, content, category, topic_id, change_summary, status, allow_comments } = req.body;
     const userId = req.session.userId;
+    const allowComments = allow_comments === 'on' || allow_comments === true;
 
     // XSS Sanitization
     title = xss(title);
@@ -208,7 +210,7 @@ router.post('/wiki/:slug/edit', isAuthenticated, (req, res) => {
 
         // Save current as revision with the provided summary
         Revision.create(page.id, page.content, userId, change_summary, (revErr) => {
-            Page.update(oldSlug, title, slug, content, userId, category, topic_id || null, (upErr) => {
+            Page.update(oldSlug, title, slug, content, userId, category, topic_id || null, status || 'published', allowComments, (upErr) => {
                 if (upErr) return res.status(500).send('Update failed');
 
                 // If status was changed to published, update it
