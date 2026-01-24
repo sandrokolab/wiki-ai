@@ -71,11 +71,19 @@
             form.addEventListener('submit', handleCreateTopic);
         }
 
-        // Trigger buttons
+        // Specific trigger buttons by ID
         ['sidebarCreateTopicBtn', 'mainCreateTopicBtn', 'topBarCreateTopicBtn'].forEach(id => {
             const btn = document.getElementById(id);
             if (btn) {
                 btn.addEventListener('click', openTopicModal);
+            }
+        });
+
+        // Global delegated listener for any element with data-open-modal="topicModal"
+        document.addEventListener('click', (e) => {
+            const trigger = e.target.closest('[data-open-modal="topicModal"]');
+            if (trigger) {
+                openTopicModal();
             }
         });
     });

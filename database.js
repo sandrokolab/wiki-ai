@@ -7,8 +7,9 @@ const pool = new Pool({
 
 // Initialize tables for PostgreSQL
 const initialize = async () => {
-  const client = await pool.connect();
+  let client;
   try {
+    client = await pool.connect();
     await client.query('BEGIN');
 
     await client.query(`
@@ -110,10 +111,10 @@ const initialize = async () => {
     await client.query('COMMIT');
     console.log('PostgreSQL tables initialized.');
   } catch (e) {
-    await client.query('ROLLBACK');
+    if (client) await client.query('ROLLBACK');
     console.error('Error initializing PostgreSQL tables:', e);
   } finally {
-    client.release();
+    if (client) client.release();
   }
 };
 

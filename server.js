@@ -24,8 +24,9 @@ app.use(helmet({
     contentSecurityPolicy: {
         directives: {
             ...helmet.contentSecurityPolicy.getDefaultDirectives(),
-            "img-src": ["'self'", "data:", "https:"],
-            "script-src": ["'self'", "'unsafe-inline'"], // Allowed for simple scripts in views
+            "img-src": ["'self'", "data:", "https:", "https://unpkg.com"],
+            "script-src": ["'self'", "'unsafe-inline'", "https://unpkg.com", "https://cdn.jsdelivr.net"],
+            "script-src-attr": ["'self'", "'unsafe-inline'"], // Allow inline event handlers if absolutely necessary, but we moved to listeners
         },
     },
 }));
