@@ -5,40 +5,50 @@
 
     <div class="activity-feed" id="activityFeed">
         <% recentActivity.forEach(function(act) { %>
-            <div class="activity-item" onclick="window.location.href='/wiki/<%= act.slug %>'">
-                <div class="act-avatar" title="<%= act.username %>">
-                    <%= act.username.charAt(0).toUpperCase() %>
-                </div>
-                <div class="act-content">
-                    <p class="act-text">
-                        <strong>
-                            <%= act.username %>
-                        </strong>
-                        <% if (act.action_type==='published' ) { %>published a post<% } else { %>edited a post<% } %>
-                    </p>
-                    <div class="act-card">
-                        <% if (act.topic_name) { %>
-                            <span class="act-card-topic" style="color: <%= act.topic_color || '#6b7280' %>">Part of <%=
-                                    act.topic_name %></span>
-                            <% } %>
-                                <span class="act-card-title">
-                                    <%= act.title %>
-                                </span>
-                                <div class="act-card-preview">
-                                    <%= (act.content || '' ).substring(0, 100).replace(/[#*`]/g, '' ) %>...
-                                </div>
+            <% const activityLink=act.action_type==='created_topic' ? '/categoria/' + (act.metadata?.name || 'Topic' )
+                : '/wiki/' + (act.slug || '' ); const displayTitle=act.title || act.metadata?.name || 'Untitled' ; const
+                displayTopic=act.topic_name || (act.action_type==='created_topic' ? act.metadata?.name : null); %>
+                <div class="activity-item" onclick="window.location.href='<%= activityLink %>'">
+                    <div class="act-avatar" title="<%= act.username %>">
+                        <%= act.username.charAt(0).toUpperCase() %>
                     </div>
-                    <div class="act-meta">
-                        <span class="act-time" data-time="<%= act.created_at %>">
-                            <%= new Date(act.created_at).toLocaleTimeString([], {hour: '2-digit' , minute:'2-digit'}) %>
-                        </span>
-                        <% if (act.topic_name) { %>
-                            <a href="/categoria/<%= act.topic_name %>" class="act-topic-link">in: <%= act.topic_name %>
-                            </a>
-                            <% } %>
+                    <div class="act-content">
+                        <p class="act-text">
+                            <strong>
+                                <%= act.username %>
+                            </strong>
+                            <% if (act.action_type==='published' ) { %>published a post
+                                <% } else if (act.action_type==='created_topic' ) { %>created a new topic
+                                    <% } else { %>edited a post<% } %>
+                        </p>
+                        <div class="act-card">
+                            <% if (displayTopic && act.action_type !=='created_topic' ) { %>
+                                <span class="act-card-topic" style="color: <%= act.topic_color || '#6b7280' %>">Part of
+                                    <%= displayTopic %></span>
+                                <% } %>
+                                    <span class="act-card-title">
+                                        <%= displayTitle %>
+                                    </span>
+                                    <% if (act.content || act.metadata?.description) { %>
+                                        <div class="act-card-preview">
+                                            <%= (act.content || act.metadata?.description || '' ).substring(0,
+                                                100).replace(/[#*`]/g, '' ) %>...
+                                        </div>
+                                        <% } %>
+                        </div>
+                        <div class="act-meta">
+                            <span class="act-time" data-time="<%= act.created_at %>">
+                                <%= new Date(act.created_at).toLocaleTimeString([], {hour: '2-digit' ,
+                                    minute:'2-digit'}) %>
+                            </span>
+                            <% if (act.topic_name) { %>
+                                <a href="/categoria/<%= act.topic_name %>" class="act-topic-link">in: <%= act.topic_name
+                                        %>
+                                </a>
+                                <% } %>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <% }); %>
+                <% }); %>
     </div>
 </aside>

@@ -313,12 +313,18 @@ router.get('/profile/:username', (req, res) => {
 // Create Topic
 router.post('/topics/create', isAuthenticated, (req, res) => {
     let { name, icon, color, description, parentId } = req.body;
+    const userId = req.session.userId;
     name = xss(name);
     description = xss(description);
 
     Topic.create(name, icon, color, description, parentId || null, (err, id) => {
         if (err) return res.status(500).json({ error: 'Failed to create topic' });
-        res.json({ id, name });
+
+        // Auto-follow and log activity
+        Topic.follow(userId, id, (fErr) => {
+            Activity.log(userId, 'created_topic', null, { name, topic_id: id });
+            res.json({ id, name });
+        });
     });
 });
 

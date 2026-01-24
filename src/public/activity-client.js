@@ -31,22 +31,32 @@
         // If it's different, update the feed
         let html = '';
         activities.forEach(act => {
+            const activityLink = act.action_type === 'created_topic'
+                ? `/categoria/${act.metadata?.name || 'Topic'}`
+                : `/wiki/${act.slug || ''}`;
+            const displayTitle = act.title || act.metadata?.name || 'Untitled';
+            const displayTopic = act.topic_name || (act.action_type === 'created_topic' ? act.metadata?.name : null);
+            const actionText = act.action_type === 'published' ? 'published a post'
+                : act.action_type === 'created_topic' ? 'created a new topic'
+                    : 'edited a post';
+
             html += `
-                <div class="activity-item" onclick="window.location.href='/wiki/${act.slug}'">
+                <div class="activity-item" onclick="window.location.href='${activityLink}'">
                     <div class="act-avatar" title="${act.username}">
                         ${act.username.charAt(0).toUpperCase()}
                     </div>
                     <div class="act-content">
                         <p class="act-text">
                             <strong>${act.username}</strong> 
-                            ${act.action_type === 'published' ? 'published a post' : 'edited a post'}
+                            ${actionText}
                         </p>
                         <div class="act-card">
-                            ${act.topic_name ? `<span class="act-card-topic" style="color: ${act.topic_color}">Part of ${act.topic_name}</span>` : ''}
-                            <span class="act-card-title">${act.title}</span>
+                            ${(displayTopic && act.action_type !== 'created_topic') ? `<span class="act-card-topic" style="color: ${act.topic_color || '#6b7280'}">Part of ${displayTopic}</span>` : ''}
+                            <span class="act-card-title">${displayTitle}</span>
+                            ${(act.content || act.metadata?.description) ? `
                             <div class="act-card-preview">
-                                ${(act.content || '').substring(0, 100).replace(/[#*`]/g, '')}...
-                            </div>
+                                ${(act.content || act.metadata?.description || '').substring(0, 100).replace(/[#*`]/g, '')}...
+                            </div>` : ''}
                         </div>
                         <div class="act-meta">
                             <span class="act-time">
