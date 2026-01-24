@@ -1,26 +1,38 @@
 (function () {
-    // DOM Elements
-    const titleInput = document.getElementById('title');
-    const slugInput = document.getElementById('slug');
-    const slugPreview = document.getElementById('slugPreviewValue');
-    const editSlugBtn = document.getElementById('editSlugBtn');
-    const tagInput = document.getElementById('tagInput');
-    const tagsContainer = document.getElementById('tagsContainer');
-    const hiddenCategoryInput = document.getElementById('category');
-    const contentTextarea = document.getElementById('content');
-    const charCount = document.getElementById('charCount');
-    const readTime = document.getElementById('readTime');
-    const advancedOptionsBtn = document.getElementById('advancedOptionsBtn');
-    const optionsContent = document.getElementById('optionsContent');
-    const unsavedIndicator = document.getElementById('unsavedIndicator');
-    const draftStatus = document.getElementById('draftStatus');
-    const topicSelect = document.getElementById('topic_id');
-    const pageId = document.getElementById('pageId')?.value;
-    const versionList = document.getElementById('versionList');
-    const editorForm = document.getElementById('editorForm');
-    const commitModal = document.getElementById('commitModal');
-    const submitStatusInput = document.getElementById('submitStatus');
-    const changeSummary = document.getElementById('changeSummary');
+    console.log('=== EDITOR CLIENT LOADED ===');
+    console.log('Document readyState:', document.readyState);
+    // DOM Elements - Using let and checking for existence
+    const getEl = (id) => document.getElementById(id);
+
+    const titleInput = getEl('title');
+    const slugInput = getEl('slug');
+    const slugPreview = getEl('slugPreviewValue');
+    const editSlugBtn = getEl('editSlugBtn');
+    const tagInput = getEl('tagInput');
+    const tagsContainer = getEl('tagsContainer');
+    const hiddenCategoryInput = getEl('category');
+    const contentTextarea = getEl('content');
+    const charCount = getEl('charCount');
+    const readTime = getEl('readTime');
+    const advancedOptionsBtn = getEl('advancedOptionsBtn');
+    const optionsContent = getEl('optionsContent');
+    const unsavedIndicator = getEl('unsavedIndicator');
+    const draftStatus = getEl('draftStatus');
+    const topicSelect = getEl('topic_id');
+    const pageId = getEl('pageId')?.value;
+    const versionList = getEl('versionList');
+    const editorForm = getEl('editorForm');
+    const commitModal = getEl('commitModal');
+    const submitStatusInput = getEl('submitStatus');
+    const changeSummary = getEl('changeSummary');
+
+    console.log('Essential elements found:', {
+        titleInput: !!titleInput,
+        slugInput: !!slugInput,
+        contentTextarea: !!contentTextarea,
+        publishBtn: !!getEl('publishBtn'),
+        commitModal: !!commitModal
+    });
 
     let tags = [];
     let isDirty = false;
@@ -205,36 +217,55 @@
 
     // Export internal functions if needed or handle internally
     function showCommitModal(status) {
-        if (submitStatusInput) submitStatusInput.value = status;
-        if (commitModal) commitModal.style.display = 'block';
+        console.log('Showing commit modal for status:', status);
+        if (submitStatusInput) {
+            submitStatusInput.value = status;
+            console.log('Set submitStatusInput to:', status);
+        } else {
+            console.error('submitStatusInput NOT FOUND in showCommitModal');
+        }
+
+        if (commitModal) {
+            commitModal.style.display = 'block';
+            console.log('Set commitModal.style.display to block');
+        } else {
+            console.error('commitModal NOT FOUND in showCommitModal');
+        }
     }
 
     // --- Slug Logic ---
     let manualSlug = false;
-    titleInput.addEventListener('input', () => {
-        if (!manualSlug) {
-            const slug = slugify(titleInput.value);
-            slugInput.value = slug;
-            slugPreview.textContent = slug || '[slug]';
-        }
-        setDirty();
-    });
+    if (titleInput) {
+        titleInput.addEventListener('input', () => {
+            if (!manualSlug && slugInput && slugPreview) {
+                const slug = slugify(titleInput.value);
+                slugInput.value = slug;
+                slugPreview.textContent = slug || '[slug]';
+            }
+            setDirty();
+        });
+    }
 
-    slugInput.addEventListener('input', () => {
-        manualSlug = true;
-        slugInput.value = slugify(slugInput.value);
-        slugPreview.textContent = slugInput.value || '[slug]';
-        setDirty();
-    });
+    if (slugInput) {
+        slugInput.addEventListener('input', () => {
+            manualSlug = true;
+            slugInput.value = slugify(slugInput.value);
+            if (slugPreview) slugPreview.textContent = slugInput.value || '[slug]';
+            setDirty();
+        });
+    }
 
-    editSlugBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        slugInput.parentElement.style.display = 'block';
-        editSlugBtn.style.display = 'none';
-    });
+    if (editSlugBtn) {
+        editSlugBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (slugInput) slugInput.parentElement.style.display = 'block';
+            editSlugBtn.style.display = 'none';
+        });
+    }
 
     // --- Tag System ---
     function renderTags() {
+        if (!tagsContainer || !tagInput) return;
         const existingPills = tagsContainer.querySelectorAll('.tag-pill');
         existingPills.forEach(p => p.remove());
         tags.forEach((tag, index) => {
@@ -243,30 +274,35 @@
             pill.innerHTML = `<span>${tag}</span><button type="button" data-index="${index}">&times;</button>`;
             tagsContainer.insertBefore(pill, tagInput);
         });
-        hiddenCategoryInput.value = tags.join(', ');
+        if (hiddenCategoryInput) hiddenCategoryInput.value = tags.join(', ');
     }
 
-    tagInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === ',') {
-            e.preventDefault();
-            const val = tagInput.value.trim().replace(/,/g, '');
-            if (val && !tags.includes(val)) {
-                tags.push(val);
-                renderTags();
-                tagInput.value = '';
-                setDirty();
+    if (tagInput) {
+        tagInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ',') {
+                e.preventDefault();
+                const val = tagInput.value.trim().replace(/,/g, '');
+                if (val && !tags.includes(val)) {
+                    tags.push(val);
+                    renderTags();
+                    tagInput.value = '';
+                    setDirty();
+                }
             }
-        }
-    });
+        });
+    }
 
     // --- Editor Logic ---
-    contentTextarea.addEventListener('input', () => {
-        updateStats();
-        setDirty();
-    });
+    if (contentTextarea) {
+        contentTextarea.addEventListener('input', () => {
+            updateStats();
+            setDirty();
+        });
+    }
 
     // Toolbar Formatting
     function insertFormatting(type) {
+        if (!contentTextarea) return;
         const start = contentTextarea.selectionStart;
         const end = contentTextarea.selectionEnd;
         const text = contentTextarea.value;
@@ -319,10 +355,10 @@
     });
 
     // --- Init ---
-    if (!contentTextarea.value && localStorage.getItem('wiki_draft_content')) {
+    if (contentTextarea && !contentTextarea.value && localStorage.getItem('wiki_draft_content')) {
         if (confirm('Load unsaved draft from your last session?')) {
             contentTextarea.value = localStorage.getItem('wiki_draft_content');
-            titleInput.value = localStorage.getItem('wiki_draft_title');
+            if (titleInput) titleInput.value = localStorage.getItem('wiki_draft_title');
             updateStats();
         }
     }
@@ -336,9 +372,15 @@
     fetchHistory();
 
     // Event Listeners for Editor Buttons (CSP Compliance)
-    // Event Listeners for Editor Buttons (CSP Compliance)
     function attachEventListeners() {
-        console.log('Attaching event listeners...');
+        console.log('=== ATTACHING EVENT LISTENERS ===');
+
+        // Listar todos los botones en la página para diagnóstico
+        const allButtons = document.querySelectorAll('button');
+        console.log('All buttons found:', allButtons.length);
+        allButtons.forEach((btn, i) => {
+            console.log(`Button ${i}: ID="${btn.id}", Class="${btn.className}", Text="${btn.textContent.trim()}"`);
+        });
 
         // Formatting Buttons
         const toolbarBtns = document.querySelectorAll('.toolbar-btn');
@@ -354,27 +396,29 @@
 
         // Publish / Draft Buttons
         const saveDraftBtn = document.getElementById('saveDraftBtn');
+        const publishBtn = document.getElementById('publishBtn');
+
+        console.log('Publish button by ID (publishBtn):', publishBtn);
+        console.log('Save Draft button by ID (saveDraftBtn):', saveDraftBtn);
+
         if (saveDraftBtn) {
-            console.log('Found saveDraftBtn');
             saveDraftBtn.addEventListener('click', (e) => {
                 console.log('Save Draft clicked');
                 e.preventDefault();
                 showCommitModal('draft');
             });
         } else {
-            console.warn('saveDraftBtn not found');
+            console.warn('saveDraftBtn NOT FOUND by ID');
         }
 
-        const publishBtn = document.getElementById('publishBtn');
         if (publishBtn) {
-            console.log('Found publishBtn');
             publishBtn.addEventListener('click', (e) => {
-                console.log('Publish clicked');
+                console.log('Publish clicked!');
                 e.preventDefault();
                 showCommitModal('published');
             });
         } else {
-            console.warn('publishBtn not found');
+            console.warn('publishBtn NOT FOUND by ID');
         }
 
         // Modal Buttons

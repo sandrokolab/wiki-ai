@@ -6,6 +6,7 @@
     <script src="/search-client.js"></script>
     <script src="/activity-client.js"></script>
     <script src="/dropdowns.js"></script>
+    <script>console.log('DEBUG: Title in layout_end:', '<%= typeof title !== "undefined" ? title : "UNDEFINED" %>');</script>
     <% if (typeof title !=='undefined' && (title.includes('Create') || title.includes('Edit'))) { %>
         <script src="/editor-client.js"></script>
         <% } %>

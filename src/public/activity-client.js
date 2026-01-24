@@ -3,10 +3,9 @@
     let lastActivityId = null;
 
     // Initial last ID
-    const firstItem = activityFeed.querySelector('.activity-item');
+    const firstItem = activityFeed ? activityFeed.querySelector('.activity-item') : null;
     if (firstItem) {
-        // We might need to embed the ID in a data attribute if we want to be precise, 
-        // but for now we'll just check if the first item's content changes or if we get new ones.
+        // ...
     }
 
     async function fetchActivity() {
@@ -74,7 +73,7 @@
             showNewActivityIndicator();
         }
 
-        activityFeed.innerHTML = html;
+        if (activityFeed) activityFeed.innerHTML = html;
         window.lastFetchedActivityId = latestId;
     }
 
@@ -94,7 +93,7 @@
     setInterval(fetchActivity, 30000);
 
     // Initial set
-    if (activityFeed.children.length > 0) {
+    if (activityFeed && activityFeed.children.length > 0) {
         // We could extract the first ID here, but since the first fetch will happen in 30s anyway, 
         // we'll just let it run.
     }

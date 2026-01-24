@@ -5,7 +5,7 @@
     const kbdKey = document.getElementById('kbd-key');
 
     // Update kbd shortcut for non-mac users
-    if (navigator.platform.toUpperCase().indexOf('MAC') === -1) {
+    if (kbdKey && navigator.platform.toUpperCase().indexOf('MAC') === -1) {
         kbdKey.textContent = 'Ctrl+';
     }
 
@@ -16,54 +16,60 @@
     // KEYBOARD SHORTCUTS
     window.addEventListener('keydown', (e) => {
         if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-            e.preventDefault();
-            searchInput.focus();
+            if (searchInput) {
+                e.preventDefault();
+                searchInput.focus();
+            }
         }
         if (e.key === 'Escape') {
             closeSearch();
         }
     });
 
-    searchInput.addEventListener('input', (e) => {
-        const query = e.target.value.trim();
-        clearTimeout(searchTimeout);
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.trim();
+            clearTimeout(searchTimeout);
 
-        if (query.length < 2) {
-            closeSearch();
-            return;
-        }
+            if (query.length < 2) {
+                closeSearch();
+                return;
+            }
 
-        searchTimeout = setTimeout(() => performSearch(query), 300);
-    });
+            searchTimeout = setTimeout(() => performSearch(query), 300);
+        });
 
-    searchInput.addEventListener('focus', () => {
-        if (searchInput.value.trim().length >= 2) {
-            searchDropdown.style.display = 'block';
-        }
-    });
+        searchInput.addEventListener('focus', () => {
+            if (searchInput.value.trim().length >= 2 && searchDropdown) {
+                searchDropdown.style.display = 'block';
+            }
+        });
+    }
 
     // NAVIGATION
-    searchInput.addEventListener('keydown', (e) => {
-        const items = searchDropdown.querySelectorAll('.search-item');
-        if (e.key === 'ArrowDown') {
-            e.preventDefault();
-            selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
-            updateSelection(items);
-        } else if (e.key === 'ArrowUp') {
-            e.preventDefault();
-            selectedIndex = Math.max(selectedIndex - 1, -1);
-            updateSelection(items);
-        } else if (e.key === 'Enter') {
-            if (selectedIndex > -1 && items[selectedIndex]) {
+    if (searchInput && searchDropdown) {
+        searchInput.addEventListener('keydown', (e) => {
+            const items = searchDropdown.querySelectorAll('.search-item');
+            if (e.key === 'ArrowDown') {
                 e.preventDefault();
-                items[selectedIndex].click();
+                selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
+                updateSelection(items);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                selectedIndex = Math.max(selectedIndex - 1, -1);
+                updateSelection(items);
+            } else if (e.key === 'Enter') {
+                if (selectedIndex > -1 && items[selectedIndex]) {
+                    e.preventDefault();
+                    items[selectedIndex].click();
+                }
             }
-        }
-    });
+        });
+    }
 
     // Close on outside click
     document.addEventListener('click', (e) => {
-        if (!searchBoxContainer.contains(e.target) && !searchDropdown.contains(e.target)) {
+        if (searchBoxContainer && searchDropdown && !searchBoxContainer.contains(e.target) && !searchDropdown.contains(e.target)) {
             closeSearch();
         }
     });
@@ -136,7 +142,7 @@
     }
 
     function closeSearch() {
-        searchDropdown.style.display = 'none';
+        if (searchDropdown) searchDropdown.style.display = 'none';
         selectedIndex = -1;
     }
 })();
