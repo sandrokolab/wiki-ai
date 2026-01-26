@@ -40,12 +40,11 @@ Para que el proyecto funcione correctamente en el entorno de Railway, se deben c
 *   Registro y login de usuarios con perfiles básicos.
 *   Feed de actividad reciente.
 
-### Trabajo Reciente y en Curso:
-*   **Refactorización de Seguridad (CSP):** Se han eliminado los manejadores de eventos inline (`onclick`) en todo el editor para cumplir con políticas de seguridad estrictas. El editor ahora usa listeners de eventos puramente en el cliente.
-*   **Bypass de Desarrollo Local:** Se añadió un mecanismo temporal en el middleware de autenticación para facilitar pruebas en local cuando la base de datos no es accesible.
-*   **Depuración del Editor:** Actualmente se está resolviendo un problema de carga del script `editor-client.js`. Se han añadido logs de diagnóstico para rastrear la ejecución en el navegador y asegurar que el servidor envíe las variables correctas a las plantillas.
+### Trabajo Reciente y Completado:
+*   **Corrección del Editor (Publicar/Guardar):** Se resolvió el problema de carga del script `editor-client.js` asegurando que las rutas envíen las variables de título necesarias. El editor es ahora robusto y compatible con CSP.
+*   **Arreglo del Índice Alfabético:** Se corrigió un Error 500 en `/indice` causado por errores de sintaxis en la plantilla EJS y se añadieron validaciones de nulidad para títulos de página.
+*   **Robustez de Scripts:** Se implementaron guardas de seguridad en todos los scripts del cliente (`search-client.js`, `activity-client.js`, `editor-client.js`) para prevenir fallos en cascada.
 
 ### Próximos Pasos:
-1.  Verificar la carga correcta de scripts tras la actualización de las rutas (`wiki.js`).
-2.  Validar el flujo completo de "Publish" (Publicar) una vez que los listeners se activen.
-3.  Limpiar el código de bypass local antes del despliegue final a producción.
+1.  Realizar una prueba de regresión completa en las funciones de edición.
+2.  Limpiar el código de bypass de autenticación local antes del despliegue a producción.
