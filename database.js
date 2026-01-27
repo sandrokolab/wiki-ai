@@ -12,6 +12,8 @@ const initialize = async () => {
     client = await pool.connect();
     await client.query('BEGIN');
 
+    // 1. Create base tables
+    console.log('Initializing base tables...');
     await client.query(`
       CREATE TABLE IF NOT EXISTS wikis (
         id SERIAL PRIMARY KEY,
@@ -20,13 +22,6 @@ const initialize = async () => {
         description TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
-    `);
-
-    // Ensure at least one default wiki exists
-    await client.query(`
-      INSERT INTO wikis (name, slug, description)
-      VALUES ('Wiki General', 'general', 'Espacio principal de la wiki')
-      ON CONFLICT (slug) DO NOTHING
     `);
 
     await client.query(`
@@ -39,7 +34,6 @@ const initialize = async () => {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
-    await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS role TEXT DEFAULT 'user'`);
 
     await client.query(`
       CREATE TABLE IF NOT EXISTS topics (
@@ -49,14 +43,9 @@ const initialize = async () => {
         color TEXT DEFAULT '#6366f1',
         description TEXT,
         parent_id INTEGER REFERENCES topics(id),
-        wiki_id INTEGER REFERENCES wikis(id) ON DELETE CASCADE,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        UNIQUE (wiki_id, name)
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
-    await client.query(`ALTER TABLE topics ADD COLUMN IF NOT EXISTS wiki_id INTEGER REFERENCES wikis(id) ON DELETE CASCADE`);
-    await client.query(`ALTER TABLE topics DROP CONSTRAINT IF EXISTS topics_name_key`);
-    await client.query(`ALTER TABLE topics ADD CONSTRAINT topics_wiki_name_unique UNIQUE (wiki_id, name)`);
 
     await client.query(`
       CREATE TABLE IF NOT EXISTS pages(
@@ -65,28 +54,43 @@ const initialize = async () => {
         title TEXT,
         content TEXT,
         category TEXT,
-        topic_id INTEGER REFERENCES topics(id),
         author_id INTEGER REFERENCES users(id),
-        wiki_id INTEGER REFERENCES wikis(id) ON DELETE CASCADE,
-        status TEXT DEFAULT 'draft',
-        is_verified BOOLEAN DEFAULT false,
-        allow_comments BOOLEAN DEFAULT true,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        UNIQUE (wiki_id, slug)
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
 
-    // Migrations for existing pages table
+    // 2. Add wiki_id columns and other missing columns
+    console.log('Running column migrations...');
+    await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS role TEXT DEFAULT 'user'`);
+
+    await client.query(`ALTER TABLE topics ADD COLUMN IF NOT EXISTS wiki_id INTEGER REFERENCES wikis(id) ON DELETE CASCADE`);
     await client.query(`ALTER TABLE pages ADD COLUMN IF NOT EXISTS wiki_id INTEGER REFERENCES wikis(id) ON DELETE CASCADE`);
-    await client.query(`ALTER TABLE pages DROP CONSTRAINT IF EXISTS pages_slug_key`);
-    await client.query(`ALTER TABLE pages ADD CONSTRAINT pages_wiki_slug_unique UNIQUE (wiki_id, slug)`);
+    await client.query(`ALTER TABLE pages ADD COLUMN IF NOT EXISTS topic_id INTEGER REFERENCES topics(id)`);
     await client.query(`ALTER TABLE pages ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'draft'`);
     await client.query(`ALTER TABLE pages ADD COLUMN IF NOT EXISTS is_verified BOOLEAN DEFAULT false`);
-    await client.query(`ALTER TABLE pages ADD COLUMN IF NOT EXISTS topic_id INTEGER REFERENCES topics(id)`);
     await client.query(`ALTER TABLE pages ADD COLUMN IF NOT EXISTS allow_comments BOOLEAN DEFAULT true`);
 
-    // Set default wiki_id for orphan pages/topics
+    // 3. Apply constraints after columns are guaranteed to exist
+    console.log('Applying constraints and indexes...');
+
+    // Topics unique constraint
+    await client.query(`ALTER TABLE topics DROP CONSTRAINT IF EXISTS topics_name_key`);
+    await client.query(`ALTER TABLE topics DROP CONSTRAINT IF EXISTS topics_wiki_name_unique`);
+    await client.query(`ALTER TABLE topics ADD CONSTRAINT topics_wiki_name_unique UNIQUE (wiki_id, name)`);
+
+    // Pages unique constraint
+    await client.query(`ALTER TABLE pages DROP CONSTRAINT IF EXISTS pages_slug_key`);
+    await client.query(`ALTER TABLE pages DROP CONSTRAINT IF EXISTS pages_wiki_slug_unique`);
+    await client.query(`ALTER TABLE pages ADD CONSTRAINT pages_wiki_slug_unique UNIQUE (wiki_id, slug)`);
+
+    // 4. Seeding and secondary tables
+    await client.query(`
+      INSERT INTO wikis (name, slug, description)
+      VALUES ('Wiki General', 'general', 'Espacio principal de la wiki')
+      ON CONFLICT (slug) DO NOTHING
+    `);
+
     const defaultWiki = await client.query("SELECT id FROM wikis WHERE slug = 'general'");
     if (defaultWiki.rows.length > 0) {
       const wikiId = defaultWiki.rows[0].id;
@@ -96,28 +100,28 @@ const initialize = async () => {
 
     await client.query(`
       CREATE TABLE IF NOT EXISTS user_favorites(
-      id SERIAL PRIMARY KEY,
-      user_id INTEGER REFERENCES users(id),
-      page_id INTEGER REFERENCES pages(id),
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      UNIQUE(user_id, page_id)
-    )
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id),
+        page_id INTEGER REFERENCES pages(id),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(user_id, page_id)
+      )
     `);
 
     await client.query(`
       CREATE TABLE IF NOT EXISTS user_favorite_topics(
-      user_id INTEGER REFERENCES users(id),
-      topic_id INTEGER REFERENCES topics(id),
-      PRIMARY KEY(user_id, topic_id)
-    )
+        user_id INTEGER REFERENCES users(id),
+        topic_id INTEGER REFERENCES topics(id),
+        PRIMARY KEY(user_id, topic_id)
+      )
     `);
 
     await client.query(`
       CREATE TABLE IF NOT EXISTS user_topics(
-  user_id INTEGER REFERENCES users(id),
-  topic_id INTEGER REFERENCES topics(id),
-  PRIMARY KEY(user_id, topic_id)
-)
+        user_id INTEGER REFERENCES users(id),
+        topic_id INTEGER REFERENCES topics(id),
+        PRIMARY KEY(user_id, topic_id)
+      )
     `);
 
     await client.query(`
@@ -130,8 +134,6 @@ const initialize = async () => {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
-
-    // Migration for page_revisions
     await client.query(`ALTER TABLE page_revisions ADD COLUMN IF NOT EXISTS change_summary TEXT`);
 
     await client.query(`
@@ -146,7 +148,6 @@ const initialize = async () => {
       )
     `);
     await client.query(`ALTER TABLE activity_log ADD COLUMN IF NOT EXISTS wiki_id INTEGER REFERENCES wikis(id) ON DELETE CASCADE`);
-
 
     await client.query(`
       CREATE TABLE IF NOT EXISTS comments (
@@ -184,7 +185,7 @@ const initialize = async () => {
     `);
 
     await client.query('COMMIT');
-    console.log('PostgreSQL tables initialized.');
+    console.log('Database initialized successfully.');
   } catch (e) {
     if (client) await client.query('ROLLBACK');
     console.error('Error initializing PostgreSQL tables:', e);
