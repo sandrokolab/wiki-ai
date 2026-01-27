@@ -346,8 +346,17 @@ router.get('/wiki/:slug/v/:revisionId/diff', (req, res) => {
 router.get('/profile/:username', (req, res) => {
     const username = req.params.username;
     User.findByUsername(username, (err, user) => {
-        if (err || !user) return res.status(404).send('User not found');
-        res.render('profile', { user });
+        if (err || !user) return res.status(404).render('error', { message: 'User not found', status: 404 });
+
+        User.getStats(user.id, (statsErr, stats) => {
+            Activity.getByUser(user.id, 20, (actErr, activities) => {
+                res.render('profile', {
+                    user,
+                    stats: stats || { pages_count: 0, revisions_count: 0, comments_count: 0, total_contributions: 0 },
+                    activities: activities || []
+                });
+            });
+        });
     });
 });
 

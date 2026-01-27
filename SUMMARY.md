@@ -57,9 +57,9 @@ Para que el proyecto funcione correctamente en el entorno de Railway, se deben c
 *   **Reacciones en Comentarios:** Implementación de un sistema de reacciones (Pulp-style) con persistencia en base de datos y actualización dinámica en la UI.
 *   **Filtrado Avanzado de Búsqueda:** Adición de un panel de filtros en la barra de búsqueda que permite filtrar por rango de fecha (Hoy, Semana, Mes) y tipo de contenido (Páginas/Comentarios).
 *   **Arquitectura Multi-Wiki Scoped:** Refactorización completa para soportar múltiples wikis. Implementación de middleware de resolución de wiki, rutas bajo `/w/:wiki_slug/`, y un sistema global de navegación (`wikiUrl`) que asegura que todos los enlaces y llamadas a la API estén restringidos a la wiki actual.
+*   **Panel de Administración Centralizado:** Implementación de una suite administrativa protegida por middleware de autorización (`role: admin`). Incluye dashboards de estadísticas globales y gestión masiva de usuarios, wikis y páginas.
 
 ### Próximos Pasos:
-1.  Implementar un Panel de Administración para gestión masiva de contenidos y usuarios.
-2.  Mejorar el sistema de perfiles de usuario con estadísticas de contribución.
-3.  Añadir soporte para exportación de páginas en formato PDF.
+1.  Mejorar el sistema de perfiles de usuario con estadísticas de contribución.
+2.  Añadir soporte para exportación de páginas en formato PDF.
 

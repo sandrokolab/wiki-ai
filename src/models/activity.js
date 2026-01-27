@@ -36,6 +36,34 @@ class Activity {
             callback(err);
         }
     }
+
+    static async getByUser(userId, limit = 20, callback) {
+        try {
+            const sql = `
+                SELECT 
+                    a.*, 
+                    u.username, 
+                    p.title, 
+                    p.slug, 
+                    p.content,
+                    t.name as topic_name,
+                    t.color as topic_color,
+                    w.slug as wiki_slug
+                FROM activity_log a
+                JOIN users u ON a.user_id = u.id
+                JOIN wikis w ON a.wiki_id = w.id
+                LEFT JOIN pages p ON a.page_id = p.id
+                LEFT JOIN topics t ON p.topic_id = t.id
+                WHERE a.user_id = $1
+                ORDER BY a.created_at DESC
+                LIMIT $2
+            `;
+            const res = await pool.query(sql, [userId, limit]);
+            callback(null, res.rows);
+        } catch (err) {
+            callback(err);
+        }
+    }
 }
 
 
