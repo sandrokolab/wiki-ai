@@ -18,8 +18,8 @@
         <div class="article-header" style="margin-bottom: 2rem;">
             <div style="margin-bottom: 1rem;">
                 <% if (page.topic_name) { %>
-                    <a href="/categoria/<%= page.topic_name %>" class="topic-tag" style="background: <%= page.topic_color ? page.topic_color + '15' : 'rgba(99, 102, 241, 0.1)' %>; 
-                              color: <%= page.topic_color || 'var(--primary-color)' %>;">
+                    <a href="/categoria/<%= page.topic_name %>" class="topic-tag"
+                        style="background: <%= page.topic_color ? page.topic_color + '15' : 'rgba(99, 102, 241, 0.1)' %>; color: <%= page.topic_color || 'var(--primary-color)' %>;">
                         <i class="<%= page.topic_icon || 'ph ph-hash' %>"></i>
                         <%= page.topic_name %>
                     </a>
@@ -50,7 +50,7 @@
                     <button onclick="toggleFavorite('<%= page.slug %>')"
                         class="action-btn <%= page.isFavorite ? 'active' : '' %>" id="favBtnMain">
                         <i class="ph <%= page.isFavorite ? 'ph-star-fill' : 'ph-star' %>"></i>
-                        <%= page.isFavorite ? 'Saved' : 'Save' %>
+                        <%= page.isFavorite ? 'Favorito' : 'Add Favoritos' %>
                     </button>
 
                     <button onclick="document.getElementById('backlinks-area').scrollIntoView({behavior: 'smooth'})"
@@ -119,9 +119,115 @@
             </div>
         </div>
 
-        <div class="wiki-content" style="line-height: 1.8; color: #2c3e50; font-size: 1.1rem;">
+        <div class="wiki-content" style="line-height: 1.8; color: #2c3e50; font-size: 1.1rem; margin-bottom: 5rem;">
             <%- page.htmlContent %>
         </div>
+
+        <!-- NEW BOTTOM SECTION: COMMENTS & ACTIVITY -->
+        <section class="comments-activity-section" id="comments-section"
+            style="border-top: 1px solid var(--border-color); padding-top: 2.5rem; margin-top: 3rem;">
+            <div class="tabs-header"
+                style="display: flex; gap: 2rem; border-bottom: 2px solid #f1f5f9; margin-bottom: 2rem; position: relative;">
+                <button class="tab-btn active" data-tab="comments-tab"
+                    style="padding: 0.75rem 0.25rem; font-weight: 700; color: var(--text-main); background: none; border: none; cursor: pointer; border-bottom: 3px solid var(--primary-color); margin-bottom: -2px; font-size: 0.95rem;">
+                    Comments
+                </button>
+                <button class="tab-btn" data-tab="activity-tab"
+                    style="padding: 0.75rem 0.25rem; font-weight: 600; color: var(--text-muted); background: none; border: none; cursor: pointer; font-size: 0.95rem;">
+                    Activity
+                </button>
+                <div style="margin-left: auto; display: flex; align-items: center; color: var(--primary-color);">
+                    <i class="ph ph-bell" style="font-size: 1.25rem;"></i>
+                </div>
+            </div>
+
+            <div class="tab-content active" id="comments-tab">
+                <div class="comments-list" id="commentsList"
+                    style="display: flex; flex-direction: column; gap: 1.5rem; margin-bottom: 2.5rem;">
+                    <% if (page.comments && page.comments.length> 0) { %>
+                        <% page.comments.forEach(function(comment) { %>
+                            <div class="comment-item" style="display: flex; gap: 1rem;">
+                                <div class="avatar"
+                                    style="width: 38px; height: 38px; font-size: 0.9rem; flex-shrink: 0;">
+                                    <%= comment.username.charAt(0).toUpperCase() %>
+                                </div>
+                                <div class="comment-content-wrapper" style="flex: 1;">
+                                    <div
+                                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
+                                        <span style="font-weight: 700; font-size: 0.9rem; color: var(--text-main);">
+                                            <%= comment.username %>
+                                        </span>
+                                        <span style="font-size: 0.75rem; color: var(--text-muted);">
+                                            <%= new Date(comment.created_at).toLocaleString() %>
+                                        </span>
+                                    </div>
+                                    <div style="font-size: 0.95rem; color: #334155; line-height: 1.5;">
+                                        <%= comment.content %>
+                                    </div>
+                                </div>
+                            </div>
+                            <% }); %>
+                                <% } else { %>
+                                    <p style="color: var(--text-muted); text-align: center; padding: 2rem;">No comments
+                                        yet. Start the conversation!</p>
+                                    <% } %>
+                </div>
+
+                <% if (currentUser) { %>
+                    <div class="comment-input-area"
+                        style="display: flex; gap: 1rem; align-items: flex-start; background: #fff; border: 1px solid var(--border-color); padding: 1rem; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                        <div class="avatar"
+                            style="width: 38px; height: 38px; font-size: 0.9rem; flex-shrink: 0; background: var(--primary-color); color: white;">
+                            <%= currentUser.username.charAt(0).toUpperCase() %>
+                        </div>
+                        <div style="flex: 1; display: flex; flex-direction: column; gap: 0.75rem;">
+                            <textarea id="commentTextArea" placeholder="Comment or @ mention someone"
+                                style="width: 100%; border: none; outline: none; resize: none; min-height: 24px; font-family: inherit; font-size: 0.95rem;"
+                                rows="1"></textarea>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div style="display: flex; gap: 0.75rem; color: var(--text-muted); font-size: 1.25rem;">
+                                    <i class="ph ph-at" style="cursor: pointer;"></i>
+                                    <i class="ph ph-smiley" style="cursor: pointer;"></i>
+                                    <i class="ph ph-paperclip" style="cursor: pointer;"></i>
+                                </div>
+                                <button onclick="postComment('<%= page.slug %>')" class="btn-primary"
+                                    style="padding: 0.5rem 1.25rem; background: #94a3b8; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer;">
+                                    Send
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <% } %>
+            </div>
+
+            <div class="tab-content" id="activity-tab" style="display: none;">
+                <div class="activity-feed">
+                    <% if (page.activities && page.activities.length> 0) { %>
+                        <% page.activities.forEach(function(act) { %>
+                            <div class="activity-item" style="border: none; padding: 0.75rem 0; margin: 0;">
+                                <div class="act-avatar" style="width: 28px; height: 28px; font-size: 0.7rem;">
+                                    <%= act.username.charAt(0).toUpperCase() %>
+                                </div>
+                                <div class="act-content">
+                                    <p class="act-text" style="font-size: 0.85rem;">
+                                        <strong>
+                                            <%= act.username %>
+                                        </strong>
+                                        <%= act.action_type %>
+                                            <span class="act-time" style="font-size: 0.75rem;">
+                                                <%= new Date(act.created_at).toLocaleDateString() %>
+                                            </span>
+                                    </p>
+                                </div>
+                            </div>
+                            <% }); %>
+                                <% } else { %>
+                                    <p style="color: var(--text-muted); text-align: center; padding: 2rem;">No recent
+                                        activity.</p>
+                                    <% } %>
+                </div>
+            </div>
+        </section>
 
         <% if (page.backlinks && page.backlinks.length> 0) { %>
             <section class="backlinks-section" id="backlinks-area"
@@ -139,6 +245,72 @@
                 </div>
             </section>
             <% } %>
+
+                <script>
+                    // Tab switching logic
+                    document.querySelectorAll('.tab-btn').forEach(btn => {
+                        btn.addEventListener('click', () => {
+                            // Update buttons
+                            document.querySelectorAll('.tab-btn').forEach(b => {
+                                b.classList.remove('active');
+                                b.style.fontWeight = '600';
+                                b.style.color = 'var(--text-muted)';
+                                b.style.borderBottom = 'none';
+                            });
+                            btn.classList.add('active');
+                            btn.style.fontWeight = '700';
+                            btn.style.color = 'var(--text-main)';
+                            btn.style.borderBottom = '3px solid var(--primary-color)';
+
+                            // Update content
+                            document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+                            document.getElementById(btn.dataset.tab).style.display = 'block';
+                        });
+                    });
+
+                    // Post comment logic
+                    async function postComment(slug) {
+                        const textArea = document.getElementById('commentTextArea');
+                        const content = textArea.value.trim();
+                        if (!content) return;
+
+                        const btn = event.currentTarget;
+                        btn.disabled = true;
+                        btn.textContent = 'Sending...';
+
+                        try {
+                            const response = await fetch(`/wiki/${slug}/comment`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ content })
+                            });
+
+                            const result = await response.json();
+                            if (result.success) {
+                                textArea.value = '';
+                                location.reload(); // Reload to show new comment and activity
+                            } else {
+                                alert(result.error || 'Failed to post comment');
+                            }
+                        } catch (err) {
+                            console.error(err);
+                            alert('An error occurred');
+                        } finally {
+                            btn.disabled = false;
+                            btn.textContent = 'Send';
+                        }
+                    }
+
+                    // Auto-expand textarea
+                    const tx = document.getElementById('commentTextArea');
+                    if (tx) {
+                        tx.addEventListener('input', OnInput, false);
+                    }
+                    function OnInput() {
+                        this.style.height = 'auto';
+                        this.style.height = (this.scrollHeight) + 'px';
+                    }
+                </script>
     </article>
 
     <%- include('partials/layout_end') %>

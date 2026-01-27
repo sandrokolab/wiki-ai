@@ -108,6 +108,16 @@ const initialize = async () => {
       )
     `);
 
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS comments (
+        id SERIAL PRIMARY KEY,
+        page_id INTEGER REFERENCES pages(id) ON DELETE CASCADE,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        content TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
     await client.query('COMMIT');
     console.log('PostgreSQL tables initialized.');
   } catch (e) {

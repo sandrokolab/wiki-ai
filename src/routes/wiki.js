@@ -6,6 +6,7 @@ const User = require('../models/user');
 const Topic = require('../models/topic');
 const Activity = require('../models/activity');
 const Favorite = require('../models/favorite');
+const Comment = require('../models/comment');
 const isAuthenticated = require('../middleware/auth');
 const marked = require('marked');
 const diff = require('diff');
@@ -174,7 +175,17 @@ router.get('/wiki/:slug', (req, res) => {
                 };
 
                 checkFavorite(() => {
-                    res.render('page', { page });
+                    // Fetch Comments
+                    Comment.getByPageId(page.id, (commErr, comments) => {
+                        page.comments = comments || [];
+
+                        // Fetch page-specific activity
+                        Activity.getRecent(50, (actErr, allAct) => {
+                            // Filter activity for this page
+                            page.activities = (allAct || []).filter(a => a.page_id === page.id);
+                            res.render('page', { page });
+                        });
+                    });
                 });
             });
         };
@@ -444,6 +455,39 @@ router.get('/api/wiki/revision/:id', (req, res) => {
     Revision.getById(req.params.id, (err, revision) => {
         if (err || !revision) return res.status(404).json({ error: 'Not found' });
         res.json(revision);
+    });
+});
+
+// Add Comment
+router.post('/wiki/:slug/comment', isAuthenticated, (req, res) => {
+    const slug = req.params.slug;
+    const { content } = req.body;
+    const userId = req.session.userId;
+
+    if (!content) return res.status(400).json({ error: 'Content is required' });
+
+    Page.getBySlug(slug, (err, page) => {
+        if (err || !page) return res.status(404).json({ error: 'Page not found' });
+
+        Comment.create(page.id, userId, xss(content), (commErr, id) => {
+            if (commErr) return res.status(500).json({ error: 'Failed to add comment' });
+
+            // Log as activity
+            Activity.log(userId, 'commented', page.id, { title: page.title, slug: page.slug });
+
+            res.json({ success: true, id });
+        });
+    });
+});
+
+// Delete Comment
+router.delete('/wiki/comment/:id', isAuthenticated, (req, res) => {
+    const commentId = req.params.id;
+    const userId = req.session.userId;
+
+    Comment.delete(commentId, userId, (err, count) => {
+        if (err || count === 0) return res.status(500).json({ error: 'Failed to delete comment' });
+        res.json({ success: true });
     });
 });
 
