@@ -52,25 +52,37 @@ app.use(session({
     cookie: { maxAge: 24 * 60 * 60 * 1000 } // 24 hours
 }));
 
-// Global middleware to provide user and layout data to all templates
-app.use((req, res, next) => {
-    // Fetch categories and activity for sidebars
-    Page.getCategories((catErr, categories) => {
-        Activity.getRecent(10, (actErr, activity) => {
-            Topic.getAll((topErr, allTopics) => {
+const wikiMiddleware = require('./src/middleware/wiki');
+
+// Global middleware for sidebar data (Wiki-Aware)
+const provideWikiData = (req, res, next) => {
+    const wikiId = req.wiki ? req.wiki.id : null;
+
+    // If we're not in a wiki context, we might still want global stats or nothing
+    if (!wikiId) return next();
+
+    Page.getCategories(wikiId, (catErr, categories) => {
+        Activity.getRecent(10, wikiId, (actErr, activity) => {
+            Topic.getAll(wikiId, (topErr, allTopics) => {
                 res.locals.allCategories = categories || [];
                 res.locals.recentActivity = activity || [];
                 res.locals.allTopics = allTopics || [];
 
+                // Helper for scoped URLs
+                res.locals.wikiUrl = (path) => {
+                    const cleanPath = path.startsWith('/') ? path : '/' + path;
+                    return `/w/${req.wiki.slug}${cleanPath}`;
+                };
+
+                // User-specific data
                 if (req.session && req.session.userId) {
                     User.findById(req.session.userId, (err, user) => {
                         res.locals.currentUser = user || null;
 
-                        // Fetch followed, favorites, and drafts if user is logged in
-                        Topic.getFollowedByUser(req.session.userId, (fErr, followed) => {
-                            Topic.getFavoritesByUser(req.session.userId, (favErr, favorites) => {
+                        Topic.getFollowedByUser(wikiId, req.session.userId, (fErr, followed) => {
+                            Topic.getFavoritesByUser(wikiId, req.session.userId, (favErr, favorites) => {
                                 Favorite.getByUser(req.session.userId, (pageFavErr, favoritePages) => {
-                                    Page.getDraftsByAuthor(req.session.userId, (draftErr, drafts) => {
+                                    Page.getDraftsByAuthor(wikiId, req.session.userId, (draftErr, drafts) => {
                                         res.locals.userTopics = followed || [];
                                         res.locals.favoriteTopics = favorites || [];
                                         res.locals.favoritePages = favoritePages || [];
@@ -92,30 +104,21 @@ app.use((req, res, next) => {
             });
         });
     });
-});
-
-// Recently Viewed Tracking Middleware
-app.use('/wiki/:slug', (req, res, next) => {
-    const slug = req.params.slug;
-    if (!req.session.viewedPages) req.session.viewedPages = [];
-
-    // We don't have the page info here yet, so we'll 
-    // hook into the wiki route or just store the slug for now.
-    // Actually, it's better to do this in the wiki.js route handler
-    // to have access to the page title/category/author.
-    next();
-});
-
-// View Engine
-app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, 'src', 'views'));
+};
 
 // Routes
 const wikiRoutes = require('./src/routes/wiki');
 const authRoutes = require('./src/routes/auth');
 
+// Auth routes are global
 app.use('/', authRoutes);
-app.use('/', wikiRoutes);
+
+// Redirect root to general wiki
+app.get('/', (req, res) => res.redirect('/w/general'));
+
+// All wiki-specific routes under /w/:wiki_slug
+app.use('/w/:wiki_slug', wikiMiddleware, provideWikiData, wikiRoutes);
+
 
 // Global Error Handler
 app.use((err, req, res, next) => {

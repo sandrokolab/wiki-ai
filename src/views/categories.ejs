@@ -32,7 +32,7 @@
                                     style="width: 48px; height: 48px; border-radius: 12px; background: <%= (topic.color && topic.color.startsWith('#')) ? topic.color + '15' : 'rgba(99, 102, 241, 0.1)' %>; color: <%= topic.color || 'var(--primary-color)' %>; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
                                     <i class="<%= topic.icon || 'ph ph-hash' %>"></i>
                                 </div>
-                                <a href="/categoria/<%= topic.name %>" class="btn-text-small"
+                                <a href="<%= wikiUrl('/categoria/' + topic.name) %>" class="btn-text-small"
                                     style="color: var(--primary-color);">View pages</a>
                             </div>
                             <div>
@@ -66,7 +66,7 @@
             <% if (allCategories && allCategories.length> 0) { %>
                 <div class="label-cloud" style="display: flex; flex-wrap: wrap; gap: 0.75rem;">
                     <% allCategories.forEach(function(cat) { %>
-                        <a href="/categoria/<%= cat.category %>" class="label-pill"
+                        <a href="<%= wikiUrl('/categoria/' + cat.category) %>" class="label-pill"
                             style="padding: 0.5rem 1rem; background: white; border: 1px solid var(--border-color); border-radius: 20px; text-decoration: none; color: var(--text-main); font-size: 0.875rem; font-weight: 600; transition: var(--transition); display: flex; align-items: center; gap: 6px;">
                             <span
                                 style="width: 6px; height: 6px; border-radius: 50%; background: var(--magenta-color);"></span>

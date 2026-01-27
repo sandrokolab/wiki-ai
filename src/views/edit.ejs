@@ -6,7 +6,7 @@
             <h2>Editing Page</h2>
         </header>
 
-        <form id="editorForm" action="/wiki/<%= page.slug %>/edit" method="POST" class="wiki-form">
+        <form id="editorForm" action="<%= wikiUrl('/wiki/' + page.slug + '/edit') %>" method="POST" class="wiki-form">
             <!-- Metadata Section -->
             <div class="metadata-grid">
                 <div class="form-group-full">
@@ -14,11 +14,11 @@
                     <input type="text" id="title" name="title" class="editor-input" required
                         placeholder="Enter page title..." value="<%= page.title %>">
                     <div class="slug-preview" id="slugPreview">
-                        tu-wiki.com/wiki/<span class="slug-value" id="slugPreviewValue">
-                            <%= page.slug %>
-                        </span>
-                        <button type="button" class="btn-text-small" id="editSlugBtn"
-                            style="margin-left: 8px; color: var(--primary-color); background: none; border: none; font-size: 0.75rem; cursor: pointer; font-weight: 600;">Edit</button>
+                        tu-wiki.com/w/<%= wiki.slug %>/wiki/<span class="slug-value" id="slugPreviewValue">
+                                <%= page.slug %>
+                            </span>
+                            <button type="button" class="btn-text-small" id="editSlugBtn"
+                                style="margin-left: 8px; color: var(--primary-color); background: none; border: none; font-size: 0.75rem; cursor: pointer; font-weight: 600;">Edit</button>
                     </div>
                     <div class="form-group" style="display: none; margin-top: 8px;">
                         <input type="text" id="slug" name="slug" class="editor-input" value="<%= page.slug %>"
@@ -151,7 +151,7 @@
             <!-- Sticky Footer -->
             <footer class="editor-sticky-footer">
                 <div class="footer-left">
-                    <a href="/wiki/<%= page.slug %>" id="backBtn"
+                    <a href="<%= wikiUrl('/wiki/' + page.slug) %>" id="backBtn"
                         style="color: var(--text-secondary); text-decoration: none; font-weight: 500; display: flex; align-items: center; gap: 2px;">
                         <i class="ph ph-arrow-left"></i> Back
                     </a>

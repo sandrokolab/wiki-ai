@@ -5,9 +5,10 @@
 
     <div class="activity-feed" id="activityFeed">
         <% recentActivity.forEach(function(act) { %>
-            <% const activityLink=act.action_type==='created_topic' ? '/categoria/' + (act.metadata?.name || 'Topic' )
-                : '/wiki/' + (act.slug || '' ); const displayTitle=act.title || act.metadata?.name || 'Untitled' ; const
-                displayTopic=act.topic_name || (act.action_type==='created_topic' ? act.metadata?.name : null); %>
+            <% const activityLink=act.action_type==='created_topic' ? wikiUrl('/categoria/' + (act.metadata?.name
+                || 'Topic' )) : wikiUrl('/wiki/' + (act.slug || '' )); const displayTitle=act.title ||
+                act.metadata?.name || 'Untitled' ; const displayTopic=act.topic_name ||
+                (act.action_type==='created_topic' ? act.metadata?.name : null); %>
                 <div class="activity-item" onclick="window.location.href='<%= activityLink %>'">
                     <div class="act-avatar" title="<%= act.username %>">
                         <%= act.username.charAt(0).toUpperCase() %>
@@ -24,7 +25,8 @@
                         <div class="act-card">
                             <% if (displayTopic && act.action_type !=='created_topic' ) { %>
                                 <span class="act-card-topic" style="color: <%= act.topic_color || '#6b7280' %>">Part of
-                                    <%= displayTopic %></span>
+                                    <%= displayTopic %>
+                                </span>
                                 <% } %>
                                     <span class="act-card-title">
                                         <%= displayTitle %>
@@ -42,8 +44,8 @@
                                     minute:'2-digit'}) %>
                             </span>
                             <% if (act.topic_name) { %>
-                                <a href="/categoria/<%= act.topic_name %>" class="act-topic-link">in: <%= act.topic_name
-                                        %>
+                                <a href="<%= wikiUrl('/categoria/' + act.topic_name) %>" class="act-topic-link">in: <%=
+                                        act.topic_name %>
                                 </a>
                                 <% } %>
                         </div>

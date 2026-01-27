@@ -63,7 +63,7 @@
     async function fetchHistory() {
         if (!pageId) return;
         try {
-            const res = await fetch(`/api/wiki/${pageId}/history`);
+            const res = await fetch(`/w/${window.wikiContext.slug}/api/wiki/${pageId}/history`);
             const revisions = await res.json();
             renderHistory(revisions);
         } catch (err) {
@@ -157,7 +157,7 @@
 
     window.previewVersion = async function (id) {
         try {
-            const res = await fetch(`/api/wiki/revision/${id}`);
+            const res = await fetch(`/w/${window.wikiContext.slug}/api/wiki/revision/${id}`);
             const rev = await res.json();
 
             document.getElementById('previewVersionTitle').textContent = `Version Details`;
@@ -177,7 +177,7 @@
     window.confirmRestore = async function (id) {
         if (confirm('This will replace your current content in the editor. Continue?')) {
             try {
-                const res = await fetch(`/api/wiki/revision/${id}`);
+                const res = await fetch(`/w/${window.wikiContext.slug}/api/wiki/revision/${id}`);
                 const rev = await res.json();
                 contentTextarea.value = rev.content;
                 updateStats();

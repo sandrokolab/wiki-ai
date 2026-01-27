@@ -10,7 +10,7 @@
 
     async function fetchActivity() {
         try {
-            const res = await fetch('/api/activity');
+            const res = await fetch(`/w/${window.wikiContext.slug}/api/activity`);
             const data = await res.json();
             if (data && data.length > 0) {
                 renderActivity(data);
@@ -31,8 +31,8 @@
         let html = '';
         activities.forEach(act => {
             const activityLink = act.action_type === 'created_topic'
-                ? `/categoria/${act.metadata?.name || 'Topic'}`
-                : `/wiki/${act.slug || ''}`;
+                ? `/w/${window.wikiContext.slug}/categoria/${act.metadata?.name || 'Topic'}`
+                : `/w/${window.wikiContext.slug}/wiki/${act.slug || ''}`;
             const displayTitle = act.title || act.metadata?.name || 'Untitled';
             const displayTopic = act.topic_name || (act.action_type === 'created_topic' ? act.metadata?.name : null);
             const actionText = act.action_type === 'published' ? 'published a post'
@@ -61,7 +61,7 @@
                             <span class="act-time">
                                 ${new Date(act.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </span>
-                            ${act.topic_name ? `<a href="/categoria/${act.topic_name}" class="act-topic-link">in: ${act.topic_name}</a>` : ''}
+                            ${act.topic_name ? `<a href="/w/${window.wikiContext.slug}/categoria/${act.topic_name}" class="act-topic-link">in: ${act.topic_name}</a>` : ''}
                         </div>
                     </div>
                 </div>

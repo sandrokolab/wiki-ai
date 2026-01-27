@@ -107,7 +107,7 @@
 
     async function performSearch(query) {
         try {
-            let url = `/api/search?q=${encodeURIComponent(query)}`;
+            let url = `/w/${window.wikiContext.slug}/api/search?q=${encodeURIComponent(query)}`;
 
             // Collect filters
             if (filterDate && filterDate.value) url += `&date=${filterDate.value}`;
@@ -131,9 +131,9 @@
         totalItems = 0;
 
         const sections = [
-            { title: 'Pages', items: data.pages, icon: 'ph-file-text', linkPrefix: '/wiki/' },
-            { title: 'Comments', items: data.comments, icon: 'ph-chat-centered-text', linkPrefix: '/wiki/' },
-            { title: 'Topics', items: data.topics, icon: 'ph-bookmark', linkPrefix: '/categoria/' },
+            { title: 'Pages', items: data.pages, icon: 'ph-file-text', linkPrefix: `/w/${window.wikiContext.slug}/wiki/` },
+            { title: 'Comments', items: data.comments, icon: 'ph-chat-centered-text', linkPrefix: `/w/${window.wikiContext.slug}/wiki/` },
+            { title: 'Topics', items: data.topics, icon: 'ph-bookmark', linkPrefix: `/w/${window.wikiContext.slug}/categoria/` },
             { title: 'Users', items: data.users, icon: 'ph-user', linkPrefix: '/profile/' }
         ];
 

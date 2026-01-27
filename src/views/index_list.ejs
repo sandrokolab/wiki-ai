@@ -37,7 +37,7 @@
                     <div
                         style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem;">
                         <% grouped[letter].forEach(function(page) { %>
-                            <a href="/wiki/<%= page.slug %>"
+                            <a href="<%= wikiUrl('/wiki/' + page.slug) %>"
                                 style="text-decoration: none; color: var(--text-main); font-size: 1rem; font-weight: 500;">
                                 <%= page.title %>
                             </a>

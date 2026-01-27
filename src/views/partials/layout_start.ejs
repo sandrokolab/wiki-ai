@@ -7,8 +7,13 @@
     <title>
         <%= typeof title !=='undefined' ? title + ' - Wiki AI' : 'Wiki AI' %>
     </title>
-    <link rel="stylesheet" href="/style.css">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script>
+        window.wikiContext = {
+            slug: '<%= wiki.slug %>',
+            id: <%= wiki.id %>
+        };
+    </script>
 </head>
 
 <body>
@@ -60,13 +65,13 @@
                         style="margin-left: auto; display: flex; gap: 1rem; align-items: center;">
                         <div class="dropdown-container">
                             <div class="btn-magenta btn-magenta-split" id="createPostDropdownTrigger">
-                                <a href="/create" class="btn-magenta-main">Create post</a>
+                                <a href="<%= wikiUrl('/create') %>" class="btn-magenta-main">Create post</a>
                                 <button class="btn-magenta-arrow">
                                     <i class="ph ph-caret-down"></i>
                                 </button>
                             </div>
                             <div class="slab-dropdown" id="createPostDropdown">
-                                <a href="/create" class="slab-menu-item">
+                                <a href="<%= wikiUrl('/create') %>" class="slab-menu-item">
                                     <i class="ph ph-file-plus"></i> Create post
                                 </a>
                                 <div class="slab-menu-item slab-submenu-trigger">
@@ -136,7 +141,7 @@
 
                         async function updateUnreadCount() {
                             try {
-                                const response = await fetch('/api/notifications/unread-count');
+                                const response = await fetch('<%= wikiUrl("/api/notifications/unread-count") %>');
                                 const data = await response.json();
                                 if (data.count > 0) {
                                     notificationBadge.textContent = data.count;
@@ -149,7 +154,7 @@
 
                         async function loadNotifications() {
                             try {
-                                const response = await fetch('/api/notifications');
+                                const response = await fetch('<%= wikiUrl("/api/notifications") %>');
                                 const items = await response.json();
                                 if (items.length === 0) {
                                     notificationList.innerHTML = '<p style="text-align: center; color: var(--text-muted); padding: 2rem; font-size: 0.85rem;">No notifications yet</p>';
@@ -170,14 +175,14 @@
 
                         async function handleNotificationClick(id, slug) {
                             try {
-                                await fetch(`/api/notifications/${id}/read`, { method: 'POST' });
-                                window.location.href = `/wiki/${slug}#comments`;
+                                await fetch(`<%= wikiUrl("/api/notifications") %>/${id}/read`, { method: 'POST' });
+                                window.location.href = `<%= wikiUrl("/wiki") %>/${slug}#comments`;
                             } catch (err) { console.error(err); }
                         }
 
                         window.markAllNotificationsRead = async function () {
                             try {
-                                await fetch('/api/notifications/read-all', { method: 'POST' });
+                                await fetch('<%= wikiUrl("/api/notifications/read-all") %>', { method: 'POST' });
                                 updateUnreadCount();
                                 loadNotifications();
                             } catch (err) { console.error(err); }

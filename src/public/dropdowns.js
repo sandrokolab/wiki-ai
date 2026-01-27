@@ -33,7 +33,7 @@
 
     // Helper functions
     window.copyToClipboard = function (slug) {
-        const url = window.location.origin + '/wiki/' + slug;
+        const url = window.location.origin + '/w/' + window.wikiContext.slug + '/wiki/' + slug;
         navigator.clipboard.writeText(url).then(() => {
             // Visual feedback (toast or simple alert for now)
             showToast('Link copied to clipboard!');
@@ -96,7 +96,7 @@
 
     window.toggleFavorite = async function (slug) {
         try {
-            const res = await fetch(`/wiki/${slug}/favorite`, { method: 'POST' });
+            const res = await fetch(`/w/${window.wikiContext.slug}/api/wiki/${slug}/favorite`, { method: 'POST' });
             const data = await res.json();
             if (data.success) {
                 location.reload(); // Simple reload to update state
@@ -112,7 +112,7 @@
     window.publishPage = async function (slug) {
         if (!confirm('Are you sure you want to publish this draft?')) return;
         try {
-            const res = await fetch(`/wiki/${slug}/publish`, { method: 'POST' });
+            const res = await fetch(`/w/${window.wikiContext.slug}/api/wiki/${slug}/publish`, { method: 'POST' });
             const data = await res.json();
             if (data.success) {
                 showToast('Page published successfully!');

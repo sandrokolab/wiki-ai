@@ -2,14 +2,16 @@
 
     <article class="wiki-article">
         <nav class="breadcrumb" style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">
-            <a href="/" style="color: inherit; text-decoration: none;">Wiki AI</a>
+            <a href="<%= wikiUrl('/') %>" style="color: inherit; text-decoration: none;">Wiki AI</a>
             <i class="ph ph-caret-right" style="font-size: 0.7rem; margin: 0 0.5rem;"></i>
             <% if (page.topic_name) { %>
-                <a href="/categoria/<%= page.topic_name %>" style="color: inherit; text-decoration: none;">
+                <a href="<%= wikiUrl('/categoria/' + page.topic_name) %>"
+                    style="color: inherit; text-decoration: none;">
                     <%= page.topic_name %>
                 </a>
                 <% } else if (page.category) { %>
-                    <a href="/categoria/<%= page.category %>" style="color: inherit; text-decoration: none;">
+                    <a href="<%= wikiUrl('/categoria/' + page.category) %>"
+                        style="color: inherit; text-decoration: none;">
                         <%= page.category %>
                     </a>
                     <% } %>
@@ -18,7 +20,7 @@
         <div class="article-header" style="margin-bottom: 2rem;">
             <div style="margin-bottom: 1rem;">
                 <% if (page.topic_name) { %>
-                    <a href="/categoria/<%= page.topic_name %>" class="topic-tag"
+                    <a href="<%= wikiUrl('/categoria/' + page.topic_name) %>" class="topic-tag"
                         style="background: <%= page.topic_color ? page.topic_color + '15' : 'rgba(99, 102, 241, 0.1)' %>; color: <%= page.topic_color || 'var(--primary-color)' %>;">
                         <i class="<%= page.topic_icon || 'ph ph-hash' %>"></i>
                         <%= page.topic_name %>
@@ -42,7 +44,7 @@
             <!-- New Prominent Action Bar -->
             <div class="article-actions-bar">
                 <% if (currentUser) { %>
-                    <a href="/wiki/<%= page.slug %>/edit" class="action-btn" title="Edit Page">
+                    <a href="<%= wikiUrl('/wiki/' + page.slug + '/edit') %>" class="action-btn" title="Edit Page">
                         <i class="ph ph-pencil-simple"></i>
                         Edit
                     </a>
@@ -65,7 +67,7 @@
                             <i class="ph ph-dots-three"></i>
                         </button>
                         <div class="slab-dropdown" id="pageMenu">
-                            <a href="/wiki/<%= page.slug %>/history" class="slab-menu-item">
+                            <a href="<%= wikiUrl('/wiki/' + page.slug + '/history') %>" class="slab-menu-item">
                                 <i class="ph ph-clock-counter-clockwise"></i> History
                             </a>
                             <button class="slab-menu-item" onclick="openMoveTopicModal('<%= page.slug %>')">
@@ -78,7 +80,7 @@
                                 </button>
                                 <% } %>
                                     <div class="slab-menu-divider"></div>
-                                    <form action="/wiki/<%= page.slug %>/delete" method="POST"
+                                    <form action="<%= wikiUrl('/wiki/' + page.slug + '/delete') %>" method="POST"
                                         onsubmit="return confirm('Delete this page permanently?')">
                                         <button type="submit" class="slab-menu-item danger">
                                             <i class="ph ph-trash"></i> Delete
@@ -105,7 +107,7 @@
                         <i class="ph ph-tag"></i>
                         <div style="display: flex; gap: 0.5rem;">
                             <% page.category.split(',').forEach(function(cat) { let tag=cat.trim(); if (tag) { %>
-                                <a href="/categoria/<%= tag %>" class="label-pill">
+                                <a href="<%= wikiUrl('/categoria/' + tag) %>" class="label-pill">
                                     <%= tag %>
                                 </a>
                                 <% } }); %>
@@ -335,7 +337,7 @@
                     Pages that link here</h3>
                 <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
                     <% page.backlinks.forEach(function(link) { %>
-                        <a href="/wiki/<%= link.slug %>" class="backlink-tag"
+                        <a href="<%= wikiUrl('/wiki/' + link.slug) %>" class="backlink-tag"
                             style="padding: 0.4rem 0.8rem; background: #f8f9fa; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.85rem; color: var(--primary-color); text-decoration: none; font-weight: 500;">
                             <%= link.title %>
                         </a>
@@ -386,7 +388,7 @@
                         }
 
                         try {
-                            const response = await fetch(`/wiki/${slug}/comment`, {
+                            const response = await fetch(`<%= wikiUrl("/wiki") %>/${slug}/comment`, {
                                 method: 'POST',
                                 body: formData
                             });
@@ -452,7 +454,7 @@
                                 const query = textBeforeCursor.substring(lastAtSymbol + 1);
                                 if (query.length >= 1) {
                                     try {
-                                        const response = await fetch(`/api/users/search?q=${query}`);
+                                        const response = await fetch(`<%= wikiUrl("/api/users/search") %>?q=${query}`);
                                         const users = await response.json();
                                         showMentionsDropdown(users, lastAtSymbol);
                                     } catch (err) {
@@ -528,7 +530,7 @@
 
                     async function toggleReaction(commentId, reactionType) {
                         try {
-                            const response = await fetch(`/api/comments/${commentId}/react`, {
+                            const response = await fetch(`<%= wikiUrl("/api/comments") %>/${commentId}/react`, {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({ reactionType })

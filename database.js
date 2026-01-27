@@ -13,49 +13,86 @@ const initialize = async () => {
     await client.query('BEGIN');
 
     await client.query(`
+      CREATE TABLE IF NOT EXISTS wikis (
+        id SERIAL PRIMARY KEY,
+        name TEXT UNIQUE NOT NULL,
+        slug TEXT UNIQUE NOT NULL,
+        description TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Ensure at least one default wiki exists
+    await client.query(`
+      INSERT INTO wikis (name, slug, description)
+      VALUES ('Wiki General', 'general', 'Espacio principal de la wiki')
+      ON CONFLICT (slug) DO NOTHING
+    `);
+
+    await client.query(`
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
         username TEXT UNIQUE,
         email TEXT UNIQUE,
         password TEXT,
+        role TEXT DEFAULT 'user',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
+    await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS role TEXT DEFAULT 'user'`);
 
     await client.query(`
       CREATE TABLE IF NOT EXISTS topics (
         id SERIAL PRIMARY KEY,
-        name TEXT UNIQUE,
+        name TEXT,
         icon TEXT DEFAULT 'ph-hash',
         color TEXT DEFAULT '#6366f1',
         description TEXT,
         parent_id INTEGER REFERENCES topics(id),
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        wiki_id INTEGER REFERENCES wikis(id) ON DELETE CASCADE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE (wiki_id, name)
       )
     `);
+    await client.query(`ALTER TABLE topics DROP CONSTRAINT IF EXISTS topics_name_key`);
+    await client.query(`ALTER TABLE topics ADD CONSTRAINT topics_wiki_name_unique UNIQUE (wiki_id, name)`);
+    await client.query(`ALTER TABLE topics ADD COLUMN IF NOT EXISTS wiki_id INTEGER REFERENCES wikis(id) ON DELETE CASCADE`);
 
     await client.query(`
       CREATE TABLE IF NOT EXISTS pages(
         id SERIAL PRIMARY KEY,
-        slug TEXT UNIQUE,
+        slug TEXT,
         title TEXT,
         content TEXT,
         category TEXT,
         topic_id INTEGER REFERENCES topics(id),
         author_id INTEGER REFERENCES users(id),
+        wiki_id INTEGER REFERENCES wikis(id) ON DELETE CASCADE,
         status TEXT DEFAULT 'draft',
         is_verified BOOLEAN DEFAULT false,
         allow_comments BOOLEAN DEFAULT true,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE (wiki_id, slug)
       )
     `);
 
     // Migrations for existing pages table
+    await client.query(`ALTER TABLE pages DROP CONSTRAINT IF EXISTS pages_slug_key`);
+    await client.query(`ALTER TABLE pages ADD CONSTRAINT pages_wiki_slug_unique UNIQUE (wiki_id, slug)`);
+    await client.query(`ALTER TABLE pages ADD COLUMN IF NOT EXISTS wiki_id INTEGER REFERENCES wikis(id) ON DELETE CASCADE`);
     await client.query(`ALTER TABLE pages ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'draft'`);
     await client.query(`ALTER TABLE pages ADD COLUMN IF NOT EXISTS is_verified BOOLEAN DEFAULT false`);
     await client.query(`ALTER TABLE pages ADD COLUMN IF NOT EXISTS topic_id INTEGER REFERENCES topics(id)`);
     await client.query(`ALTER TABLE pages ADD COLUMN IF NOT EXISTS allow_comments BOOLEAN DEFAULT true`);
+
+    // Set default wiki_id for orphan pages/topics
+    const defaultWiki = await client.query("SELECT id FROM wikis WHERE slug = 'general'");
+    if (defaultWiki.rows.length > 0) {
+      const wikiId = defaultWiki.rows[0].id;
+      await client.query("UPDATE pages SET wiki_id = $1 WHERE wiki_id IS NULL", [wikiId]);
+      await client.query("UPDATE topics SET wiki_id = $1 WHERE wiki_id IS NULL", [wikiId]);
+    }
 
     await client.query(`
       CREATE TABLE IF NOT EXISTS user_favorites(
@@ -103,10 +140,13 @@ const initialize = async () => {
         user_id INTEGER REFERENCES users(id),
         action_type TEXT,
         page_id INTEGER REFERENCES pages(id),
+        wiki_id INTEGER REFERENCES wikis(id) ON DELETE CASCADE,
         metadata JSONB,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
+    await client.query(`ALTER TABLE activity_log ADD COLUMN IF NOT EXISTS wiki_id INTEGER REFERENCES wikis(id) ON DELETE CASCADE`);
+
 
     await client.query(`
       CREATE TABLE IF NOT EXISTS comments (
