@@ -1,10 +1,10 @@
 const pool = require('../../database');
 
 class Comment {
-    static async create(pageId, userId, content, callback) {
+    static async create(pageId, userId, content, attachmentName, attachmentUrl, callback) {
         try {
-            const sql = 'INSERT INTO comments (page_id, user_id, content) VALUES ($1, $2, $3) RETURNING id';
-            const res = await pool.query(sql, [pageId, userId, content]);
+            const sql = 'INSERT INTO comments (page_id, user_id, content, attachment_name, attachment_url) VALUES ($1, $2, $3, $4, $5) RETURNING id';
+            const res = await pool.query(sql, [pageId, userId, content, attachmentName || null, attachmentUrl || null]);
             callback(null, res.rows[0].id);
         } catch (err) {
             callback(err);

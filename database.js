@@ -114,6 +114,8 @@ const initialize = async () => {
         page_id INTEGER REFERENCES pages(id) ON DELETE CASCADE,
         user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
         content TEXT NOT NULL,
+        attachment_name TEXT,
+        attachment_url TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);

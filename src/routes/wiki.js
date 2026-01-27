@@ -11,6 +11,19 @@ const isAuthenticated = require('../middleware/auth');
 const marked = require('marked');
 const diff = require('diff');
 const xss = require('xss');
+const multer = require('multer');
+const path = require('path');
+
+// Multer configuration for comment attachments
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, 'src/public/uploads/comments');
+    },
+    filename: (req, file, cb) => {
+        cb(null, Date.now() + path.extname(file.originalname));
+    }
+});
+const upload = multer({ storage: storage });
 
 // Helper to replace [[WikiLinks]] with HTML anchor tags
 async function processWikiLinks(content) {
@@ -458,8 +471,8 @@ router.get('/api/wiki/revision/:id', (req, res) => {
     });
 });
 
-// Add Comment
-router.post('/wiki/:slug/comment', isAuthenticated, (req, res) => {
+// Add Comment with Attachment
+router.post('/wiki/:slug/comment', isAuthenticated, upload.single('attachment'), (req, res) => {
     const slug = req.params.slug;
     const { content } = req.body;
     const userId = req.session.userId;
@@ -469,7 +482,10 @@ router.post('/wiki/:slug/comment', isAuthenticated, (req, res) => {
     Page.getBySlug(slug, (err, page) => {
         if (err || !page) return res.status(404).json({ error: 'Page not found' });
 
-        Comment.create(page.id, userId, xss(content), (commErr, id) => {
+        const attachmentName = req.file ? req.file.originalname : null;
+        const attachmentUrl = req.file ? `/uploads/comments/${req.file.filename}` : null;
+
+        Comment.create(page.id, userId, xss(content), attachmentName, attachmentUrl, (commErr, id) => {
             if (commErr) return res.status(500).json({ error: 'Failed to add comment' });
 
             // Log as activity
@@ -477,6 +493,15 @@ router.post('/wiki/:slug/comment', isAuthenticated, (req, res) => {
 
             res.json({ success: true, id });
         });
+    });
+});
+
+// Route to get users for mentions
+router.get('/api/users/search', isAuthenticated, (req, res) => {
+    const query = req.query.q;
+    pool.query('SELECT username FROM users WHERE username ILIKE $1 LIMIT 5', [`${query}%`], (err, result) => {
+        if (err) return res.status(500).json({ error: 'Database error' });
+        res.json(result.rows);
     });
 });
 

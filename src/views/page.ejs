@@ -53,11 +53,7 @@
                         <%= page.isFavorite ? 'Favorito' : 'Add Favoritos' %>
                     </button>
 
-                    <button onclick="document.getElementById('backlinks-area').scrollIntoView({behavior: 'smooth'})"
-                        class="action-btn" title="Comments">
-                        <i class="ph ph-chat-centered-text"></i>
-                        Comment
-                    </button>
+
 
                     <button onclick="copyToClipboard('<%= page.slug %>')" class="action-btn" title="Share Page">
                         <i class="ph ph-share-network"></i>
@@ -164,6 +160,15 @@
                                     <div style="font-size: 0.95rem; color: #334155; line-height: 1.5;">
                                         <%= comment.content %>
                                     </div>
+                                    <% if (comment.attachment_url) { %>
+                                        <div class="comment-attachment" style="margin-top: 0.75rem;">
+                                            <a href="<%= comment.attachment_url %>" target="_blank"
+                                                style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.75rem; background: #f8fafc; border: 1px solid var(--border-color); border-radius: 8px; font-size: 0.85rem; color: var(--primary-color); text-decoration: none;">
+                                                <i class="ph ph-file"></i>
+                                                <%= comment.attachment_name %>
+                                            </a>
+                                        </div>
+                                        <% } %>
                                 </div>
                             </div>
                             <% }); %>
@@ -185,13 +190,39 @@
                                 style="width: 100%; border: none; outline: none; resize: none; min-height: 24px; font-family: inherit; font-size: 0.95rem;"
                                 rows="1"></textarea>
                             <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <div style="display: flex; gap: 0.75rem; color: var(--text-muted); font-size: 1.25rem;">
-                                    <i class="ph ph-at" style="cursor: pointer;"></i>
-                                    <i class="ph ph-smiley" style="cursor: pointer;"></i>
-                                    <i class="ph ph-paperclip" style="cursor: pointer;"></i>
+                                <div
+                                    style="display: flex; gap: 0.75rem; color: var(--text-muted); font-size: 1.25rem; position: relative;">
+                                    <i class="ph ph-at" style="cursor: pointer;"
+                                        onclick="document.getElementById('commentTextArea').value += '@'; document.getElementById('commentTextArea').focus();"
+                                        title="Mention someone"></i>
+
+                                    <div class="emoji-picker-container" style="position: relative;">
+                                        <i class="ph ph-smiley" style="cursor: pointer;" onclick="toggleEmojiPicker()"
+                                            title="Add emoji"></i>
+                                        <div id="emojiPicker"
+                                            style="display: none; position: absolute; bottom: 30px; left: 0; background: white; border: 1px solid var(--border-color); border-radius: 8px; padding: 0.5rem; grid-template-columns: repeat(5, 1fr); gap: 0.25rem; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.1); width: 150px;">
+                                            <% ['😀','😂','😍','👍','🙌','✨','🔥','💡','🚀','💬'].forEach(emoji=> { %>
+                                                <span onclick="addEmoji('<%= emoji %>')"
+                                                    style="cursor: pointer; font-size: 1.25rem; padding: 0.25rem; text-align: center;">
+                                                    <%= emoji %>
+                                                </span>
+                                                <% }) %>
+                                        </div>
+                                    </div>
+
+                                    <i class="ph ph-paperclip" style="cursor: pointer;"
+                                        onclick="document.getElementById('fileInput').click()" title="Attach file"></i>
+                                    <input type="file" id="fileInput" style="display: none;"
+                                        onchange="handleFileSelect(this)">
+                                </div>
+                                <div id="attachmentPreview"
+                                    style="display: none; font-size: 0.8rem; color: var(--text-muted); align-items: center; gap: 0.5rem; background: #f1f5f9; padding: 0.25rem 0.5rem; border-radius: 4px;">
+                                    <i class="ph ph-file"></i>
+                                    <span id="fileName"></span>
+                                    <i class="ph ph-x" style="cursor: pointer;" onclick="clearAttachment()"></i>
                                 </div>
                                 <button onclick="postComment('<%= page.slug %>')" class="btn-primary"
-                                    style="padding: 0.5rem 1.25rem; background: #94a3b8; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer;">
+                                    style="padding: 0.5rem 1.25rem; background: var(--primary-color); color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer;">
                                     Send
                                 </button>
                             </div>
@@ -272,23 +303,32 @@
                     async function postComment(slug) {
                         const textArea = document.getElementById('commentTextArea');
                         const content = textArea.value.trim();
-                        if (!content) return;
+                        const fileInput = document.getElementById('fileInput');
+
+                        if (!content && !fileInput.files[0]) return;
 
                         const btn = event.currentTarget;
+                        const originalText = btn.textContent;
                         btn.disabled = true;
                         btn.textContent = 'Sending...';
+
+                        const formData = new FormData();
+                        formData.append('content', content);
+                        if (fileInput.files[0]) {
+                            formData.append('attachment', fileInput.files[0]);
+                        }
 
                         try {
                             const response = await fetch(`/wiki/${slug}/comment`, {
                                 method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ content })
+                                body: formData
                             });
 
                             const result = await response.json();
                             if (result.success) {
                                 textArea.value = '';
-                                location.reload(); // Reload to show new comment and activity
+                                if (window.clearAttachment) clearAttachment();
+                                location.reload();
                             } else {
                                 alert(result.error || 'Failed to post comment');
                             }
@@ -297,8 +337,36 @@
                             alert('An error occurred');
                         } finally {
                             btn.disabled = false;
-                            btn.textContent = 'Send';
+                            btn.textContent = originalText;
                         }
+                    }
+
+                    // Emoji logic
+                    function toggleEmojiPicker() {
+                        const picker = document.getElementById('emojiPicker');
+                        picker.style.display = picker.style.display === 'none' ? 'grid' : 'none';
+                    }
+                    function addEmoji(emoji) {
+                        const textArea = document.getElementById('commentTextArea');
+                        textArea.value += emoji;
+                        toggleEmojiPicker();
+                        textArea.focus();
+                    }
+
+                    // Attachment logic
+                    function handleFileSelect(input) {
+                        const preview = document.getElementById('attachmentPreview');
+                        const nameSpan = document.getElementById('fileName');
+                        if (input.files && input.files[0]) {
+                            nameSpan.textContent = input.files[0].name;
+                            preview.style.display = 'flex';
+                        }
+                    }
+                    function clearAttachment() {
+                        const fileInput = document.getElementById('fileInput');
+                        const preview = document.getElementById('attachmentPreview');
+                        fileInput.value = '';
+                        preview.style.display = 'none';
                     }
 
                     // Auto-expand textarea
@@ -310,6 +378,7 @@
                         this.style.height = 'auto';
                         this.style.height = (this.scrollHeight) + 'px';
                     }
+
                 </script>
     </article>
 
