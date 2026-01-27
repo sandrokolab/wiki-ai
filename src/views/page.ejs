@@ -186,9 +186,15 @@
                             <%= currentUser.username.charAt(0).toUpperCase() %>
                         </div>
                         <div style="flex: 1; display: flex; flex-direction: column; gap: 0.75rem;">
-                            <textarea id="commentTextArea" placeholder="Comment or @ mention someone"
-                                style="width: 100%; border: none; outline: none; resize: none; min-height: 24px; font-family: inherit; font-size: 0.95rem;"
-                                rows="1"></textarea>
+                            <div style="position: relative;">
+                                <textarea id="commentTextArea" placeholder="Comment or @ mention someone"
+                                    style="width: 100%; border: none; outline: none; resize: none; min-height: 24px; font-family: inherit; font-size: 0.95rem;"
+                                    rows="1"></textarea>
+                                <div id="mentionsDropdown"
+                                    style="display: none; position: absolute; bottom: 100%; left: 0; background: white; border: 1px solid var(--border-color); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 100; width: 200px; max-height: 150px; overflow-y: auto;">
+                                    <!-- Suggestions will be populated here -->
+                                </div>
+                            </div>
                             <div style="display: flex; justify-content: space-between; align-items: center;">
                                 <div
                                     style="display: flex; gap: 0.75rem; color: var(--text-muted); font-size: 1.25rem; position: relative;">
@@ -373,7 +379,66 @@
                     const tx = document.getElementById('commentTextArea');
                     if (tx) {
                         tx.addEventListener('input', OnInput, false);
+
+                        // Mention detection logic
+                        tx.addEventListener('keyup', async (e) => {
+                            const content = tx.value;
+                            const cursorPosition = tx.selectionStart;
+                            const textBeforeCursor = content.substring(0, cursorPosition);
+                            const lastAtSymbol = textBeforeCursor.lastIndexOf('@');
+
+                            if (lastAtSymbol !== -1 && (lastAtSymbol === 0 || textBeforeCursor[lastAtSymbol - 1] === ' ')) {
+                                const query = textBeforeCursor.substring(lastAtSymbol + 1);
+                                if (query.length >= 1) {
+                                    try {
+                                        const response = await fetch(`/api/users/search?q=${query}`);
+                                        const users = await response.json();
+                                        showMentionsDropdown(users, lastAtSymbol);
+                                    } catch (err) {
+                                        console.error('Failed to search users', err);
+                                    }
+                                } else {
+                                    hideMentionsDropdown();
+                                }
+                            } else {
+                                hideMentionsDropdown();
+                            }
+                        });
                     }
+
+                    function showMentionsDropdown(users, atPos) {
+                        const dropdown = document.getElementById('mentionsDropdown');
+                        if (users.length === 0) {
+                            dropdown.style.display = 'none';
+                            return;
+                        }
+
+                        dropdown.innerHTML = users.map(user => `
+                            <div class="mention-item" style="padding: 0.75rem 1rem; cursor: pointer; border-bottom: 1px solid #f1f5f9; font-size: 0.85rem;" onclick="selectMention('${user.username}', ${atPos})">
+                                <strong>@${user.username}</strong>
+                            </div>
+                        `).join('');
+                        dropdown.style.display = 'block';
+                    }
+
+                    function hideMentionsDropdown() {
+                        const dropdown = document.getElementById('mentionsDropdown');
+                        if (dropdown) dropdown.style.display = 'none';
+                    }
+
+                    function selectMention(username, atPos) {
+                        const tx = document.getElementById('commentTextArea');
+                        const content = tx.value;
+                        const cursorPosition = tx.selectionStart;
+                        const textBeforeAt = content.substring(0, atPos);
+                        const textAfterCursor = content.substring(cursorPosition);
+
+                        tx.value = textBeforeAt + '@' + username + ' ' + textAfterCursor;
+                        hideMentionsDropdown();
+                        tx.focus();
+                        tx.dispatchEvent(new Event('input')); // Trigger resize
+                    }
+
                     function OnInput() {
                         this.style.height = 'auto';
                         this.style.height = (this.scrollHeight) + 'px';

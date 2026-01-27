@@ -59,7 +59,109 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
+
+                        <% if (currentUser) { %>
+                            <div class="notification-container" style="position: relative;">
+                                <button id="notificationBtn" class="action-icon-btn" style="position: relative;">
+                                    <i class="ph ph-bell" style="font-size: 1.4rem;"></i>
+                                    <span id="notificationBadge"
+                                        style="display: none; position: absolute; top: 0; right: 0; background: var(--magenta); color: white; border-radius: 50%; width: 16px; height: 16px; font-size: 0.65rem; display: flex; align-items: center; justify-content: center; border: 2px solid white;">0</span>
+                                </button>
+                                <div id="notificationDropdown" class="slab-dropdown notification-dropdown"
+                                    style="display: none; position: absolute; top: 100%; right: 0; width: 320px; z-index: 1000; padding: 0.5rem 0;">
+                                    <div
+                                        style="padding: 0.75rem 1rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+                                        <h4 style="margin: 0; font-size: 0.9rem;">Notifications</h4>
+                                        <button onclick="markAllNotificationsRead()"
+                                            style="background: none; border: none; color: var(--primary-color); font-size: 0.75rem; cursor: pointer;">Mark
+                                            all as read</button>
+                                    </div>
+                                    <div id="notificationList" style="max-height: 400px; overflow-y: auto;">
+                                        <!-- Notifications will be loaded here -->
+                                        <p
+                                            style="text-align: center; color: var(--text-muted); padding: 2rem; font-size: 0.85rem;">
+                                            No new notifications</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <% } %>
                 </header>
+                <script>
+                    <% if (currentUser) { %>
+                    const notificationBtn = document.getElementById('notificationBtn');
+                        const notificationDropdown = document.getElementById('notificationDropdown');
+                        const notificationList = document.getElementById('notificationList');
+                        const notificationBadge = document.getElementById('notificationBadge');
+
+                        if (notificationBtn) {
+                            notificationBtn.addEventListener('click', (e) => {
+                                e.stopPropagation();
+                                const isVisible = notificationDropdown.style.display === 'block';
+                                notificationDropdown.style.display = isVisible ? 'none' : 'block';
+                                if (!isVisible) loadNotifications();
+                            });
+                        }
+
+                        document.addEventListener('click', (e) => {
+                            if (notificationDropdown && !notificationDropdown.contains(e.target)) {
+                                notificationDropdown.style.display = 'none';
+                            }
+                        });
+
+                        async function updateUnreadCount() {
+                            try {
+                                const response = await fetch('/api/notifications/unread-count');
+                                const data = await response.json();
+                                if (data.count > 0) {
+                                    notificationBadge.textContent = data.count;
+                                    notificationBadge.style.display = 'flex';
+                                } else {
+                                    notificationBadge.style.display = 'none';
+                                }
+                            } catch (err) { console.error(err); }
+                        }
+
+                        async function loadNotifications() {
+                            try {
+                                const response = await fetch('/api/notifications');
+                                const items = await response.json();
+                                if (items.length === 0) {
+                                    notificationList.innerHTML = '<p style="text-align: center; color: var(--text-muted); padding: 2rem; font-size: 0.85rem;">No notifications yet</p>';
+                                } else {
+                                    notificationList.innerHTML = items.map(n => `
+                                    <div class="notification-item ${n.is_read ? '' : 'unread'}" style="padding: 1rem; border-bottom: 1px solid #f1f5f9; cursor: pointer; transition: background 0.2s;" onclick="handleNotificationClick('${n.id}', '${n.page_slug}')">
+                                        <div style="font-size: 0.85rem; margin-bottom: 0.25rem;">
+                                            <strong>${n.actor_name}</strong> mentioned you in <strong>${n.page_title}</strong>
+                                        </div>
+                                        <div style="font-size: 0.7rem; color: var(--text-muted);">
+                                            ${new Date(n.created_at).toLocaleDateString()}
+                                        </div>
+                                    </div>
+                                `).join('');
+                                }
+                            } catch (err) { console.error(err); }
+                        }
+
+                        async function handleNotificationClick(id, slug) {
+                            try {
+                                await fetch(`/api/notifications/${id}/read`, { method: 'POST' });
+                                window.location.href = `/wiki/${slug}#comments`;
+                            } catch (err) { console.error(err); }
+                        }
+
+                        window.markAllNotificationsRead = async function () {
+                            try {
+                                await fetch('/api/notifications/read-all', { method: 'POST' });
+                                updateUnreadCount();
+                                loadNotifications();
+                            } catch (err) { console.error(err); }
+                        }
+
+                        // Initial count check
+                        updateUnreadCount();
+                        // Poll for new notifications every 60s
+                        setInterval(updateUnreadCount, 60000);
+                    <% } %>
+                </script>
                 <%- include('topic_modal') %>
                     <div class="content-wrapper">

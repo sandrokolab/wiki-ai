@@ -102,14 +102,25 @@
                     const title = item.title || item.name || item.username;
                     const slug = item.slug || item.name || item.username;
                     const highlighted = highlight(title, query);
-                    const snippet = item.content ? `<div class="search-snippet">${item.content.substring(0, 60)}...</div>` : '';
+
+                    // Specific logic for page/comment results
+                    let icon = section.icon;
+                    let displayTitle = highlighted;
+                    let snippetText = item.content || '';
+
+                    if (item.type === 'comment') {
+                        icon = 'ph-chat-centered-text';
+                        displayTitle = `In: ${highlighted}`;
+                    }
+
+                    const snippet = snippetText ? `<div class="search-snippet">${highlight(snippetText, query)}</div>` : '';
                     const topicLabel = item.category ? `<span class="search-topic-tag">${item.category}</span>` : '';
 
                     html += `
-                        <a href="${section.linkPrefix}${slug}" class="search-item">
-                            <i class="ph ${section.icon}"></i>
+                        <a href="${section.linkPrefix}${slug}${item.type === 'comment' ? '#comments' : ''}" class="search-item">
+                            <i class="ph ${icon}"></i>
                             <div class="search-item-info">
-                                <div class="search-item-title">${highlighted} ${topicLabel}</div>
+                                <div class="search-item-title">${displayTitle} ${topicLabel}</div>
                                 ${snippet}
                             </div>
                         </a>

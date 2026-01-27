@@ -65,7 +65,17 @@ class Page {
     static async search(query, callback) {
         try {
             const pattern = `%${query}%`;
-            const sql = "SELECT title, slug, content FROM pages WHERE (title ILIKE $1 OR content ILIKE $1) AND status = 'published'";
+            const sql = `
+                SELECT 'page' as type, title, slug, content 
+                FROM pages 
+                WHERE (title ILIKE $1 OR content ILIKE $1) AND status = 'published'
+                UNION
+                SELECT 'comment' as type, p.title, p.slug, c.content 
+                FROM comments c
+                JOIN pages p ON c.page_id = p.id
+                WHERE c.content ILIKE $1
+                ORDER BY type ASC, title ASC
+            `;
             const res = await pool.query(sql, [pattern]);
             callback(null, res.rows);
         } catch (err) {

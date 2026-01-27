@@ -7,6 +7,7 @@ const Topic = require('../models/topic');
 const Activity = require('../models/activity');
 const Favorite = require('../models/favorite');
 const Comment = require('../models/comment');
+const Notification = require('../models/notification');
 const isAuthenticated = require('../middleware/auth');
 const marked = require('marked');
 const diff = require('diff');
@@ -485,11 +486,24 @@ router.post('/wiki/:slug/comment', isAuthenticated, upload.single('attachment'),
         const attachmentName = req.file ? req.file.originalname : null;
         const attachmentUrl = req.file ? `/uploads/comments/${req.file.filename}` : null;
 
-        Comment.create(page.id, userId, xss(content), attachmentName, attachmentUrl, (commErr, id) => {
+        Comment.create(page.id, userId, xss(content), attachmentName, attachmentUrl, async (commErr, id) => {
             if (commErr) return res.status(500).json({ error: 'Failed to add comment' });
 
             // Log as activity
             Activity.log(userId, 'commented', page.id, { title: page.title, slug: page.slug });
+
+            // Notification System: Parse mentions (@username)
+            const mentionRegex = /@(\w+)/g;
+            const matches = [...content.matchAll(mentionRegex)];
+            const usernames = [...new Set(matches.map(m => m[1]))]; // Unique usernames
+
+            for (const username of usernames) {
+                User.findByUsername(username, (uErr, targetUser) => {
+                    if (targetUser && targetUser.id !== userId) {
+                        Notification.create(targetUser.id, userId, 'mention', id, page.id);
+                    }
+                });
+            }
 
             res.json({ success: true, id });
         });
@@ -502,6 +516,38 @@ router.get('/api/users/search', isAuthenticated, (req, res) => {
     pool.query('SELECT username FROM users WHERE username ILIKE $1 LIMIT 5', [`${query}%`], (err, result) => {
         if (err) return res.status(500).json({ error: 'Database error' });
         res.json(result.rows);
+    });
+});
+
+// GET user notifications
+router.get('/api/notifications', isAuthenticated, (req, res) => {
+    Notification.getByUser(req.session.userId, (err, notifications) => {
+        if (err) return res.status(500).json({ error: 'Failed to fetch notifications' });
+        res.json(notifications || []);
+    });
+});
+
+// GET unread notifications count
+router.get('/api/notifications/unread-count', isAuthenticated, (req, res) => {
+    Notification.getUnreadCount(req.session.userId, (err, count) => {
+        if (err) return res.status(500).json({ error: 'Failed' });
+        res.json({ count });
+    });
+});
+
+// Mark notification as read
+router.post('/api/notifications/:id/read', isAuthenticated, (req, res) => {
+    Notification.markAsRead(req.params.id, (err) => {
+        if (err) return res.status(500).json({ error: 'Failed' });
+        res.json({ success: true });
+    });
+});
+
+// Mark all notifications as read
+router.post('/api/notifications/read-all', isAuthenticated, (req, res) => {
+    Notification.markAllAsRead(req.session.userId, (err) => {
+        if (err) return res.status(500).json({ error: 'Failed' });
+        res.json({ success: true });
     });
 });
 

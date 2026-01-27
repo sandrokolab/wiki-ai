@@ -120,6 +120,19 @@ const initialize = async () => {
       )
     `);
 
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS notifications (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        actor_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        type TEXT NOT NULL,
+        target_id INTEGER,
+        page_id INTEGER REFERENCES pages(id) ON DELETE CASCADE,
+        is_read BOOLEAN DEFAULT false,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
     await client.query('COMMIT');
     console.log('PostgreSQL tables initialized.');
   } catch (e) {

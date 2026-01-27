@@ -1753,3 +1753,13 @@ h1 {
         transform: translateY(0);
     }
 }
+
+/* Mentions */
+.mention-item {
+    transition: background 0.2s ease;
+}
+
+.mention-item:hover {
+    background: #f8fafc !important;
+    color: var(--primary-color);
+}
