@@ -8,7 +8,7 @@ El proyecto sigue un patrón **MVC (Model-View-Controller)** monolítico, optimi
 
 *   **Backend:** Node.js con el framework **Express**.
 *   **Frontend:** Plantillas **EJS** (Embedded JavaScript) para el renderizado del lado del servidor, con componentes dinámicos en JavaScript vanilla integrados en un sistema de clientes distribuidos (`src/public/*.js`).
-*   **Base de Datos:** **PostgreSQL** administrado a través de `pg` (node-postgres). El esquema está diseñado para **soporte multi-wiki**, permitiendo múltiples instancias independientes en la misma base de datos. Incluye tablas para:
+*   **Base de Datos:** **PostgreSQL** (Servicio: `Postgres-VQvv` en Railway). El esquema está diseñado para **soporte multi-wiki**, permitiendo múltiples instancias independientes en la misma base de datos. Incluye tablas para:
     *   `wikis`: Registro de las wikis independientes (slug, nombre, configuración).
     *   `users`: Gestión de cuentas y autenticación.
     *   `pages`: Artículos de la wiki (títulos, slugs, contenido en Markdown).
@@ -59,7 +59,7 @@ Para que el proyecto funcione correctamente en el entorno de Railway, se deben c
 *   **Arquitectura Multi-Wiki Scoped:** Refactorización completa para soportar múltiples wikis. Implementación de middleware de resolución de wiki, rutas bajo `/w/:wiki_slug/`, y un sistema global de navegación (`wikiUrl`) que asegura que todos los enlaces y llamadas a la API estén restringidos a la wiki actual.
 *   **Panel de Administración Centralizado:** Implementación de una suite administrativa protegida por middleware de autorización (`role: admin`). Incluye dashboards de estadísticas globales y gestión masiva de usuarios, wikis y páginas.
 *   **Perfiles de Usuario Dinámicos:** Rediseño de perfiles con estadísticas en tiempo real (páginas, ediciones, comentarios) y una línea de tiempo de actividad personalizada y filtrada por usuario.
-*   **Refactorización de Inicialización de DB:** Reestructuración proactiva de `database.js` con un sistema de tres fases (Creación, Migración de Columnas, Aplicación de Restricciones) para garantizar despliegues resilientes y sin errores en Railway.
+*   **Resolución Definitiva de Inicialización de DB:** Migración exitosa a una base de datos limpia (`Postgres-VQvv`) tras detectar corrupción en el servicio original. Se implementó una lógica de inicialización en 4 fases desacopladas que garantiza la creación de columnas `wiki_id` y restricciones en el orden correcto, logrando un despliegue 100% estable.
 
 ### Próximos Pasos:
 1.  Añadir soporte para exportación de páginas en formato PDF.

@@ -19,6 +19,10 @@ const PORT = process.env.PORT || 3000;
 // Trust proxy for rate-limiting on Railway
 app.set('trust proxy', 1);
 
+// Configure View Engine
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'src', 'views'));
+
 // Security Middlewares
 app.use(helmet({
     contentSecurityPolicy: {
