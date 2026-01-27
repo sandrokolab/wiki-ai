@@ -85,7 +85,14 @@ class Page {
 
     static async getByCategory(category, callback) {
         try {
-            const sql = 'SELECT title, slug FROM pages WHERE category = $1 ORDER BY title ASC';
+            // Join with topics to also find pages associated with a topic of that name
+            const sql = `
+                SELECT p.title, p.slug 
+                FROM pages p 
+                LEFT JOIN topics t ON p.topic_id = t.id 
+                WHERE p.category = $1 OR t.name = $1 
+                ORDER BY p.title ASC
+            `;
             const res = await pool.query(sql, [category]);
             callback(null, res.rows);
         } catch (err) {
