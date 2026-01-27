@@ -21,7 +21,7 @@ app.set('trust proxy', 1);
 
 // Configure View Engine
 app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, 'src', 'views'));
+app.set('views', path.resolve(__dirname, 'src', 'views'));
 
 // Security Middlewares
 app.use(helmet({
