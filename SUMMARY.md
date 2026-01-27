@@ -16,6 +16,7 @@ El proyecto sigue un patrón **MVC (Model-View-Controller)** monolítico, optimi
     *   `activity_log`: Registro de acciones globales y específicas de página.
     *   `favorites`: Relación de seguimiento entre usuarios, temas y páginas.
     *   `comments`: Hilos de conversación en páginas con soporte para adjuntos.
+    *   `notifications`: Registro de alertas para menciones de usuarios.
 *   **Autenticación:** Basada en sesiones nativas (`express-session`) con contraseñas cifradas mediante `bcrypt`.
 *   **Seguridad:** Implementación de cabeceras **Helmet**, protección XSS y Content Security Policy (CSP) para prevenir ataques de inyección.
 
@@ -49,8 +50,9 @@ Para que el proyecto funcione correctamente en el entorno de Railway, se deben c
 *   **Sistema de Comentarios e Interacción:** Se implementó una sección de comentarios al pie de página con pestañas (Comentarios/Actividad). Incluye campo de texto con avatar, selector de emojis, subida de archivos adjuntos (vía `multer`) y detección de menciones.
 *   **Corrección de Asociación Topic-Page:** Se optimizó la consulta `getByCategory` para que las páginas se vinculen correctamente tanto por el ID del tema como por el nombre de la categoría, asegurando que el "Mapa de Contenidos" sea preciso.
 *   **Robustez de Scripts:** Se implementaron guardas de seguridad en todos los scripts del cliente (`search-client.js`, `activity-client.js`, `editor-client.js`) para prevenir fallos en cascada.
-*   **Seguridad y Menciones:** Se eliminó el bypass de autenticación temporal para asegurar que el sistema sea robusto en cualquier entorno. Se completó el sistema de menciones (@) con búsqueda dinámica de usuarios.
+*   **Seguridad y Menciones:** Se eliminó el bypass de autenticación temporal para asegurar que el sistema sea robusto en cualquier entorno. Se completó el sistema de menciones (@) con búsqueda dinámica y un sistema de notificaciones dedicado.
+*   **Búsqueda Global Refinada:** Se actualizó el motor de búsqueda para incluir comentarios. La interfaz ahora distingue entre resultados de página y resultados de comentarios con iconos y snippets contextuales.
 
 ### Próximos Pasos:
-1.  Implementar la lógica de notificaciones cuando un usuario es mencionado.
-2.  Refinar el sistema de búsqueda global para incluir comentarios.
+1.  Implementar la lógica de "Me gusta" o reacciones en los comentarios.
+2.  Añadir un sistema de filtrado avanzado en la búsqueda global.

@@ -25,7 +25,33 @@
                         <div class="search-box" id="searchBoxContainer">
                             <i class="ph ph-magnifying-glass search-icon"></i>
                             <input type="text" id="searchInput" placeholder="Search or jump to..." autocomplete="off">
-                            <div class="kbd-shortcut"><span id="kbd-key">⌘</span>K</div>
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <button id="searchFilterBtn" title="Advanced filters"
+                                    style="background: none; border: none; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; padding: 2px;">
+                                    <i class="ph ph-sliders"></i>
+                                </button>
+                                <div class="kbd-shortcut"><span id="kbd-key">⌘</span>K</div>
+                            </div>
+                        </div>
+                        <div id="searchFilterPanel" class="search-filter-panel" style="display: none;">
+                            <div class="filter-row">
+                                <label>Date</label>
+                                <select id="filterDate">
+                                    <option value="">Any time</option>
+                                    <option value="today">Today</option>
+                                    <option value="week">Past week</option>
+                                    <option value="month">Past month</option>
+                                </select>
+                            </div>
+                            <div class="filter-row">
+                                <label>Type</label>
+                                <div style="display: flex; gap: 1rem;">
+                                    <label style="font-size: 0.75rem;"><input type="checkbox" id="filterTypePage"
+                                            checked> Pages</label>
+                                    <label style="font-size: 0.75rem;"><input type="checkbox" id="filterTypeComment"
+                                            checked> Comments</label>
+                                </div>
+                            </div>
                         </div>
                         <div id="searchDropdown" class="search-dropdown"></div>
                     </div>

@@ -1763,3 +1763,58 @@ h1 {
     background: #f8fafc !important;
     color: var(--primary-color);
 }
+
+/* SEARCH FILTERS */
+.search-filter-panel {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    z-index: 1001;
+    margin-top: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.filter-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.filter-row label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.filter-row select {
+    padding: 0.25rem 0.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 0.8rem;
+    outline: none;
+}
+
+.search-item mark {
+    background: #fef3c7;
+    color: #92400e;
+    border-radius: 2px;
+    padding: 0 1px;
+}
+
+.search-topic-tag {
+    font-size: 0.7rem;
+    background: #e0e7ff;
+    color: #4338ca;
+    padding: 1px 6px;
+    border-radius: 10px;
+    margin-left: 0.5rem;
+    font-weight: 500;
+}

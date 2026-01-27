@@ -13,6 +13,37 @@
     let selectedIndex = -1;
     let totalItems = 0;
 
+    const searchFilterBtn = document.getElementById('searchFilterBtn');
+    const searchFilterPanel = document.getElementById('searchFilterPanel');
+    const filterDate = document.getElementById('filterDate');
+    const filterTypePage = document.getElementById('filterTypePage');
+    const filterTypeComment = document.getElementById('filterTypeComment');
+
+    // Filter toggle
+    if (searchFilterBtn && searchFilterPanel) {
+        searchFilterBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isVisible = searchFilterPanel.style.display === 'flex' || searchFilterPanel.style.display === 'block';
+            searchFilterPanel.style.display = isVisible ? 'none' : 'flex';
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!searchFilterPanel.contains(e.target) && e.target !== searchFilterBtn && !searchFilterBtn.contains(e.target)) {
+                searchFilterPanel.style.display = 'none';
+            }
+        });
+    }
+
+    // Update search on filter change
+    [filterDate, filterTypePage, filterTypeComment].forEach(el => {
+        if (el) {
+            el.addEventListener('change', () => {
+                const query = searchInput.value.trim();
+                if (query.length >= 2) performSearch(query);
+            });
+        }
+    });
+
     // KEYBOARD SHORTCUTS
     window.addEventListener('keydown', (e) => {
         if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
@@ -76,8 +107,18 @@
 
     async function performSearch(query) {
         try {
-            const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+            let url = `/api/search?q=${encodeURIComponent(query)}`;
+
+            // Collect filters
+            if (filterDate && filterDate.value) url += `&date=${filterDate.value}`;
+
+            const res = await fetch(url);
             const data = await res.json();
+
+            // Filter categories locally in the frontend based on checkboxes for display
+            if (filterTypePage && !filterTypePage.checked) data.pages = [];
+            if (filterTypeComment && !filterTypeComment.checked) data.comments = [];
+
             renderResults(data, query);
         } catch (err) {
             console.error('Search error:', err);
@@ -91,6 +132,7 @@
 
         const sections = [
             { title: 'Pages', items: data.pages, icon: 'ph-file-text', linkPrefix: '/wiki/' },
+            { title: 'Comments', items: data.comments, icon: 'ph-chat-centered-text', linkPrefix: '/wiki/' },
             { title: 'Topics', items: data.topics, icon: 'ph-bookmark', linkPrefix: '/categoria/' },
             { title: 'Users', items: data.users, icon: 'ph-user', linkPrefix: '/profile/' }
         ];
@@ -108,16 +150,16 @@
                     let displayTitle = highlighted;
                     let snippetText = item.content || '';
 
-                    if (item.type === 'comment') {
+                    if (section.title === 'Comments') {
                         icon = 'ph-chat-centered-text';
-                        displayTitle = `In: ${highlighted}`;
+                        displayTitle = `Comment in: ${highlighted}`;
                     }
 
                     const snippet = snippetText ? `<div class="search-snippet">${highlight(snippetText, query)}</div>` : '';
                     const topicLabel = item.category ? `<span class="search-topic-tag">${item.category}</span>` : '';
 
                     html += `
-                        <a href="${section.linkPrefix}${slug}${item.type === 'comment' ? '#comments' : ''}" class="search-item">
+                        <a href="${section.linkPrefix}${slug}${section.title === 'Comments' ? '#comments' : ''}" class="search-item">
                             <i class="ph ${icon}"></i>
                             <div class="search-item-info">
                                 <div class="search-item-title">${displayTitle} ${topicLabel}</div>
@@ -154,6 +196,7 @@
 
     function closeSearch() {
         if (searchDropdown) searchDropdown.style.display = 'none';
+        if (searchFilterPanel) searchFilterPanel.style.display = 'none';
         selectedIndex = -1;
     }
 })();

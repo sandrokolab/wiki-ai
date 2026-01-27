@@ -14,7 +14,17 @@ class Comment {
     static async getByPageId(pageId, callback) {
         try {
             const sql = `
-                SELECT c.*, u.username, u.email 
+                SELECT c.*, u.username, u.email,
+                COALESCE(
+                    (SELECT jsonb_object_agg(reaction_type, count)
+                     FROM (
+                         SELECT reaction_type, COUNT(*) as count
+                         FROM comment_reactions
+                         WHERE comment_id = c.id
+                         GROUP BY reaction_type
+                     ) s
+                    ), '{}'::jsonb
+                ) as reactions
                 FROM comments c 
                 JOIN users u ON c.user_id = u.id 
                 WHERE c.page_id = $1 

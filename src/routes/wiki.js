@@ -8,6 +8,7 @@ const Activity = require('../models/activity');
 const Favorite = require('../models/favorite');
 const Comment = require('../models/comment');
 const Notification = require('../models/notification');
+const Reaction = require('../models/reaction');
 const isAuthenticated = require('../middleware/auth');
 const marked = require('marked');
 const diff = require('diff');
@@ -197,7 +198,17 @@ router.get('/wiki/:slug', (req, res) => {
                         Activity.getRecent(50, (actErr, allAct) => {
                             // Filter activity for this page
                             page.activities = (allAct || []).filter(a => a.page_id === page.id);
-                            res.render('page', { page });
+
+                            // Fetch user reactions if logged in
+                            if (req.session.userId) {
+                                Reaction.getUserReactionsOnPage(page.id, req.session.userId, (reacErr, userReactions) => {
+                                    page.userReactions = userReactions || [];
+                                    res.render('page', { page });
+                                });
+                            } else {
+                                page.userReactions = [];
+                                res.render('page', { page });
+                            }
                         });
                     });
                 });
@@ -387,18 +398,37 @@ router.get('/api/activity', (req, res) => {
     });
 });
 
-// API Search (Grouped results)
+// API Search (Grouped results with Filters)
 router.get('/api/search', (req, res) => {
     const query = req.query.q;
-    if (!query || query.length < 2) return res.json({ pages: [], topics: [], users: [] });
+    const filters = {
+        category: req.query.cat,
+        topicId: req.query.topic ? parseInt(req.query.topic) : null,
+        authorId: req.query.author ? parseInt(req.query.author) : null,
+        dateRange: req.query.date
+    };
 
-    Page.search(query, (pErr, pages) => {
-        Topic.search(query, (tErr, topics) => {
-            User.search(query, (uErr, users) => {
+    if (!query || query.length < 2) return res.json({ pages: [], topics: [], users: [], comments: [] });
+
+    Page.search(query, filters, (err, results) => {
+        if (err) return res.status(500).json({ error: 'Search failed' });
+
+        // Separate results by type
+        const pages = results.filter(r => r.type === 'page');
+        const comments = results.filter(r => r.type === 'comment');
+
+        // Still search for topics and users to keep the rich sidebar results
+        // Note: Topic.search and User.search should be implemented in their respective models
+        Topic.getAll((tErr, allTopics) => {
+            const matchedTopics = (allTopics || []).filter(t => t.name.toLowerCase().includes(query.toLowerCase()));
+
+            const userSql = "SELECT id, username FROM users WHERE username ILIKE $1 LIMIT 5";
+            pool.query(userSql, [`%${query}%`], (uErr, userRes) => {
                 res.json({
-                    pages: pages || [],
-                    topics: topics || [],
-                    users: users || []
+                    pages,
+                    comments,
+                    topics: matchedTopics,
+                    users: userRes ? userRes.rows : []
                 });
             });
         });
@@ -558,6 +588,36 @@ router.delete('/wiki/comment/:id', isAuthenticated, (req, res) => {
 
     Comment.delete(commentId, userId, (err, count) => {
         if (err || count === 0) return res.status(500).json({ error: 'Failed to delete comment' });
+        res.json({ success: true });
+    });
+});
+
+// React to Comment
+router.post('/api/comments/:id/react', isAuthenticated, (req, res) => {
+    const commentId = req.params.id;
+    const { reactionType } = req.body; // e.g., 'like', 'love', 'haha', 'wow'
+    const userId = req.session.userId;
+
+    if (!reactionType) {
+        // Toggle off if no type provided (optional behavior) or just return error
+        return Reaction.remove(commentId, userId, (err) => {
+            if (err) return res.status(500).json({ error: 'Failed' });
+            res.json({ success: true, action: 'removed' });
+        });
+    }
+
+    Reaction.addOrUpdate(commentId, userId, reactionType, (err) => {
+        if (err) return res.status(500).json({ error: 'Failed' });
+        res.json({ success: true, action: 'set', type: reactionType });
+    });
+});
+
+// Remove Reaction
+router.delete('/api/comments/:id/react', isAuthenticated, (req, res) => {
+    const commentId = req.params.id;
+    const userId = req.session.userId;
+    Reaction.remove(commentId, userId, (err) => {
+        if (err) return res.status(500).json({ error: 'Failed' });
         res.json({ success: true });
     });
 });

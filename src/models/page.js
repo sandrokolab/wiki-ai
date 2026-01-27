@@ -62,21 +62,55 @@ class Page {
         }
     }
 
-    static async search(query, callback) {
+    static async search(query, filters = {}, callback) {
         try {
             const pattern = `%${query}%`;
+            let params = [pattern];
+            let pageFilters = ["(p.title ILIKE $1 OR p.content ILIKE $1) AND p.status = 'published'"];
+            let commentFilters = ["c.content ILIKE $1"];
+
+            if (filters.topicId) {
+                params.push(filters.topicId);
+                pageFilters.push(`p.topic_id = $${params.length}`);
+                commentFilters.push(`p.topic_id = $${params.length}`);
+            }
+
+            if (filters.category) {
+                params.push(filters.category);
+                pageFilters.push(`p.category = $${params.length}`);
+                commentFilters.push(`p.category = $${params.length}`);
+            }
+
+            if (filters.authorId) {
+                params.push(filters.authorId);
+                pageFilters.push(`p.author_id = $${params.length}`);
+                commentFilters.push(`c.user_id = $${params.length}`);
+            }
+
+            if (filters.dateRange) {
+                let interval = '';
+                if (filters.dateRange === 'today') interval = '1 day';
+                else if (filters.dateRange === 'week') interval = '7 days';
+                else if (filters.dateRange === 'month') interval = '30 days';
+
+                if (interval) {
+                    pageFilters.push(`p.created_at >= CURRENT_TIMESTAMP - INTERVAL '${interval}'`);
+                    commentFilters.push(`c.created_at >= CURRENT_TIMESTAMP - INTERVAL '${interval}'`);
+                }
+            }
+
             const sql = `
-                SELECT 'page' as type, title, slug, content 
-                FROM pages 
-                WHERE (title ILIKE $1 OR content ILIKE $1) AND status = 'published'
+                SELECT 'page' as type, p.title, p.slug, p.content 
+                FROM pages p
+                WHERE ${pageFilters.join(' AND ')}
                 UNION
                 SELECT 'comment' as type, p.title, p.slug, c.content 
                 FROM comments c
                 JOIN pages p ON c.page_id = p.id
-                WHERE c.content ILIKE $1
+                WHERE ${commentFilters.join(' AND ')}
                 ORDER BY type ASC, title ASC
             `;
-            const res = await pool.query(sql, [pattern]);
+            const res = await pool.query(sql, params);
             callback(null, res.rows);
         } catch (err) {
             callback(err);
