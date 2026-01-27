@@ -182,6 +182,23 @@ class Page {
             callback(err);
         }
     }
+
+    static async getCount() {
+        const res = await pool.query('SELECT COUNT(*) FROM pages');
+        return parseInt(res.rows[0].count);
+    }
+
+    static async getAllGlobal() {
+        const sql = `
+            SELECT p.*, w.slug as wiki_slug, w.name as wiki_name, u.username as author_name 
+            FROM pages p
+            JOIN wikis w ON p.wiki_id = w.id
+            LEFT JOIN users u ON p.author_id = u.id
+            ORDER BY p.created_at DESC
+        `;
+        const res = await pool.query(sql);
+        return res.rows;
+    }
 }
 
 module.exports = Page;

@@ -1,0 +1,80 @@
+<%- include('../partials/layout_start', { title: 'Admin Dashboard' }) %>
+
+    <div class="admin-container" style="padding: 2rem; max-width: 1200px; margin: 0 auto;">
+        <header class="admin-header" style="margin-bottom: 2rem;">
+            <h1 style="font-size: 1.875rem; font-weight: 700; color: var(--text-main);">Dashboard de Administración</h1>
+            <p style="color: var(--text-muted);">Bienvenido al panel centralizado de Wiki AI.</p>
+        </header>
+
+        <div class="stats-grid"
+            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; margin-bottom: 3rem;">
+            <div class="stat-card"
+                style="background: white; padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-color); box-shadow: var(--shadow-sm);">
+                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem;">
+                    <div
+                        style="background: rgba(99, 102, 241, 0.1); color: var(--primary-color); padding: 0.75rem; border-radius: 8px;">
+                        <i class="ph ph-users" style="font-size: 1.5rem;"></i>
+                    </div>
+                    <span
+                        style="font-size: 0.875rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Usuarios</span>
+                </div>
+                <div style="font-size: 2rem; font-weight: 700; color: var(--text-main);">
+                    <%= stats.users %>
+                </div>
+                <a href="/admin/users"
+                    style="font-size: 0.75rem; color: var(--primary-color); text-decoration: none; font-weight: 600; margin-top: 0.5rem; display: inline-block;">Gestionar
+                    usuarios →</a>
+            </div>
+
+            <div class="stat-card"
+                style="background: white; padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-color); box-shadow: var(--shadow-sm);">
+                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem;">
+                    <div
+                        style="background: rgba(236, 72, 153, 0.1); color: var(--magenta); padding: 0.75rem; border-radius: 8px;">
+                        <i class="ph ph-globe" style="font-size: 1.5rem;"></i>
+                    </div>
+                    <span
+                        style="font-size: 0.875rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Wikis</span>
+                </div>
+                <div style="font-size: 2rem; font-weight: 700; color: var(--text-main);">
+                    <%= stats.wikis %>
+                </div>
+                <a href="/admin/wikis"
+                    style="font-size: 0.75rem; color: var(--magenta); text-decoration: none; font-weight: 600; margin-top: 0.5rem; display: inline-block;">Gestionar
+                    wikis →</a>
+            </div>
+
+            <div class="stat-card"
+                style="background: white; padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-color); box-shadow: var(--shadow-sm);">
+                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem;">
+                    <div
+                        style="background: rgba(16, 185, 129, 0.1); color: var(--success-color); padding: 0.75rem; border-radius: 8px;">
+                        <i class="ph ph-file-text" style="font-size: 1.5rem;"></i>
+                    </div>
+                    <span
+                        style="font-size: 0.875rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Páginas</span>
+                </div>
+                <div style="font-size: 2rem; font-weight: 700; color: var(--text-main);">
+                    <%= stats.pages %>
+                </div>
+                <a href="/admin/pages"
+                    style="font-size: 0.75rem; color: var(--success-color); text-decoration: none; font-weight: 600; margin-top: 0.5rem; display: inline-block;">Gestionar
+                    contenido →</a>
+            </div>
+        </div>
+
+        <section class="admin-quick-actions">
+            <h2 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 1rem; color: var(--text-main);">Acciones
+                Rápidas</h2>
+            <div style="display: flex; gap: 1rem;">
+                <button class="btn-primary" onclick="alert('Funcionalidad de nueva wiki próximamente')">
+                    <i class="ph ph-plus-circle"></i> Crear Nueva Wiki
+                </button>
+                <button class="btn-secondary" onclick="window.location.href='/admin/users'">
+                    <i class="ph ph-shield-check"></i> Revisar Permisos
+                </button>
+            </div>
+        </section>
+    </div>
+
+    <%- include('../partials/layout_end') %>

@@ -47,6 +47,16 @@ class User {
             callback(err);
         }
     }
+
+    static async getCount() {
+        const res = await pool.query('SELECT COUNT(*) FROM users');
+        return parseInt(res.rows[0].count);
+    }
+
+    static async getAll() {
+        const res = await pool.query('SELECT id, username, email, role, created_at FROM users ORDER BY username ASC');
+        return res.rows;
+    }
 }
 
 module.exports = User;

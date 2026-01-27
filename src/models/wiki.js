@@ -50,6 +50,11 @@ class Wiki {
             callback(err);
         }
     }
+
+    static async getCount() {
+        const res = await pool.query('SELECT COUNT(*) FROM wikis');
+        return parseInt(res.rows[0].count);
+    }
 }
 
 module.exports = Wiki;

@@ -8,7 +8,8 @@ El proyecto sigue un patrón **MVC (Model-View-Controller)** monolítico, optimi
 
 *   **Backend:** Node.js con el framework **Express**.
 *   **Frontend:** Plantillas **EJS** (Embedded JavaScript) para el renderizado del lado del servidor, con componentes dinámicos en JavaScript vanilla integrados en un sistema de clientes distribuidos (`src/public/*.js`).
-*   **Base de Datos:** **PostgreSQL** administrado a través de `pg` (node-postgres). El esquema incluye tablas para:
+*   **Base de Datos:** **PostgreSQL** administrado a través de `pg` (node-postgres). El esquema está diseñado para **soporte multi-wiki**, permitiendo múltiples instancias independientes en la misma base de datos. Incluye tablas para:
+    *   `wikis`: Registro de las wikis independientes (slug, nombre, configuración).
     *   `users`: Gestión de cuentas y autenticación.
     *   `pages`: Artículos de la wiki (títulos, slugs, contenido en Markdown).
     *   `topics`: Categorización jerárquica de páginas.
@@ -18,6 +19,7 @@ El proyecto sigue un patrón **MVC (Model-View-Controller)** monolítico, optimi
     *   `comments`: Hilos de conversación en páginas con soporte para adjuntos e interacción.
     *   `notifications`: Registro de alertas para menciones de usuarios y actividades relevantes.
     *   `comment_reactions`: Almacenamiento de reacciones (like, love, etc.) vinculadas a usuarios y comentarios.
+    *   *Nota:* La mayoría de las tablas (`pages`, `topics`, `activity_log`, `comments`) están vinculadas a `wikis` mediante `wiki_id`.
 *   **Autenticación:** Basada en sesiones nativas (`express-session`) con contraseñas cifradas mediante `bcrypt`.
 *   **Seguridad:** Implementación de cabeceras **Helmet**, protección XSS y Content Security Policy (CSP) para prevenir ataques de inyección.
 
@@ -54,6 +56,7 @@ Para que el proyecto funcione correctamente en el entorno de Railway, se deben c
 *   **Búsqueda Global Refinada:** Integración de comentarios en los resultados de búsqueda con iconos y snippets contextuales.
 *   **Reacciones en Comentarios:** Implementación de un sistema de reacciones (Pulp-style) con persistencia en base de datos y actualización dinámica en la UI.
 *   **Filtrado Avanzado de Búsqueda:** Adición de un panel de filtros en la barra de búsqueda que permite filtrar por rango de fecha (Hoy, Semana, Mes) y tipo de contenido (Páginas/Comentarios).
+*   **Arquitectura Multi-Wiki Scoped:** Refactorización completa para soportar múltiples wikis. Implementación de middleware de resolución de wiki, rutas bajo `/w/:wiki_slug/`, y un sistema global de navegación (`wikiUrl`) que asegura que todos los enlaces y llamadas a la API estén restringidos a la wiki actual.
 
 ### Próximos Pasos:
 1.  Implementar un Panel de Administración para gestión masiva de contenidos y usuarios.

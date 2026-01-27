@@ -109,9 +109,13 @@ const provideWikiData = (req, res, next) => {
 // Routes
 const wikiRoutes = require('./src/routes/wiki');
 const authRoutes = require('./src/routes/auth');
+const adminRoutes = require('./src/routes/admin');
 
 // Auth routes are global
 app.use('/', authRoutes);
+
+// Admin routes (middleware and check inside routes/admin.js)
+app.use('/admin', provideWikiData, adminRoutes);
 
 // Redirect root to general wiki
 app.get('/', (req, res) => res.redirect('/w/general'));
