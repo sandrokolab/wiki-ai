@@ -162,19 +162,30 @@ async function finalizeSetup(client) {
   console.log('Phase 4: Finalizing setup and seeding...');
 
   // Seeding default wiki
-  await client.query(`
+  console.log('Seeding default wiki "general"...');
+  const insertRes = await client.query(`
     INSERT INTO wikis (name, slug, description)
     VALUES ('Wiki General', 'general', 'Espacio principal de la wiki')
     ON CONFLICT (slug) DO NOTHING
+    RETURNING id
   `);
+
+  if (insertRes.rows.length > 0) {
+    console.log(`Default wiki "general" created with ID: ${insertRes.rows[0].id}`);
+  } else {
+    console.log('Default wiki "general" already exists.');
+  }
 
   const defaultWiki = await client.query("SELECT id FROM wikis WHERE slug = 'general'");
   if (defaultWiki.rows.length > 0) {
     const wikiId = defaultWiki.rows[0].id;
+    console.log(`Ensuring existing records are linked to wiki ID: ${wikiId}`);
     await client.query("UPDATE pages SET wiki_id = $1 WHERE wiki_id IS NULL", [wikiId]);
     await client.query("UPDATE topics SET wiki_id = $1 WHERE wiki_id IS NULL", [wikiId]);
     await client.query("UPDATE activity_log SET wiki_id = $1 WHERE wiki_id IS NULL", [wikiId]);
     await client.query("UPDATE comments SET wiki_id = $1 WHERE wiki_id IS NULL", [wikiId]);
+  } else {
+    console.error('CRITICAL ERROR: Default wiki "general" could not be created or found.');
   }
 
   // Secondary tables
