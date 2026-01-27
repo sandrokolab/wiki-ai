@@ -58,8 +58,9 @@ Para que el proyecto funcione correctamente en el entorno de Railway, se deben c
 *   **Filtrado Avanzado de Búsqueda:** Adición de un panel de filtros en la barra de búsqueda que permite filtrar por rango de fecha (Hoy, Semana, Mes) y tipo de contenido (Páginas/Comentarios).
 *   **Arquitectura Multi-Wiki Scoped:** Refactorización completa para soportar múltiples wikis. Implementación de middleware de resolución de wiki, rutas bajo `/w/:wiki_slug/`, y un sistema global de navegación (`wikiUrl`) que asegura que todos los enlaces y llamadas a la API estén restringidos a la wiki actual.
 *   **Panel de Administración Centralizado:** Implementación de una suite administrativa protegida por middleware de autorización (`role: admin`). Incluye dashboards de estadísticas globales y gestión masiva de usuarios, wikis y páginas.
+*   **Perfiles de Usuario Dinámicos:** Rediseño de perfiles con estadísticas en tiempo real (páginas, ediciones, comentarios) y una línea de tiempo de actividad personalizada y filtrada por usuario.
 
 ### Próximos Pasos:
-1.  Mejorar el sistema de perfiles de usuario con estadísticas de contribución.
-2.  Añadir soporte para exportación de páginas en formato PDF.
+1.  Añadir soporte para exportación de páginas en formato PDF.
+2.  Implementar un sistema de badges/logros basado en las estadísticas de contribución.
 

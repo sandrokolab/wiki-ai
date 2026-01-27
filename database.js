@@ -54,9 +54,9 @@ const initialize = async () => {
         UNIQUE (wiki_id, name)
       )
     `);
+    await client.query(`ALTER TABLE topics ADD COLUMN IF NOT EXISTS wiki_id INTEGER REFERENCES wikis(id) ON DELETE CASCADE`);
     await client.query(`ALTER TABLE topics DROP CONSTRAINT IF EXISTS topics_name_key`);
     await client.query(`ALTER TABLE topics ADD CONSTRAINT topics_wiki_name_unique UNIQUE (wiki_id, name)`);
-    await client.query(`ALTER TABLE topics ADD COLUMN IF NOT EXISTS wiki_id INTEGER REFERENCES wikis(id) ON DELETE CASCADE`);
 
     await client.query(`
       CREATE TABLE IF NOT EXISTS pages(
@@ -78,9 +78,9 @@ const initialize = async () => {
     `);
 
     // Migrations for existing pages table
+    await client.query(`ALTER TABLE pages ADD COLUMN IF NOT EXISTS wiki_id INTEGER REFERENCES wikis(id) ON DELETE CASCADE`);
     await client.query(`ALTER TABLE pages DROP CONSTRAINT IF EXISTS pages_slug_key`);
     await client.query(`ALTER TABLE pages ADD CONSTRAINT pages_wiki_slug_unique UNIQUE (wiki_id, slug)`);
-    await client.query(`ALTER TABLE pages ADD COLUMN IF NOT EXISTS wiki_id INTEGER REFERENCES wikis(id) ON DELETE CASCADE`);
     await client.query(`ALTER TABLE pages ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'draft'`);
     await client.query(`ALTER TABLE pages ADD COLUMN IF NOT EXISTS is_verified BOOLEAN DEFAULT false`);
     await client.query(`ALTER TABLE pages ADD COLUMN IF NOT EXISTS topic_id INTEGER REFERENCES topics(id)`);
