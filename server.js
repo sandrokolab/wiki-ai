@@ -19,9 +19,14 @@ const PORT = process.env.PORT || 3000;
 // Trust proxy for rate-limiting on Railway
 app.set('trust proxy', 1);
 
-// Configure View Engine
+// Configure View Engine - DEFINITIVE SETUP
 app.set('view engine', 'ejs');
-app.set('views', path.resolve(__dirname, 'src', 'views'));
+const viewsPath = path.resolve(__dirname, 'src', 'views');
+app.set('views', [viewsPath, path.join(__dirname, 'views')]);
+console.log(`View engine configured. Views path: ${viewsPath}`);
+
+// Explicitly register EJS engine to avoid "no default engine" issues
+app.engine('ejs', require('ejs').renderFile);
 
 // Security Middlewares
 app.use(helmet({

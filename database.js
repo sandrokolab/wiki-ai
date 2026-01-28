@@ -21,6 +21,24 @@ async function createBaseTables(client) {
     )
   `);
 
+  // Seeding default wiki EARLY in Phase 1 to prevent 404s
+  console.log('Phase 1.5: Seeding default wiki "general"...');
+  try {
+    const insertRes = await client.query(`
+      INSERT INTO wikis (name, slug, description)
+      VALUES ('Wiki General', 'general', 'Espacio principal de la wiki')
+      ON CONFLICT (slug) DO NOTHING
+      RETURNING id
+    `);
+    if (insertRes.rows.length > 0) {
+      console.log(`Default wiki "general" created with ID: ${insertRes.rows[0].id}`);
+    } else {
+      console.log('Default wiki "general" already exists.');
+    }
+  } catch (err) {
+    console.error('Error seeding general wiki in Phase 1:', err.message);
+  }
+
   await client.query(`
     CREATE TABLE IF NOT EXISTS users (
       id SERIAL PRIMARY KEY,
@@ -156,36 +174,25 @@ async function createIndexesAndConstraints(client) {
 }
 
 /**
- * PHASE 4: Secondary tables and seeding
+ * PHASE 4: Secondary tables and data linking
  */
 async function finalizeSetup(client) {
-  console.log('Phase 4: Finalizing setup and seeding...');
-
-  // Seeding default wiki
-  console.log('Seeding default wiki "general"...');
-  const insertRes = await client.query(`
-    INSERT INTO wikis (name, slug, description)
-    VALUES ('Wiki General', 'general', 'Espacio principal de la wiki')
-    ON CONFLICT (slug) DO NOTHING
-    RETURNING id
-  `);
-
-  if (insertRes.rows.length > 0) {
-    console.log(`Default wiki "general" created with ID: ${insertRes.rows[0].id}`);
-  } else {
-    console.log('Default wiki "general" already exists.');
-  }
+  console.log('Phase 4: Finalizing setup and data linking...');
 
   const defaultWiki = await client.query("SELECT id FROM wikis WHERE slug = 'general'");
   if (defaultWiki.rows.length > 0) {
     const wikiId = defaultWiki.rows[0].id;
-    console.log(`Ensuring existing records are linked to wiki ID: ${wikiId}`);
-    await client.query("UPDATE pages SET wiki_id = $1 WHERE wiki_id IS NULL", [wikiId]);
-    await client.query("UPDATE topics SET wiki_id = $1 WHERE wiki_id IS NULL", [wikiId]);
-    await client.query("UPDATE activity_log SET wiki_id = $1 WHERE wiki_id IS NULL", [wikiId]);
-    await client.query("UPDATE comments SET wiki_id = $1 WHERE wiki_id IS NULL", [wikiId]);
+    console.log(`Ensuring orphaned records are linked to wiki ID: ${wikiId}`);
+    try {
+      await client.query("UPDATE pages SET wiki_id = $1 WHERE wiki_id IS NULL", [wikiId]);
+      await client.query("UPDATE topics SET wiki_id = $1 WHERE wiki_id IS NULL", [wikiId]);
+      await client.query("UPDATE activity_log SET wiki_id = $1 WHERE wiki_id IS NULL", [wikiId]);
+      await client.query("UPDATE comments SET wiki_id = $1 WHERE wiki_id IS NULL", [wikiId]);
+    } catch (err) {
+      console.warn('Update orphaned records non-critical error:', err.message);
+    }
   } else {
-    console.error('CRITICAL ERROR: Default wiki "general" could not be created or found.');
+    console.error('CRITICAL ERROR: Default wiki "general" could not be found in Phase 4.');
   }
 
   // Secondary tables
