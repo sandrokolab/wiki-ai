@@ -9,7 +9,7 @@ const pool = require('./database');
 const { dbReady } = pool;
 
 // Multi-style compatibility check
-console.log(`[SERVER] [VER 1.34] Pool type: ${typeof pool} | hasQuery: ${typeof pool.query === 'function'} | hasDbReady: ${typeof pool.dbReady === 'object'}`);
+console.log(`[SERVER] [VER 1.36] Pool type: ${typeof pool} | hasQuery: ${typeof pool.query === 'function'} | hasDbReady: ${typeof pool.dbReady === 'object'}`);
 
 const User = require('./src/models/user');
 const Page = require('./src/models/page');
@@ -21,7 +21,7 @@ const Favorite = require('./src/models/favorite');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-console.log('[SERVER] [VER 1.34] Initializing system...');
+console.log('[SERVER] [VER 1.36] Initializing system...');
 
 // Trust proxy
 app.set('trust proxy', 1);
@@ -33,7 +33,7 @@ app.set('view engine', 'ejs');
 const viewsDir = path.join(__dirname, 'src', 'views');
 app.set('views', viewsDir);
 
-console.log(`[SERVER] [VER 1.34] View engine: ${app.get('view engine')} | Views dir: ${app.get('views')}`);
+console.log(`[SERVER] [VER 1.36] View engine: ${app.get('view engine')} | Views dir: ${app.get('views')}`);
 
 // Middlewares
 app.use(helmet({
@@ -121,7 +121,7 @@ app.get('/system/check', async (req, res) => {
         const wikiCount = await pool.query('SELECT count(*) FROM wikis');
         const generalWiki = await pool.query('SELECT * FROM wikis WHERE slug = $1', ['general']);
         res.json({
-            version: '1.35',
+            version: '1.36',
             status: 'online',
             pool: {
                 type: typeof pool,
@@ -135,13 +135,13 @@ app.get('/system/check', async (req, res) => {
             }
         });
     } catch (err) {
-        res.status(500).json({ version: '1.35', error: err.message, stack: err.stack });
+        res.status(500).json({ version: '1.36', error: err.message, stack: err.stack });
     }
 });
 
 app.get('/', (req, res) => {
     const defaultWiki = process.env.DEFAULT_WIKI_SLUG || 'general';
-    console.log(`[SERVER] [VER 1.35] Root redirect -> /w/${defaultWiki}`);
+    console.log(`[SERVER] [VER 1.36] Root redirect -> /w/${defaultWiki}`);
     return res.redirect(`/w/${defaultWiki}`);
 });
 
@@ -149,7 +149,7 @@ app.use('/w/:wiki_slug', wikiMiddleware, provideWikiData, wikiRoutes);
 
 // Error Handler
 app.use((err, req, res, next) => {
-    console.error('[SERVER ERROR] [VER 1.35]', err.stack);
+    console.error('[SERVER ERROR] [VER 1.36]', err.stack);
     const status = err.status || 500;
     try {
         res.status(status).render('error', {
@@ -163,13 +163,13 @@ app.use((err, req, res, next) => {
 
 // START SERVER
 dbReady.then(() => {
-    console.log('[SERVER] [VER 1.35] Database initialized. Ready for connections.');
+    console.log('[SERVER] [VER 1.36] Database initialized. Ready for connections.');
     app.listen(PORT, () => {
-        console.log(`[SERVER] [VER 1.35] Listening on port ${PORT}`);
+        console.log(`[SERVER] [VER 1.36] Listening on port ${PORT}`);
     });
 }).catch(err => {
-    console.error('[SERVER] [VER 1.35] Warning: DB Init encountered errors, but starting anyway.', err.message);
+    console.error('[SERVER] [VER 1.36] Warning: DB Init encountered errors, but starting anyway.', err.message);
     app.listen(PORT, () => {
-        console.log(`[SERVER] [VER 1.35] Listening on port ${PORT} (DEGRADED MODE)`);
+        console.log(`[SERVER] [VER 1.36] Listening on port ${PORT} (DEGRADED MODE)`);
     });
 });

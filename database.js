@@ -1,3 +1,4 @@
+// TODO: Multi-wiki deshabilitado temporalmente. Reactivar después de estabilizar deploy.
 const { Pool } = require('pg');
 
 const pool = new Pool({
@@ -29,7 +30,7 @@ async function safeQuery(client, label, sql, params = []) {
  * This version is designed to never throw a fatal error.
  */
 const initialize = async () => {
-  console.log('[DB] [VER 1.34] Starting indestructible initialization...');
+  console.log('[DB] [VER 1.36] Starting indestructible initialization...');
   let client;
 
   try {
@@ -69,7 +70,7 @@ const initialize = async () => {
     await safeQuery(client, 'Table topics', `
       CREATE TABLE IF NOT EXISTS topics (
         id SERIAL PRIMARY KEY,
-        wiki_id INTEGER REFERENCES wikis(id) ON DELETE CASCADE,
+        -- wiki_id INTEGER REFERENCES wikis(id) ON DELETE CASCADE,
         name TEXT,
         icon TEXT DEFAULT 'ph-hash',
         color TEXT DEFAULT '#6366f1',
@@ -82,7 +83,7 @@ const initialize = async () => {
     await safeQuery(client, 'Table pages', `
       CREATE TABLE IF NOT EXISTS pages (
         id SERIAL PRIMARY KEY,
-        wiki_id INTEGER REFERENCES wikis(id) ON DELETE CASCADE,
+        -- wiki_id INTEGER REFERENCES wikis(id) ON DELETE CASCADE,
         slug TEXT,
         title TEXT,
         content TEXT,
@@ -98,15 +99,15 @@ const initialize = async () => {
     `);
 
     // 2. SURGICAL COLUMN INJECTION
-    await safeQuery(client, 'Inject wiki_id topics', 'ALTER TABLE topics ADD COLUMN IF NOT EXISTS wiki_id INTEGER REFERENCES wikis(id) ON DELETE CASCADE');
-    await safeQuery(client, 'Inject wiki_id pages', 'ALTER TABLE pages ADD COLUMN IF NOT EXISTS wiki_id INTEGER REFERENCES wikis(id) ON DELETE CASCADE');
+    // await safeQuery(client, 'Inject wiki_id topics', 'ALTER TABLE topics ADD COLUMN IF NOT EXISTS wiki_id INTEGER REFERENCES wikis(id) ON DELETE CASCADE');
+    // await safeQuery(client, 'Inject wiki_id pages', 'ALTER TABLE pages ADD COLUMN IF NOT EXISTS wiki_id INTEGER REFERENCES wikis(id) ON DELETE CASCADE');
     await safeQuery(client, 'Inject topic_id pages', 'ALTER TABLE pages ADD COLUMN IF NOT EXISTS topic_id INTEGER REFERENCES topics(id)');
 
     // 3. OTHER TABLES
     await safeQuery(client, 'Table activity_log', `
       CREATE TABLE IF NOT EXISTS activity_log (
         id SERIAL PRIMARY KEY,
-        wiki_id INTEGER REFERENCES wikis(id) ON DELETE CASCADE,
+        -- wiki_id INTEGER REFERENCES wikis(id) ON DELETE CASCADE,
         user_id INTEGER REFERENCES users(id),
         action_type TEXT,
         page_id INTEGER,
@@ -118,7 +119,7 @@ const initialize = async () => {
     await safeQuery(client, 'Table comments', `
       CREATE TABLE IF NOT EXISTS comments (
         id SERIAL PRIMARY KEY,
-        wiki_id INTEGER REFERENCES wikis(id) ON DELETE CASCADE,
+        -- wiki_id INTEGER REFERENCES wikis(id) ON DELETE CASCADE,
         page_id INTEGER REFERENCES pages (id) ON DELETE CASCADE,
         user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
         content TEXT NOT NULL,
@@ -138,10 +139,10 @@ const initialize = async () => {
     `);
 
     // 4. CONSTRAINTS & INDEXES
-    await safeQuery(client, 'Unique topics', 'ALTER TABLE topics ADD CONSTRAINT topics_wiki_name_unique UNIQUE (wiki_id, name)');
-    await safeQuery(client, 'Unique pages', 'ALTER TABLE pages ADD CONSTRAINT pages_wiki_slug_unique UNIQUE (wiki_id, slug)');
-    await safeQuery(client, 'Index pages wiki', 'CREATE INDEX IF NOT EXISTS idx_pages_wiki_id ON pages(wiki_id)');
-    await safeQuery(client, 'Index topics wiki', 'CREATE INDEX IF NOT EXISTS idx_topics_wiki_id ON topics(wiki_id)');
+    // await safeQuery(client, 'Unique topics', 'ALTER TABLE topics ADD CONSTRAINT topics_wiki_name_unique UNIQUE (wiki_id, name)');
+    // await safeQuery(client, 'Unique pages', 'ALTER TABLE pages ADD CONSTRAINT pages_wiki_slug_unique UNIQUE (wiki_id, slug)');
+    // await safeQuery(client, 'Index pages wiki', 'CREATE INDEX IF NOT EXISTS idx_pages_wiki_id ON pages(wiki_id)');
+    // await safeQuery(client, 'Index topics wiki', 'CREATE INDEX IF NOT EXISTS idx_topics_wiki_id ON topics(wiki_id)');
 
     // 5. SECONDARY TABLES
     const secondary = ['user_favorites', 'user_favorite_topics', 'user_topics', 'notifications', 'comment_reactions'];
@@ -157,9 +158,9 @@ const initialize = async () => {
       )
     `);
 
-    console.log('[DB] [VER 1.34] Initialization COMPLETED');
+    console.log('[DB] [VER 1.36] Initialization COMPLETED');
   } catch (err) {
-    console.error('[DB] [VER 1.34] CRITICAL error:', err.message);
+    console.error('[DB] [VER 1.36] CRITICAL error:', err.message);
   } finally {
     if (client) client.release();
   }
