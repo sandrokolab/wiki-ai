@@ -1,17 +1,17 @@
 const pool = require('../../database');
 
 class Activity {
-    static async log(userId, actionType, pageId, metadata, callback) {
+    static async log(userId, actionType, pageId, metadata, wikiId, callback) {
         try {
-            const sql = 'INSERT INTO activity_log (user_id, action_type, page_id, metadata) VALUES ($1, $2, $3, $4) RETURNING id';
-            const res = await pool.query(sql, [userId, actionType, pageId, metadata ? JSON.stringify(metadata) : null]);
+            const sql = 'INSERT INTO activity_log (user_id, action_type, page_id, metadata, wiki_id) VALUES ($1, $2, $3, $4, $5) RETURNING id';
+            const res = await pool.query(sql, [userId, actionType, pageId, metadata ? JSON.stringify(metadata) : null, wikiId]);
             if (callback) callback(null, res.rows[0].id);
         } catch (err) {
             if (callback) callback(err);
         }
     }
 
-    static async getRecent(limit = 20, callback) {
+    static async getRecent(limit = 20, wikiId, callback) {
         try {
             const sql = `
                 SELECT 
@@ -26,15 +26,45 @@ class Activity {
                 JOIN users u ON a.user_id = u.id
                 LEFT JOIN pages p ON a.page_id = p.id
                 LEFT JOIN topics t ON p.topic_id = t.id
+                WHERE a.wiki_id = $2
                 ORDER BY a.created_at DESC
                 LIMIT $1
             `;
-            const res = await pool.query(sql, [limit]);
+            const res = await pool.query(sql, [limit, wikiId]);
+            callback(null, res.rows);
+        } catch (err) {
+            callback(err);
+        }
+    }
+
+    static async getByUser(userId, limit = 20, callback) {
+        try {
+            const sql = `
+                SELECT 
+                    a.*, 
+                    u.username, 
+                    p.title, 
+                    p.slug, 
+                    p.content,
+                    t.name as topic_name,
+                    t.color as topic_color,
+                    w.slug as wiki_slug
+                FROM activity_log a
+                JOIN users u ON a.user_id = u.id
+                JOIN wikis w ON a.wiki_id = w.id
+                LEFT JOIN pages p ON a.page_id = p.id
+                LEFT JOIN topics t ON p.topic_id = t.id
+                WHERE a.user_id = $1
+                ORDER BY a.created_at DESC
+                LIMIT $2
+            `;
+            const res = await pool.query(sql, [userId, limit]);
             callback(null, res.rows);
         } catch (err) {
             callback(err);
         }
     }
 }
+
 
 module.exports = Activity;

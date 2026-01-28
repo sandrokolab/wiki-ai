@@ -9,7 +9,7 @@ const pool = require('./database');
 const { dbReady } = pool;
 
 // VER 1.40 Log
-console.log('[SERVER] [VER 1.40] Initializing Wiki AI Restoration (Single Wiki Mode)...');
+console.log('[SERVER] [VER 1.40] Initializing Wiki AI Restoration (Multi-Wiki Mode)...');
 
 const User = require('./src/models/user');
 const Page = require('./src/models/page');
@@ -21,8 +21,14 @@ const Favorite = require('./src/models/favorite');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Trust proxy for Railway/Heroku
 app.set('trust proxy', 1);
 
+// Configure View Engine
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'src', 'views'));
+
+// Middlewares
 app.use(helmet({
     contentSecurityPolicy: {
         directives: {
@@ -53,26 +59,34 @@ app.use(session({
     cookie: { maxAge: 24 * 60 * 60 * 1000 }
 }));
 
-// Global Middleware (Single Wiki)
-app.use((req, res, next) => {
-    // Helper to keep templates happy (even in single wiki mode)
-    res.locals.wiki = { id: 1, slug: 'general', name: 'Wiki AI' };
-    res.locals.wikiUrl = (p) => p.startsWith('/') ? p : '/' + p;
+const wikiMiddleware = require('./src/middleware/wiki');
 
-    Page.getCategories((catErr, categories) => {
-        Activity.getRecent(10, (actErr, activity) => {
-            Topic.getAll((topErr, allTopics) => {
+// SHARED DATA MIDDLEWARE (Multi-Wiki Aware)
+const provideWikiData = (req, res, next) => {
+    const wikiId = req.wiki ? req.wiki.id : 1; // Default to ID 1 if not in wiki context
+
+    // Wiki URL Helper
+    res.locals.wikiUrl = (path) => {
+        const slug = (req.wiki && req.wiki.slug) || 'general';
+        const cleanPath = path.startsWith('/') ? path : '/' + path;
+        return `/w/${slug}${cleanPath}`;
+    };
+
+    Page.getCategories(wikiId, (catErr, categories) => {
+        Activity.getRecent(10, wikiId, (actErr, activity) => {
+            Topic.getAll(wikiId, (topErr, allTopics) => {
                 res.locals.allCategories = categories || [];
                 res.locals.recentActivity = activity || [];
                 res.locals.allTopics = allTopics || [];
+                res.locals.wiki = req.wiki || { id: 1, slug: 'general', name: 'Wiki General' };
 
                 if (req.session && req.session.userId) {
                     User.findById(req.session.userId, (err, user) => {
                         res.locals.currentUser = user || null;
-                        Topic.getFollowedByUser(req.session.userId, (fErr, followed) => {
-                            Topic.getFavoritesByUser(req.session.userId, (favErr, favorites) => {
+                        Topic.getFollowedByUser(wikiId, req.session.userId, (fErr, followed) => {
+                            Topic.getFavoritesByUser(wikiId, req.session.userId, (favErr, favorites) => {
                                 Favorite.getByUser(req.session.userId, (pageFavErr, favoritePages) => {
-                                    Page.getDraftsByAuthor(req.session.userId, (draftErr, drafts) => {
+                                    Page.getDraftsByAuthor(wikiId, req.session.userId, (draftErr, drafts) => {
                                         res.locals.userTopics = followed || [];
                                         res.locals.favoriteTopics = favorites || [];
                                         res.locals.favoritePages = favoritePages || [];
@@ -91,29 +105,59 @@ app.use((req, res, next) => {
             });
         });
     });
-});
+};
 
 // Routes
 const wikiRoutes = require('./src/routes/wiki');
 const authRoutes = require('./src/routes/auth');
+const adminRoutes = require('./src/routes/admin');
 
-app.use('/', authRoutes);
-app.use('/', wikiRoutes);
+// DIAGNOSTIC ROUTE
+app.get('/system/check', async (req, res) => {
+    try {
+        const result = await pool.query('SELECT NOW()');
+        const wikiCount = await pool.query('SELECT count(*) FROM wikis');
+        res.json({
+            status: 'UP',
+            version: '1.40',
+            db: 'CONNECTED',
+            time: result.rows[0].now,
+            wikis: wikiCount.rows[0].count
+        });
+    } catch (e) {
+        res.status(500).json({ status: 'ERROR', version: '1.40', db: 'DISCONNECTED', error: e.message });
+    }
+});
+
+// Root Redirect to Default Wiki
+app.get('/', (req, res) => {
+    const defaultWiki = process.env.DEFAULT_WIKI_SLUG || 'general';
+    return res.redirect(`/w/${defaultWiki}`);
+});
+
+app.use('/', provideWikiData, authRoutes);
+app.use('/admin', provideWikiData, adminRoutes);
+app.use('/w/:wiki_slug', wikiMiddleware, provideWikiData, wikiRoutes);
 
 // Error Handler
 app.use((err, req, res, next) => {
-    console.error('[SERVER ERROR]', err.stack);
+    console.error('[SERVER ERROR] [VER 1.40]', err.stack);
     const status = err.status || 500;
     res.status(status).render('error', {
-        message: process.env.NODE_ENV === 'production' ? 'Error interno.' : err.message,
+        message: process.env.NODE_ENV === 'production' ? 'Un error interno ha ocurrido.' : err.message,
         status: status,
-        wiki: { slug: 'general' }
+        wiki: res.locals.wiki || { slug: 'general' }
     });
 });
 
-// Start Server
+// START SERVER
 dbReady.then(() => {
     app.listen(PORT, () => {
-        console.log(`[SERVER] [VER 1.40] RESTORED (Single Wiki) on port ${PORT}`);
+        console.log(`[SERVER] [VER 1.40] RESTORED AND RUNNING on port ${PORT}`);
+    });
+}).catch(err => {
+    console.error('[SERVER] [VER 1.40] DB connection failed, starting in degraded mode.');
+    app.listen(PORT, () => {
+        console.log(`[SERVER] [VER 1.40] Running on port ${PORT} (DEGRADED)`);
     });
 });

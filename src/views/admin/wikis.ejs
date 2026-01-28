@@ -1,0 +1,59 @@
+<%- include('../partials/layout_start', { title: 'Gestión de Wikis' }) %>
+
+    <div class="admin-container" style="padding: 2rem; max-width: 1200px; margin: 0 auto;">
+        <header class="admin-header"
+            style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h1 style="font-size: 1.875rem; font-weight: 700; color: var(--text-main);">Gestión de Wikis</h1>
+                <p style="color: var(--text-muted);">Administra las diferentes instancias de wiki en la plataforma.</p>
+            </div>
+            <div style="display: flex; gap: 1rem;">
+                <button class="btn-primary" onclick="alert('Funcionalidad próximamente')">
+                    <i class="ph ph-plus"></i> Nueva Wiki
+                </button>
+                <a href="/admin" class="btn-secondary" style="font-size: 0.875rem;">
+                    <i class="ph ph-arrow-left"></i> Volver al Dashboard
+                </a>
+            </div>
+        </header>
+
+        <div class="wikis-grid"
+            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+            <% wikis.forEach(function(w) { %>
+                <div class="wiki-admin-card"
+                    style="background: white; border-radius: 12px; border: 1px solid var(--border-color); padding: 1.5rem; box-shadow: var(--shadow-sm); position: relative;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                        <div
+                            style="background: rgba(236, 72, 153, 0.1); color: var(--magenta); padding: 0.75rem; border-radius: 8px;">
+                            <i class="ph ph-globe" style="font-size: 1.5rem;"></i>
+                        </div>
+                        <div class="dropdown-container">
+                            <button class="action-icon-btn" onclick="alert('Opciones de wiki próximamente')">
+                                <i class="ph ph-dots-three-vertical"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <h3 style="font-size: 1.25rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.25rem;">
+                        <%= w.name %>
+                    </h3>
+                    <code
+                        style="font-size: 0.75rem; color: var(--magenta); background: rgba(236, 72, 153, 0.05); padding: 0.2rem 0.4rem; border-radius: 4px;">/w/<%= w.slug %></code>
+                    <p style="font-size: 0.875rem; color: var(--text-muted); margin-top: 1rem; line-height: 1.5;">
+                        <%= w.description || 'Sin descripción.' %>
+                    </p>
+                    <div
+                        style="margin-top: 1.5rem; display: flex; gap: 0.75rem; border-top: 1px solid var(--border-color); padding-top: 1rem;">
+                        <a href="/w/<%= w.slug %>" class="btn-text"
+                            style="font-size: 0.875rem; color: var(--primary-color); font-weight: 600; text-decoration: none;">Ver
+                            Wiki</a>
+                        <button class="btn-text"
+                            style="font-size: 0.875rem; color: var(--text-muted); font-weight: 500;"
+                            onclick="alert('Configuración próximamente')">Configuración</button>
+                    </div>
+                </div>
+                <% }); %>
+        </div>
+    </div>
+
+    <%- include('../partials/layout_end') %>

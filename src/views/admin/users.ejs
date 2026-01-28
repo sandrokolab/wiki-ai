@@ -1,0 +1,78 @@
+<%- include('../partials/layout_start', { title: 'Gestión de Usuarios' }) %>
+
+    <div class="admin-container" style="padding: 2rem; max-width: 1200px; margin: 0 auto;">
+        <header class="admin-header"
+            style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h1 style="font-size: 1.875rem; font-weight: 700; color: var(--text-main);">Gestión de Usuarios</h1>
+                <p style="color: var(--text-muted);">Administra los roles y el acceso de los usuarios registrados.</p>
+            </div>
+            <a href="/admin" class="btn-secondary" style="font-size: 0.875rem;">
+                <i class="ph ph-arrow-left"></i> Volver al Dashboard
+            </a>
+        </header>
+
+        <div class="admin-card"
+            style="background: white; border-radius: 12px; border: 1px solid var(--border-color); overflow: hidden; box-shadow: var(--shadow-sm);">
+            <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                <thead>
+                    <tr style="background: var(--bg-main); border-bottom: 1px solid var(--border-color);">
+                        <th style="padding: 1rem; font-weight: 600; color: var(--text-muted); font-size: 0.875rem;">
+                            Usuario</th>
+                        <th style="padding: 1rem; font-weight: 600; color: var(--text-muted); font-size: 0.875rem;">
+                            Email</th>
+                        <th style="padding: 1rem; font-weight: 600; color: var(--text-muted); font-size: 0.875rem;">Rol
+                        </th>
+                        <th style="padding: 1rem; font-weight: 600; color: var(--text-muted); font-size: 0.875rem;">
+                            Registrado</th>
+                        <th
+                            style="padding: 1rem; font-weight: 600; color: var(--text-muted); font-size: 0.875rem; text-align: right;">
+                            Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% users.forEach(function(user) { %>
+                        <tr style="border-bottom: 1px solid var(--border-color);">
+                            <td style="padding: 1rem;">
+                                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                    <div class="avatar-sm"
+                                        style="background: var(--bg-main); color: var(--primary-color); width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.875rem;">
+                                        <%= user.username.charAt(0).toUpperCase() %>
+                                    </div>
+                                    <span style="font-weight: 500; color: var(--text-main);">
+                                        <%= user.username %>
+                                    </span>
+                                </div>
+                            </td>
+                            <td style="padding: 1rem; font-size: 0.875rem; color: var(--text-muted);">
+                                <%= user.email %>
+                            </td>
+                            <td style="padding: 1rem;">
+                                <span
+                                    style="display: inline-block; padding: 0.25rem 0.5rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; <%= user.role === 'admin' ? 'background: rgba(99, 102, 241, 0.1); color: var(--primary-color);' : 'background: var(--bg-main); color: var(--text-muted);' %>">
+                                    <%= user.role.toUpperCase() %>
+                                </span>
+                            </td>
+                            <td style="padding: 1rem; font-size: 0.875rem; color: var(--text-muted);">
+                                <%= new Date(user.created_at).toLocaleDateString() %>
+                            </td>
+                            <td style="padding: 1rem; text-align: right;">
+                                <div style="display: flex; justify-content: flex-end; gap: 0.5rem;">
+                                    <button class="action-icon-btn" title="Editar Rol"
+                                        onclick="alert('Funcionalidad próximamente')">
+                                        <i class="ph ph-shield-check"></i>
+                                    </button>
+                                    <button class="action-icon-btn" style="color: #ef4444;" title="Suspender Usuario"
+                                        onclick="alert('Funcionalidad próximamente')">
+                                        <i class="ph ph-user-minus"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        <% }); %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <%- include('../partials/layout_end') %>

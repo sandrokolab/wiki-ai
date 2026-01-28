@@ -1,0 +1,92 @@
+<%- include('../partials/layout_start', { title: 'Gestión Global de Páginas' }) %>
+
+    <div class="admin-container" style="padding: 2rem; max-width: 1200px; margin: 0 auto;">
+        <header class="admin-header"
+            style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h1 style="font-size: 1.875rem; font-weight: 700; color: var(--text-main);">Gestión Global de Páginas
+                </h1>
+                <p style="color: var(--text-muted);">Administra y verifica el contenido de todas las wikis.</p>
+            </div>
+            <a href="/admin" class="btn-secondary" style="font-size: 0.875rem;">
+                <i class="ph ph-arrow-left"></i> Volver al Dashboard
+            </a>
+        </header>
+
+        <div class="admin-card"
+            style="background: white; border-radius: 12px; border: 1px solid var(--border-color); overflow: hidden; box-shadow: var(--shadow-sm);">
+            <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                <thead>
+                    <tr style="background: var(--bg-main); border-bottom: 1px solid var(--border-color);">
+                        <th style="padding: 1rem; font-weight: 600; color: var(--text-muted); font-size: 0.875rem;">
+                            Página</th>
+                        <th style="padding: 1rem; font-weight: 600; color: var(--text-muted); font-size: 0.875rem;">Wiki
+                        </th>
+                        <th style="padding: 1rem; font-weight: 600; color: var(--text-muted); font-size: 0.875rem;">
+                            Autor</th>
+                        <th style="padding: 1rem; font-weight: 600; color: var(--text-muted); font-size: 0.875rem;">
+                            Estado</th>
+                        <th style="padding: 1rem; font-weight: 600; color: var(--text-muted); font-size: 0.875rem;">
+                            Verificada</th>
+                        <th
+                            style="padding: 1rem; font-weight: 600; color: var(--text-muted); font-size: 0.875rem; text-align: right;">
+                            Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% pages.forEach(function(p) { %>
+                        <tr style="border-bottom: 1px solid var(--border-color);">
+                            <td style="padding: 1rem;">
+                                <div style="font-weight: 500; color: var(--text-main);">
+                                    <%= p.title %>
+                                </div>
+                                <div style="font-size: 0.75rem; color: var(--text-muted);">/wiki/<%= p.slug %>
+                                </div>
+                            </td>
+                            <td style="padding: 1rem;">
+                                <span style="font-size: 0.875rem; color: var(--magenta); font-weight: 600;">
+                                    <%= p.wiki_name %>
+                                </span>
+                            </td>
+                            <td style="padding: 1rem; font-size: 0.875rem; color: var(--text-muted);">
+                                <%= p.author_name || 'Anónimo' %>
+                            </td>
+                            <td style="padding: 1rem;">
+                                <span
+                                    style="display: inline-block; padding: 0.25rem 0.5rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; <%= p.status === 'published' ? 'background: rgba(16, 185, 129, 0.1); color: var(--success-color);' : 'background: var(--bg-main); color: var(--text-muted);' %>">
+                                    <%= p.status.toUpperCase() %>
+                                </span>
+                            </td>
+                            <td style="padding: 1rem; text-align: center;">
+                                <% if (p.is_verified) { %>
+                                    <i class="ph-fill ph-check-circle"
+                                        style="color: var(--primary-color); font-size: 1.25rem;"></i>
+                                    <% } else { %>
+                                        <i class="ph ph-circle"
+                                            style="color: var(--border-color); font-size: 1.25rem;"></i>
+                                        <% } %>
+                            </td>
+                            <td style="padding: 1rem; text-align: right;">
+                                <div style="display: flex; justify-content: flex-end; gap: 0.5rem;">
+                                    <a href="/w/<%= p.wiki_slug %>/wiki/<%= p.slug %>" target="_blank"
+                                        class="action-icon-btn" title="Ver Página">
+                                        <i class="ph ph-eye"></i>
+                                    </a>
+                                    <button class="action-icon-btn" title="Verificar/Anular"
+                                        onclick="alert('Funcionalidad próximamente')">
+                                        <i class="ph ph-shield-check"></i>
+                                    </button>
+                                    <button class="action-icon-btn" style="color: #ef4444;" title="Eliminar"
+                                        onclick="alert('Funcionalidad próximamente')">
+                                        <i class="ph ph-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        <% }); %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <%- include('../partials/layout_end') %>

@@ -2,118 +2,342 @@
 
     <article class="wiki-article">
         <nav class="breadcrumb" style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">
-            <a href="/" style="color: inherit; text-decoration: none;">Wiki AI</a>
+            <a href="<%= wikiUrl('/') %>" style="color: inherit; text-decoration: none;">Wiki AI</a>
             <i class="ph ph-caret-right" style="font-size: 0.7rem; margin: 0 0.5rem;"></i>
-            <% if (page.category) { %>
-                <a href="/categoria/<%= page.category %>" style="color: inherit; text-decoration: none;">
-                    <%= page.category %>
+            <% if (page.topic_name) { %>
+                <a href="<%= wikiUrl('/categoria/' + page.topic_name) %>"
+                    style="color: inherit; text-decoration: none;">
+                    <%= page.topic_name %>
                 </a>
-                <% } %>
-        </nav>
-
-        <div class="topic-indicator" style="margin-bottom: 0.5rem;">
-            <% if (page.category) { %>
-                <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 500;">
-                    Part of <a href="/categoria/<%= page.category %>"
-                        style="color: var(--primary-color); text-decoration: none; font-weight: 600;">
+                <% } else if (page.category) { %>
+                    <a href="<%= wikiUrl('/categoria/' + page.category) %>"
+                        style="color: inherit; text-decoration: none;">
                         <%= page.category %>
                     </a>
-                </span>
-                <% } %>
-        </div>
+                    <% } %>
+        </nav>
 
         <div class="article-header" style="margin-bottom: 2rem;">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 2rem;">
+            <div style="margin-bottom: 1rem;">
+                <% if (page.topic_name) { %>
+                    <a href="<%= wikiUrl('/categoria/' + page.topic_name) %>" class="topic-tag"
+                        style="background: <%= page.topic_color ? page.topic_color + '15' : 'rgba(99, 102, 241, 0.1)' %>; color: <%= page.topic_color || 'var(--primary-color)' %>;">
+                        <i class="<%= page.topic_icon || 'ph ph-hash' %>"></i>
+                        <%= page.topic_name %>
+                    </a>
+                    <% } %>
+            </div>
+
+            <div
+                style="display: flex; justify-content: space-between; align-items: flex-start; gap: 2rem; margin-bottom: 1.5rem;">
                 <div style="display: flex; align-items: center; gap: 0.75rem;">
-                    <div class="page-status-icons"
-                        style="display: flex; gap: 0.5rem; color: var(--text-muted); font-size: 1.5rem;">
-                        <% if (page.status==='draft' ) { %>
-                            <i class="ph ph-file-dashed draft-icon" title="Draft"></i>
-                            <% } else { %>
-                                <i class="ph ph-file-text" title="Published"></i>
-                                <% } %>
-                                    <% if (page.is_verified) { %>
-                                        <i class="ph ph-seal-check verified-icon" title="Verified"></i>
-                                        <% } %>
-                    </div>
-                    <h1 style="margin: 0; border: none; font-size: 2.5rem;">
+                    <h1 style="margin: 0; border: none; font-size: 2.75rem; font-weight: 800; letter-spacing: -0.02em;">
                         <%= page.title %>
                     </h1>
-                    <% if (page.status==='draft' && currentUser && currentUser.id===page.author_id) { %>
-                        <button class="btn-publish" onclick="publishPage('<%= page.slug %>')">
-                            <i class="ph ph-rocket-launch"></i>
-                            Publish
-                        </button>
-                        <% } %>
-                </div>
-                <div class="article-actions" style="display: flex; gap: 0.75rem; align-items: center;">
-                    <% if (currentUser) { %>
-                        <div class="dropdown-container">
-                            <button class="btn-dots" id="pageMenuTrigger">
-                                <i class="ph ph-dots-three"></i>
-                            </button>
-                            <div class="slab-dropdown" id="pageMenu">
-                                <a href="/wiki/<%= page.slug %>/edit" class="slab-menu-item">
-                                    <i class="ph ph-pencil-simple"></i> Edit
-                                </a>
-                                <button class="slab-menu-item" onclick="toggleFavorite('<%= page.slug %>')">
-                                    <i
-                                        class="ph <%= page.isFavorite ? 'ph-star-fill' : 'ph-star' %> <%= page.isFavorite ? 'active-star' : '' %>"></i>
-                                    <%= page.isFavorite ? 'Remove from favorites' : 'Add to favorites' %>
-                                </button>
-                                <button onclick="copyToClipboard('<%= page.slug %>')" class="slab-menu-item">
-                                    <i class="ph ph-link"></i> Copy link
-                                </button>
-                                <a href="/wiki/<%= page.slug %>/history" class="slab-menu-item">
-                                    <i class="ph ph-clock-counter-clockwise"></i> History
-                                </a>
-                                <button class="slab-menu-item" onclick="openMoveTopicModal('<%= page.slug %>')">
-                                    <i class="ph ph-folder-notch-open"></i> Move to topic
-                                </button>
-                                <div class="slab-menu-divider"></div>
-                                <form action="/wiki/<%= page.slug %>/delete" method="POST"
-                                    onsubmit="return confirm('Delete this page permanently?')">
-                                    <button type="submit" class="slab-menu-item danger">
-                                        <i class="ph ph-trash"></i> Delete
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
+                    <% if (page.is_verified) { %>
+                        <i class="ph ph-seal-check verified-icon" title="Verified"
+                            style="color: var(--primary-color); font-size: 1.5rem;"></i>
                         <% } %>
                 </div>
             </div>
 
+            <!-- New Prominent Action Bar -->
+            <div class="article-actions-bar">
+                <% if (currentUser) { %>
+                    <a href="<%= wikiUrl('/wiki/' + page.slug + '/edit') %>" class="action-btn" title="Edit Page">
+                        <i class="ph ph-pencil-simple"></i>
+                        Edit
+                    </a>
+
+                    <button onclick="toggleFavorite('<%= page.slug %>')"
+                        class="action-btn <%= page.isFavorite ? 'active' : '' %>" id="favBtnMain">
+                        <i class="ph <%= page.isFavorite ? 'ph-star-fill' : 'ph-star' %>"></i>
+                        <%= page.isFavorite ? 'Favorito' : 'Add Favoritos' %>
+                    </button>
+
+
+
+                    <button onclick="copyToClipboard('<%= page.slug %>')" class="action-btn" title="Share Page">
+                        <i class="ph ph-share-network"></i>
+                        Share
+                    </button>
+
+                    <div class="dropdown-container" style="margin-left: auto;">
+                        <button class="btn-dots" id="pageMenuTrigger" style="background: #f1f5f9;">
+                            <i class="ph ph-dots-three"></i>
+                        </button>
+                        <div class="slab-dropdown" id="pageMenu">
+                            <a href="<%= wikiUrl('/wiki/' + page.slug + '/history') %>" class="slab-menu-item">
+                                <i class="ph ph-clock-counter-clockwise"></i> History
+                            </a>
+                            <button class="slab-menu-item" onclick="openMoveTopicModal('<%= page.slug %>')">
+                                <i class="ph ph-folder-notch-open"></i> Move to topic
+                            </button>
+                            <% if (page.status==='draft' && currentUser.id===page.author_id) { %>
+                                <button class="slab-menu-item" onclick="publishPage('<%= page.slug %>')"
+                                    style="color: var(--primary-color);">
+                                    <i class="ph ph-rocket-launch" style="color: var(--primary-color);"></i> Publish
+                                </button>
+                                <% } %>
+                                    <div class="slab-menu-divider"></div>
+                                    <form action="<%= wikiUrl('/wiki/' + page.slug + '/delete') %>" method="POST"
+                                        onsubmit="return confirm('Delete this page permanently?')">
+                                        <button type="submit" class="slab-menu-item danger">
+                                            <i class="ph ph-trash"></i> Delete
+                                        </button>
+                                    </form>
+                        </div>
+                    </div>
+                    <% } else { %>
+                        <button onclick="copyToClipboard('<%= page.slug %>')" class="action-btn" title="Share Page">
+                            <i class="ph ph-share-network"></i>
+                            Share
+                        </button>
+                        <% } %>
+            </div>
+
             <div class="meta-info"
-                style="display: flex; align-items: center; gap: 1rem; margin-top: 1rem; font-size: 0.85rem; color: var(--text-muted);">
+                style="display: flex; align-items: center; gap: 1.5rem; font-size: 0.85rem; color: var(--text-muted); border-top: 1px solid var(--border-color); padding-top: 1rem;">
                 <div style="display: flex; align-items: center; gap: 0.4rem;">
                     <i class="ph ph-clock"></i>
                     Updated on <%= new Date(page.updated_at || page.created_at).toLocaleDateString() %>
                 </div>
                 <% if (page.category) { %>
-                    <div style="display: flex; align-items: center; gap: 0.4rem;">
+                    <div style="display: flex; align-items: center; gap: 0.6rem;">
                         <i class="ph ph-tag"></i>
-                        <a href="/categoria/<%= page.category %>"
-                            style="color: var(--primary-color); text-decoration: none; font-weight: 500;">
-                            <%= page.category %>
-                        </a>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <% page.category.split(',').forEach(function(cat) { let tag=cat.trim(); if (tag) { %>
+                                <a href="<%= wikiUrl('/categoria/' + tag) %>" class="label-pill">
+                                    <%= tag %>
+                                </a>
+                                <% } }); %>
+                        </div>
                     </div>
                     <% } %>
             </div>
         </div>
 
-        <div class="wiki-content" style="line-height: 1.8; color: #2c3e50; font-size: 1.1rem;">
+        <div class="wiki-content" style="line-height: 1.8; color: #2c3e50; font-size: 1.1rem; margin-bottom: 5rem;">
             <%- page.htmlContent %>
         </div>
 
+        <!-- NEW BOTTOM SECTION: COMMENTS & ACTIVITY -->
+        <section class="comments-activity-section" id="comments-section"
+            style="border-top: 1px solid var(--border-color); padding-top: 2.5rem; margin-top: 3rem;">
+            <div class="tabs-header"
+                style="display: flex; gap: 2rem; border-bottom: 2px solid #f1f5f9; margin-bottom: 2rem; position: relative;">
+                <button class="tab-btn active" data-tab="comments-tab"
+                    style="padding: 0.75rem 0.25rem; font-weight: 700; color: var(--text-main); background: none; border: none; cursor: pointer; border-bottom: 3px solid var(--primary-color); margin-bottom: -2px; font-size: 0.95rem;">
+                    Comments
+                </button>
+                <button class="tab-btn" data-tab="activity-tab"
+                    style="padding: 0.75rem 0.25rem; font-weight: 600; color: var(--text-muted); background: none; border: none; cursor: pointer; font-size: 0.95rem;">
+                    Activity
+                </button>
+                <div style="margin-left: auto; display: flex; align-items: center; color: var(--primary-color);">
+                    <i class="ph ph-bell" style="font-size: 1.25rem;"></i>
+                </div>
+            </div>
+
+            <div class="tab-content active" id="comments-tab">
+                <div class="comments-list" id="commentsList"
+                    style="display: flex; flex-direction: column; gap: 1.5rem; margin-bottom: 2.5rem;">
+                    <% if (page.comments && page.comments.length> 0) { %>
+                        <% page.comments.forEach(function(comment) { %>
+                            <div class="comment-item" style="display: flex; gap: 1rem;">
+                                <div class="avatar"
+                                    style="width: 38px; height: 38px; font-size: 0.9rem; flex-shrink: 0;">
+                                    <%= comment.username.charAt(0).toUpperCase() %>
+                                </div>
+                                <div class="comment-content-wrapper" style="flex: 1;">
+                                    <div
+                                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
+                                        <span style="font-weight: 700; font-size: 0.9rem; color: var(--text-main);">
+                                            <%= comment.username %>
+                                        </span>
+                                        <span style="font-size: 0.75rem; color: var(--text-muted);">
+                                            <%= new Date(comment.created_at).toLocaleString() %>
+                                        </span>
+                                    </div>
+                                    <div style="font-size: 0.95rem; color: #334155; line-height: 1.5;">
+                                        <%= comment.content %>
+                                    </div>
+                                    <% if (comment.attachment_url) { %>
+                                        <div class="comment-attachment" style="margin-top: 0.75rem;">
+                                            <a href="<%= comment.attachment_url %>" target="_blank"
+                                                style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.75rem; background: #f8fafc; border: 1px solid var(--border-color); border-radius: 8px; font-size: 0.85rem; color: var(--primary-color); text-decoration: none;">
+                                                <i class="ph ph-file"></i>
+                                                <%= comment.attachment_name %>
+                                            </a>
+                                        </div>
+                                        <% } %>
+
+                                            <!-- Reactions UI -->
+                                            <div class="comment-reactions"
+                                                style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem;">
+                                                <% const reactions=comment.reactions || {}; const
+                                                    userReaction=page.userReactions && page.userReactions.find(r=>
+                                                    r.comment_id === comment.id);
+                                                    const availableReactions = [
+                                                    { type: 'like', emoji: '👍' },
+                                                    { type: 'love', emoji: '❤️' },
+                                                    { type: 'haha', emoji: '😂' },
+                                                    { type: 'wow', emoji: '😮' },
+                                                    { type: 'sad', emoji: '😢' },
+                                                    { type: 'angry', emoji: '😠' }
+                                                    ];
+                                                    %>
+
+                                                    <% availableReactions.forEach(r=> {
+                                                        const count = reactions[r.type] || 0;
+                                                        if (count > 0 || (currentUser && userReaction &&
+                                                        userReaction.reaction_type === r.type)) {
+                                                        %>
+                                                        <button
+                                                            onclick="toggleReaction('<%= comment.id %>', '<%= r.type %>')"
+                                                            class="reaction-pill <%= (userReaction && userReaction.reaction_type === r.type) ? 'active' : '' %>"
+                                                            style="display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.25rem 0.5rem; background: #f1f5f9; border: 1px solid transparent; border-radius: 20px; font-size: 0.8rem; cursor: pointer; transition: all 0.2s; <%= (userReaction && userReaction.reaction_type === r.type) ? 'border-color: var(--primary-color); background: #eef2ff; color: var(--primary-color);' : 'color: var(--text-muted);' %>">
+                                                            <span>
+                                                                <%= r.emoji %>
+                                                            </span>
+                                                            <% if (count> 0) { %>
+                                                                <span style="font-weight: 600;">
+                                                                    <%= count %>
+                                                                </span>
+                                                                <% } %>
+                                                        </button>
+                                                        <% } }); %>
+
+                                                            <% if (currentUser) { %>
+                                                                <div class="add-reaction-container"
+                                                                    style="position: relative;">
+                                                                    <button class="add-reaction-btn"
+                                                                        onclick="toggleReactionSelector('<%= comment.id %>')"
+                                                                        style="display: flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%; border: 1px dashed var(--border-color); background: none; color: var(--text-muted); cursor: pointer; font-size: 1rem;">
+                                                                        <i class="ph ph-plus"></i>
+                                                                    </button>
+                                                                    <div id="reactionSelector-<%= comment.id %>"
+                                                                        class="reaction-selector"
+                                                                        style="display: none; position: absolute; bottom: 100%; left: 0; background: white; border: 1px solid var(--border-color); border-radius: 24px; padding: 0.25rem 0.5rem; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 10; display: flex; gap: 0.25rem;">
+                                                                        <% availableReactions.forEach(r=> { %>
+                                                                            <span
+                                                                                onclick="toggleReaction('<%= comment.id %>', '<%= r.type %>')"
+                                                                                style="cursor: pointer; font-size: 1.25rem; padding: 0.25rem; transition: transform 0.2s;"
+                                                                                onmouseover="this.style.transform='scale(1.3)'"
+                                                                                onmouseout="this.style.transform='scale(1)'">
+                                                                                <%= r.emoji %>
+                                                                            </span>
+                                                                            <% }) %>
+                                                                    </div>
+                                                                </div>
+                                                                <% } %>
+                                            </div>
+                                </div>
+                            </div>
+                            <% }); %>
+                                <% } else { %>
+                                    <p style="color: var(--text-muted); text-align: center; padding: 2rem;">No comments
+                                        yet. Start the conversation!</p>
+                                    <% } %>
+                </div>
+
+                <% if (currentUser) { %>
+                    <div class="comment-input-area"
+                        style="display: flex; gap: 1rem; align-items: flex-start; background: #fff; border: 1px solid var(--border-color); padding: 1rem; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                        <div class="avatar"
+                            style="width: 38px; height: 38px; font-size: 0.9rem; flex-shrink: 0; background: var(--primary-color); color: white;">
+                            <%= currentUser.username.charAt(0).toUpperCase() %>
+                        </div>
+                        <div style="flex: 1; display: flex; flex-direction: column; gap: 0.75rem;">
+                            <div style="position: relative;">
+                                <textarea id="commentTextArea" placeholder="Comment or @ mention someone"
+                                    style="width: 100%; border: none; outline: none; resize: none; min-height: 24px; font-family: inherit; font-size: 0.95rem;"
+                                    rows="1"></textarea>
+                                <div id="mentionsDropdown"
+                                    style="display: none; position: absolute; bottom: 100%; left: 0; background: white; border: 1px solid var(--border-color); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 100; width: 200px; max-height: 150px; overflow-y: auto;">
+                                    <!-- Suggestions will be populated here -->
+                                </div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div
+                                    style="display: flex; gap: 0.75rem; color: var(--text-muted); font-size: 1.25rem; position: relative;">
+                                    <i class="ph ph-at" style="cursor: pointer;"
+                                        onclick="document.getElementById('commentTextArea').value += '@'; document.getElementById('commentTextArea').focus();"
+                                        title="Mention someone"></i>
+
+                                    <div class="emoji-picker-container" style="position: relative;">
+                                        <i class="ph ph-smiley" style="cursor: pointer;" onclick="toggleEmojiPicker()"
+                                            title="Add emoji"></i>
+                                        <div id="emojiPicker"
+                                            style="display: none; position: absolute; bottom: 30px; left: 0; background: white; border: 1px solid var(--border-color); border-radius: 8px; padding: 0.5rem; grid-template-columns: repeat(5, 1fr); gap: 0.25rem; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.1); width: 150px;">
+                                            <% ['😀','😂','😍','👍','🙌','✨','🔥','💡','🚀','💬'].forEach(emoji=> { %>
+                                                <span onclick="addEmoji('<%= emoji %>')"
+                                                    style="cursor: pointer; font-size: 1.25rem; padding: 0.25rem; text-align: center;">
+                                                    <%= emoji %>
+                                                </span>
+                                                <% }) %>
+                                        </div>
+                                    </div>
+
+                                    <i class="ph ph-paperclip" style="cursor: pointer;"
+                                        onclick="document.getElementById('fileInput').click()" title="Attach file"></i>
+                                    <input type="file" id="fileInput" style="display: none;"
+                                        onchange="handleFileSelect(this)">
+                                </div>
+                                <div id="attachmentPreview"
+                                    style="display: none; font-size: 0.8rem; color: var(--text-muted); align-items: center; gap: 0.5rem; background: #f1f5f9; padding: 0.25rem 0.5rem; border-radius: 4px;">
+                                    <i class="ph ph-file"></i>
+                                    <span id="fileName"></span>
+                                    <i class="ph ph-x" style="cursor: pointer;" onclick="clearAttachment()"></i>
+                                </div>
+                                <button onclick="postComment('<%= page.slug %>')" class="btn-primary"
+                                    style="padding: 0.5rem 1.25rem; background: var(--primary-color); color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer;">
+                                    Send
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <% } %>
+            </div>
+
+            <div class="tab-content" id="activity-tab" style="display: none;">
+                <div class="activity-feed">
+                    <% if (page.activities && page.activities.length> 0) { %>
+                        <% page.activities.forEach(function(act) { %>
+                            <div class="activity-item" style="border: none; padding: 0.75rem 0; margin: 0;">
+                                <div class="act-avatar" style="width: 28px; height: 28px; font-size: 0.7rem;">
+                                    <%= act.username.charAt(0).toUpperCase() %>
+                                </div>
+                                <div class="act-content">
+                                    <p class="act-text" style="font-size: 0.85rem;">
+                                        <strong>
+                                            <%= act.username %>
+                                        </strong>
+                                        <%= act.action_type %>
+                                            <span class="act-time" style="font-size: 0.75rem;">
+                                                <%= new Date(act.created_at).toLocaleDateString() %>
+                                            </span>
+                                    </p>
+                                </div>
+                            </div>
+                            <% }); %>
+                                <% } else { %>
+                                    <p style="color: var(--text-muted); text-align: center; padding: 2rem;">No recent
+                                        activity.</p>
+                                    <% } %>
+                </div>
+            </div>
+        </section>
+
         <% if (page.backlinks && page.backlinks.length> 0) { %>
-            <section class="backlinks-section"
+            <section class="backlinks-section" id="backlinks-area"
                 style="margin-top: 5rem; padding-top: 2rem; border-top: 1px solid var(--border-color);">
                 <h3
                     style="font-size: 0.9rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem;">
                     Pages that link here</h3>
                 <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
                     <% page.backlinks.forEach(function(link) { %>
-                        <a href="/wiki/<%= link.slug %>" class="backlink-tag"
+                        <a href="<%= wikiUrl('/wiki/' + link.slug) %>" class="backlink-tag"
                             style="padding: 0.4rem 0.8rem; background: #f8f9fa; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.85rem; color: var(--primary-color); text-decoration: none; font-weight: 500;">
                             <%= link.title %>
                         </a>
@@ -121,6 +345,206 @@
                 </div>
             </section>
             <% } %>
+
+                <script>
+                    // Tab switching logic
+                    document.querySelectorAll('.tab-btn').forEach(btn => {
+                        btn.addEventListener('click', () => {
+                            // Update buttons
+                            document.querySelectorAll('.tab-btn').forEach(b => {
+                                b.classList.remove('active');
+                                b.style.fontWeight = '600';
+                                b.style.color = 'var(--text-muted)';
+                                b.style.borderBottom = 'none';
+                            });
+                            btn.classList.add('active');
+                            btn.style.fontWeight = '700';
+                            btn.style.color = 'var(--text-main)';
+                            btn.style.borderBottom = '3px solid var(--primary-color)';
+
+                            // Update content
+                            document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+                            document.getElementById(btn.dataset.tab).style.display = 'block';
+                        });
+                    });
+
+                    // Post comment logic
+                    async function postComment(slug) {
+                        const textArea = document.getElementById('commentTextArea');
+                        const content = textArea.value.trim();
+                        const fileInput = document.getElementById('fileInput');
+
+                        if (!content && !fileInput.files[0]) return;
+
+                        const btn = event.currentTarget;
+                        const originalText = btn.textContent;
+                        btn.disabled = true;
+                        btn.textContent = 'Sending...';
+
+                        const formData = new FormData();
+                        formData.append('content', content);
+                        if (fileInput.files[0]) {
+                            formData.append('attachment', fileInput.files[0]);
+                        }
+
+                        try {
+                            const response = await fetch(`<%= wikiUrl("/wiki") %>/${slug}/comment`, {
+                                method: 'POST',
+                                body: formData
+                            });
+
+                            const result = await response.json();
+                            if (result.success) {
+                                textArea.value = '';
+                                if (window.clearAttachment) clearAttachment();
+                                location.reload();
+                            } else {
+                                alert(result.error || 'Failed to post comment');
+                            }
+                        } catch (err) {
+                            console.error(err);
+                            alert('An error occurred');
+                        } finally {
+                            btn.disabled = false;
+                            btn.textContent = originalText;
+                        }
+                    }
+
+                    // Emoji logic
+                    function toggleEmojiPicker() {
+                        const picker = document.getElementById('emojiPicker');
+                        picker.style.display = picker.style.display === 'none' ? 'grid' : 'none';
+                    }
+                    function addEmoji(emoji) {
+                        const textArea = document.getElementById('commentTextArea');
+                        textArea.value += emoji;
+                        toggleEmojiPicker();
+                        textArea.focus();
+                    }
+
+                    // Attachment logic
+                    function handleFileSelect(input) {
+                        const preview = document.getElementById('attachmentPreview');
+                        const nameSpan = document.getElementById('fileName');
+                        if (input.files && input.files[0]) {
+                            nameSpan.textContent = input.files[0].name;
+                            preview.style.display = 'flex';
+                        }
+                    }
+                    function clearAttachment() {
+                        const fileInput = document.getElementById('fileInput');
+                        const preview = document.getElementById('attachmentPreview');
+                        fileInput.value = '';
+                        preview.style.display = 'none';
+                    }
+
+                    // Auto-expand textarea
+                    const tx = document.getElementById('commentTextArea');
+                    if (tx) {
+                        tx.addEventListener('input', OnInput, false);
+
+                        // Mention detection logic
+                        tx.addEventListener('keyup', async (e) => {
+                            const content = tx.value;
+                            const cursorPosition = tx.selectionStart;
+                            const textBeforeCursor = content.substring(0, cursorPosition);
+                            const lastAtSymbol = textBeforeCursor.lastIndexOf('@');
+
+                            if (lastAtSymbol !== -1 && (lastAtSymbol === 0 || textBeforeCursor[lastAtSymbol - 1] === ' ')) {
+                                const query = textBeforeCursor.substring(lastAtSymbol + 1);
+                                if (query.length >= 1) {
+                                    try {
+                                        const response = await fetch(`<%= wikiUrl("/api/users/search") %>?q=${query}`);
+                                        const users = await response.json();
+                                        showMentionsDropdown(users, lastAtSymbol);
+                                    } catch (err) {
+                                        console.error('Failed to search users', err);
+                                    }
+                                } else {
+                                    hideMentionsDropdown();
+                                }
+                            } else {
+                                hideMentionsDropdown();
+                            }
+                        });
+                    }
+
+                    function showMentionsDropdown(users, atPos) {
+                        const dropdown = document.getElementById('mentionsDropdown');
+                        if (users.length === 0) {
+                            dropdown.style.display = 'none';
+                            return;
+                        }
+
+                        dropdown.innerHTML = users.map(user => `
+                            <div class="mention-item" style="padding: 0.75rem 1rem; cursor: pointer; border-bottom: 1px solid #f1f5f9; font-size: 0.85rem;" onclick="selectMention('${user.username}', ${atPos})">
+                                <strong>@${user.username}</strong>
+                            </div>
+                        `).join('');
+                        dropdown.style.display = 'block';
+                    }
+
+                    function hideMentionsDropdown() {
+                        const dropdown = document.getElementById('mentionsDropdown');
+                        if (dropdown) dropdown.style.display = 'none';
+                    }
+
+                    function selectMention(username, atPos) {
+                        const tx = document.getElementById('commentTextArea');
+                        const content = tx.value;
+                        const cursorPosition = tx.selectionStart;
+                        const textBeforeAt = content.substring(0, atPos);
+                        const textAfterCursor = content.substring(cursorPosition);
+
+                        tx.value = textBeforeAt + '@' + username + ' ' + textAfterCursor;
+                        hideMentionsDropdown();
+                        tx.focus();
+                        tx.dispatchEvent(new Event('input')); // Trigger resize
+                    }
+
+                    function OnInput() {
+                        this.style.height = 'auto';
+                        this.style.height = (this.scrollHeight) + 'px';
+                    }
+
+                    // Reaction Logic
+                    function toggleReactionSelector(commentId) {
+                        const selector = document.getElementById(`reactionSelector-${commentId}`);
+                        const isVisible = selector.style.display === 'flex';
+
+                        // Close all other selectors first
+                        document.querySelectorAll('.reaction-selector').forEach(s => s.style.display = 'none');
+
+                        selector.style.display = isVisible ? 'none' : 'flex';
+                        if (!isVisible) {
+                            // Close when clicking outside
+                            const closeHandler = (e) => {
+                                if (!selector.contains(e.target) && !e.target.closest('.add-reaction-btn')) {
+                                    selector.style.display = 'none';
+                                    document.removeEventListener('click', closeHandler);
+                                }
+                            };
+                            setTimeout(() => document.addEventListener('click', closeHandler), 10);
+                        }
+                    }
+
+                    async function toggleReaction(commentId, reactionType) {
+                        try {
+                            const response = await fetch(`<%= wikiUrl("/api/comments") %>/${commentId}/react`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ reactionType })
+                            });
+                            const result = await response.json();
+                            if (result.success) {
+                                location.reload();
+                            }
+                        } catch (err) {
+                            console.error('Reaction failed:', err);
+                        }
+                    }
+
+                </script>
     </article>
 
     <%- include('partials/layout_end') %>

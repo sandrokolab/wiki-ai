@@ -6,13 +6,29 @@ const User = require('../models/user');
 const Topic = require('../models/topic');
 const Activity = require('../models/activity');
 const Favorite = require('../models/favorite');
+const Comment = require('../models/comment');
+const Notification = require('../models/notification');
+const Reaction = require('../models/reaction');
 const isAuthenticated = require('../middleware/auth');
 const marked = require('marked');
 const diff = require('diff');
 const xss = require('xss');
+const multer = require('multer');
+const path = require('path');
+
+// Multer configuration for comment attachments
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, 'src/public/uploads/comments');
+    },
+    filename: (req, file, cb) => {
+        cb(null, Date.now() + path.extname(file.originalname));
+    }
+});
+const upload = multer({ storage: storage });
 
 // Helper to replace [[WikiLinks]] with HTML anchor tags
-async function processWikiLinks(content) {
+async function processWikiLinks(content, wikiId, wikiSlug) {
     const regex = /\[\[(.*?)\]\]/g;
     const matches = [...content.matchAll(regex)];
     let processedContent = content;
@@ -21,30 +37,34 @@ async function processWikiLinks(content) {
         const fullMatch = match[0];
         const pageTitle = match[1];
 
-        // Find if page exists by title
+        // Find if page exists by title within the current wiki
         const page = await new Promise((resolve) => {
-            Page.getByTitle(pageTitle, (err, row) => resolve(row));
+            Page.getByTitle(wikiId, pageTitle, (err, row) => resolve(row));
         });
 
         if (page) {
             processedContent = processedContent.replace(
                 fullMatch,
-                `<a href="/wiki/${page.slug}" class="wiki-link-exists">${pageTitle}</a>`
+                `<a href="/w/${wikiSlug}/wiki/${page.slug}" class="wiki-link-exists">${pageTitle}</a>`
             );
         } else {
             const encodedTitle = encodeURIComponent(pageTitle);
             processedContent = processedContent.replace(
                 fullMatch,
-                `<a href="/create?title=${encodedTitle}" class="wiki-link-new">${pageTitle}</a>`
+                `<a href="/w/${wikiSlug}/create?title=${encodedTitle}" class="wiki-link-new">${pageTitle}</a>`
             );
         }
     }
     return processedContent;
 }
 
+
 // Home route - List all pages
 router.get('/', (req, res) => {
-    Page.getAll((err, pages) => {
+    console.log('DEBUG: req.app.get("view engine"):', req.app.get('view engine'));
+    console.log('DEBUG: req.app.get("views"):', req.app.get('views'));
+
+    Page.getAll(req.wiki.id, (err, pages) => {
         // Handle error gracefully for UI testing/resilience
         res.render('index', {
             pages: pages || [],
@@ -56,9 +76,9 @@ router.get('/', (req, res) => {
 // Search route
 router.get('/search', (req, res) => {
     const query = req.query.q;
-    if (!query) return res.redirect('/');
+    if (!query) return res.redirect(`/w/${req.wiki.slug}`);
 
-    Page.search(query, (err, results) => {
+    Page.search(req.wiki.id, query, {}, (err, results) => {
         if (err) return res.status(500).send('Search error');
         res.render('search', { query, results });
     });
@@ -66,7 +86,7 @@ router.get('/search', (req, res) => {
 
 // Alphabetical Index
 router.get('/indice', (req, res) => {
-    Page.getAlphabeticalIndex((err, pages) => {
+    Page.getAlphabeticalIndex(req.wiki.id, (err, pages) => {
         if (err) return res.status(500).send('Error');
         res.render('index_list', { pages });
     });
@@ -74,8 +94,8 @@ router.get('/indice', (req, res) => {
 
 // List all topics and categories (Content Map)
 router.get('/categorias', (req, res) => {
-    Topic.getAll((tErr, topics) => {
-        Page.getCategories((cErr, categories) => {
+    Topic.getAll(req.wiki.id, (tErr, topics) => {
+        Page.getCategories(req.wiki.id, (cErr, categories) => {
             res.render('categories', {
                 topics: topics || [],
                 allCategories: categories || []
@@ -87,7 +107,7 @@ router.get('/categorias', (req, res) => {
 // List pages in a category
 router.get('/categoria/:name', (req, res) => {
     const category = req.params.name;
-    Page.getByCategory(category, (err, pages) => {
+    Page.getByCategory(req.wiki.id, category, (err, pages) => {
         if (err) return res.status(500).send('Error');
         res.render('category_pages', { category, pages });
     });
@@ -113,23 +133,19 @@ router.post('/create', isAuthenticated, (req, res) => {
     content = xss(content);
     category = xss(category);
 
-    Page.create(title, slug, content, userId, category, topic_id || null, 'draft', allowComments, (err, id) => {
+    Page.create(req.wiki.id, title, slug, content, userId, category, topic_id || null, 'draft', allowComments, (err, id) => {
         if (err) {
             console.error(err);
             return res.status(500).send('Error creating page');
         }
-        // Don't log to activity yet for drafts? 
-        // User asked: "Drafts no aparecen en feeds"
-        // But maybe we log "created a draft"? 
-        // Let's stick to "published" logging in the publish route.
-        res.redirect(`/wiki/${slug}`);
+        res.redirect(`/w/${req.wiki.slug}/wiki/${slug}`);
     });
 });
 
 // View page route
 router.get('/wiki/:slug', (req, res) => {
     const slug = req.params.slug;
-    Page.getBySlug(slug, (err, page) => {
+    Page.getBySlug(req.wiki.id, slug, (err, page) => {
         if (err) return res.status(500).send('Database error');
         if (!page) return res.status(404).send('Page not found');
 
@@ -139,11 +155,11 @@ router.get('/wiki/:slug', (req, res) => {
         // Handle async marked.parse or simple string
         const handleHtml = async (html) => {
             // Process [[WikiLinks]]
-            const contentWithLinks = await processWikiLinks(html);
+            const contentWithLinks = await processWikiLinks(html, req.wiki.id, req.wiki.slug);
             page.htmlContent = contentWithLinks;
 
             // Fetch Backlinks
-            Page.getBacklinks(page.title, (backErr, backlinks) => {
+            Page.getBacklinks(req.wiki.id, page.title, (backErr, backlinks) => {
                 page.backlinks = backlinks || [];
 
                 // Update Recently Viewed in Session
@@ -152,11 +168,12 @@ router.get('/wiki/:slug', (req, res) => {
                     title: page.title,
                     slug: page.slug,
                     category: page.category,
+                    wikiSlug: req.wiki.slug,
                     timestamp: new Date()
                 };
 
                 // Remove if already exists to move to top, then unshift and slice
-                req.session.viewedPages = req.session.viewedPages.filter(p => p.slug !== page.slug);
+                req.session.viewedPages = req.session.viewedPages.filter(p => !(p.slug === page.slug && p.wikiSlug === req.wiki.slug));
                 req.session.viewedPages.unshift(currentPage);
                 req.session.viewedPages = req.session.viewedPages.slice(0, 5); // Keep last 5
 
@@ -174,7 +191,27 @@ router.get('/wiki/:slug', (req, res) => {
                 };
 
                 checkFavorite(() => {
-                    res.render('page', { page });
+                    // Fetch Comments
+                    Comment.getByPageId(page.id, (commErr, comments) => {
+                        page.comments = comments || [];
+
+                        // Fetch page-specific activity
+                        Activity.getRecent(50, req.wiki.id, (actErr, allAct) => {
+                            // Filter activity for this page
+                            page.activities = (allAct || []).filter(a => a.page_id === page.id);
+
+                            // Fetch user reactions if logged in
+                            if (req.session.userId) {
+                                Reaction.getUserReactionsOnPage(page.id, req.session.userId, (reacErr, userReactions) => {
+                                    page.userReactions = userReactions || [];
+                                    res.render('page', { page });
+                                });
+                            } else {
+                                page.userReactions = [];
+                                res.render('page', { page });
+                            }
+                        });
+                    });
                 });
             });
         };
@@ -187,10 +224,11 @@ router.get('/wiki/:slug', (req, res) => {
     });
 });
 
+
 // Edit page route (form)
 router.get('/wiki/:slug/edit', isAuthenticated, (req, res) => {
     const slug = req.params.slug;
-    Page.getBySlug(slug, (err, page) => {
+    Page.getBySlug(req.wiki.id, slug, (err, page) => {
         if (err) return res.status(500).send('Database error');
         if (!page) return res.status(404).send('Page not found');
         res.render('edit', {
@@ -213,21 +251,21 @@ router.post('/wiki/:slug/edit', isAuthenticated, (req, res) => {
     category = xss(category);
     change_summary = xss(change_summary);
 
-    Page.getBySlug(oldSlug, (err, page) => {
+    Page.getBySlug(req.wiki.id, oldSlug, (err, page) => {
         if (err || !page) return res.status(500).send('Error fetching page');
 
         // Save current as revision with the provided summary
         Revision.create(page.id, page.content, userId, change_summary, (revErr) => {
-            Page.update(oldSlug, title, slug, content, userId, category, topic_id || null, status || 'published', allowComments, (upErr) => {
+            Page.update(req.wiki.id, oldSlug, title, slug, content, userId, category, topic_id || null, status || 'published', allowComments, (upErr) => {
                 if (upErr) return res.status(500).send('Update failed');
 
                 // If status was changed to published, update it
                 if (status === 'published' && page.status === 'draft') {
-                    Page.publish(slug, () => { });
+                    Page.publish(req.wiki.id, slug, () => { });
                 }
 
-                Activity.log(userId, 'edited', page.id, { title, slug, change_summary });
-                res.redirect(`/wiki/${slug}`);
+                Activity.log(userId, 'edited', page.id, { title, slug, change_summary }, req.wiki.id);
+                res.redirect(`/w/${req.wiki.slug}/wiki/${slug}`);
             });
         });
     });
@@ -236,7 +274,7 @@ router.post('/wiki/:slug/edit', isAuthenticated, (req, res) => {
 // Page History
 router.get('/wiki/:slug/history', (req, res) => {
     const slug = req.params.slug;
-    Page.getBySlug(slug, (err, page) => {
+    Page.getBySlug(req.wiki.id, slug, (err, page) => {
         if (err || !page) return res.status(500).send('Error fetching page');
 
         Revision.getByPageId(page.id, (revErr, revisions) => {
@@ -255,7 +293,7 @@ router.get('/wiki/:slug/v/:revisionId', (req, res) => {
         const parsed = marked.parse(revision.content);
 
         const handleHtml = async (html) => {
-            revision.htmlContent = await processWikiLinks(html);
+            revision.htmlContent = await processWikiLinks(html, req.wiki.id, req.wiki.slug);
             res.render('version', { revision });
         };
 
@@ -276,14 +314,14 @@ router.post('/wiki/:slug/v/:revisionId/revert', isAuthenticated, (req, res) => {
     Revision.getById(revisionId, (err, revision) => {
         if (err || !revision) return res.status(404).send('Revision not found');
 
-        Page.getBySlug(slug, (pErr, page) => {
+        Page.getBySlug(req.wiki.id, slug, (pErr, page) => {
             if (pErr || !page) return res.status(500).send('Page error');
 
             // Save current as revision before revert
             Revision.create(page.id, page.content, userId, () => {
-                Page.update(slug, revision.title, revision.slug, revision.content, userId, revision.category, (uErr) => {
+                Page.update(req.wiki.id, slug, revision.title, revision.slug, revision.content, userId, revision.category, (uErr) => {
                     if (uErr) return res.status(500).send('Revert failed');
-                    res.redirect(`/wiki/${revision.slug}`);
+                    res.redirect(`/w/${req.wiki.slug}/wiki/${revision.slug}`);
                 });
             });
         });
@@ -298,7 +336,7 @@ router.get('/wiki/:slug/v/:revisionId/diff', (req, res) => {
     Revision.getById(revisionId, (err, revision) => {
         if (err || !revision) return res.status(404).send('Revision not found');
 
-        Page.getBySlug(slug, (pErr, page) => {
+        Page.getBySlug(req.wiki.id, slug, (pErr, page) => {
             if (pErr || !page) return res.status(500).send('Page error');
 
             const changes = diff.diffLines(revision.content, page.content);
@@ -311,8 +349,17 @@ router.get('/wiki/:slug/v/:revisionId/diff', (req, res) => {
 router.get('/profile/:username', (req, res) => {
     const username = req.params.username;
     User.findByUsername(username, (err, user) => {
-        if (err || !user) return res.status(404).send('User not found');
-        res.render('profile', { user });
+        if (err || !user) return res.status(404).render('error', { message: 'User not found', status: 404 });
+
+        User.getStats(user.id, (statsErr, stats) => {
+            Activity.getByUser(user.id, 20, (actErr, activities) => {
+                res.render('profile', {
+                    user,
+                    stats: stats || { pages_count: 0, revisions_count: 0, comments_count: 0, total_contributions: 0 },
+                    activities: activities || []
+                });
+            });
+        });
     });
 });
 
@@ -323,12 +370,12 @@ router.post('/topics/create', isAuthenticated, (req, res) => {
     name = xss(name);
     description = xss(description);
 
-    Topic.create(name, icon, color, description, parentId || null, (err, id) => {
+    Topic.create(req.wiki.id, name, icon, color, description, parentId || null, (err, id) => {
         if (err) return res.status(500).json({ error: 'Failed to create topic' });
 
         // Auto-follow and log activity
         Topic.follow(userId, id, (fErr) => {
-            Activity.log(userId, 'created_topic', null, { name, topic_id: id });
+            Activity.log(userId, 'created_topic', null, { name, topic_id: id }, req.wiki.id);
             res.json({ id, name });
         });
     });
@@ -356,24 +403,42 @@ router.post('/topics/:id/favorite', isAuthenticated, (req, res) => {
 
 // GET Recent Activity API
 router.get('/api/activity', (req, res) => {
-    Activity.getRecent(10, (err, activity) => {
+    Activity.getRecent(10, req.wiki.id, (err, activity) => {
         if (err) return res.status(500).json({ error: 'Failed to fetch activity' });
         res.json(activity || []);
     });
 });
 
-// API Search (Grouped results)
+// API Search (Grouped results with Filters)
 router.get('/api/search', (req, res) => {
     const query = req.query.q;
-    if (!query || query.length < 2) return res.json({ pages: [], topics: [], users: [] });
+    const filters = {
+        category: req.query.cat,
+        topicId: req.query.topic ? parseInt(req.query.topic) : null,
+        authorId: req.query.author ? parseInt(req.query.author) : null,
+        dateRange: req.query.date
+    };
 
-    Page.search(query, (pErr, pages) => {
-        Topic.search(query, (tErr, topics) => {
-            User.search(query, (uErr, users) => {
+    if (!query || query.length < 2) return res.json({ pages: [], topics: [], users: [], comments: [] });
+
+    Page.search(req.wiki.id, query, filters, (err, results) => {
+        if (err) return res.status(500).json({ error: 'Search failed' });
+
+        // Separate results by type
+        const pages = results.filter(r => r.type === 'page');
+        const comments = results.filter(r => r.type === 'comment');
+
+        // Still search for topics and users to keep the rich sidebar results
+        Topic.getAll(req.wiki.id, (tErr, allTopics) => {
+            const matchedTopics = (allTopics || []).filter(t => t.name.toLowerCase().includes(query.toLowerCase()));
+
+            const userSql = "SELECT id, username FROM users WHERE username ILIKE $1 LIMIT 5";
+            pool.query(userSql, [`%${query}%`], (uErr, userRes) => {
                 res.json({
-                    pages: pages || [],
-                    topics: topics || [],
-                    users: users || []
+                    pages,
+                    comments,
+                    topics: matchedTopics,
+                    users: userRes ? userRes.rows : []
                 });
             });
         });
@@ -385,7 +450,7 @@ router.post('/wiki/:slug/favorite', isAuthenticated, (req, res) => {
     const userId = req.session.userId;
     const slug = req.params.slug;
 
-    Page.getBySlug(slug, (err, page) => {
+    Page.getBySlug(req.wiki.id, slug, (err, page) => {
         if (err || !page) return res.status(404).json({ error: 'Page not found' });
 
         Favorite.isFavorite(userId, page.id, (favErr, isFav) => {
@@ -409,13 +474,13 @@ router.post('/wiki/:slug/publish', isAuthenticated, (req, res) => {
     const slug = req.params.slug;
     const userId = req.session.userId;
 
-    Page.getBySlug(slug, (err, page) => {
+    Page.getBySlug(req.wiki.id, slug, (err, page) => {
         if (err || !page) return res.status(404).json({ error: 'Page not found' });
         if (page.author_id !== userId) return res.status(403).json({ error: 'Only the author can publish' });
 
-        Page.publish(slug, (pubErr) => {
+        Page.publish(req.wiki.id, slug, (pubErr) => {
             if (pubErr) return res.status(500).json({ error: 'Publish failed' });
-            Activity.log(userId, 'published', page.id, { title: page.title, slug: page.slug });
+            Activity.log(userId, 'published', page.id, { title: page.title, slug: page.slug }, req.wiki.id);
             res.json({ success: true });
         });
     });
@@ -425,7 +490,7 @@ router.post('/wiki/:slug/publish', isAuthenticated, (req, res) => {
 router.post('/wiki/:slug/verify', isAuthenticated, (req, res) => {
     // Basic check - in a real app check for role
     const slug = req.params.slug;
-    Page.verify(slug, true, (err) => {
+    Page.verify(req.wiki.id, slug, true, (err) => {
         if (err) return res.status(500).json({ error: 'Verification failed' });
         res.json({ success: true });
     });
@@ -444,6 +509,126 @@ router.get('/api/wiki/revision/:id', (req, res) => {
     Revision.getById(req.params.id, (err, revision) => {
         if (err || !revision) return res.status(404).json({ error: 'Not found' });
         res.json(revision);
+    });
+});
+
+// Add Comment with Attachment
+router.post('/wiki/:slug/comment', isAuthenticated, upload.single('attachment'), (req, res) => {
+    const slug = req.params.slug;
+    const { content } = req.body;
+    const userId = req.session.userId;
+
+    if (!content) return res.status(400).json({ error: 'Content is required' });
+
+    Page.getBySlug(req.wiki.id, slug, (err, page) => {
+        if (err || !page) return res.status(404).json({ error: 'Page not found' });
+
+        const attachmentName = req.file ? req.file.originalname : null;
+        const attachmentUrl = req.file ? `/uploads/comments/${req.file.filename}` : null;
+
+        Comment.create(page.id, userId, xss(content), attachmentName, attachmentUrl, async (commErr, id) => {
+            if (commErr) return res.status(500).json({ error: 'Failed to add comment' });
+
+            // Log as activity
+            Activity.log(userId, 'commented', page.id, { title: page.title, slug: page.slug }, req.wiki.id);
+
+            // Notification System: Parse mentions (@username)
+            const mentionRegex = /@(\w+)/g;
+            const matches = [...content.matchAll(mentionRegex)];
+            const usernames = [...new Set(matches.map(m => m[1]))]; // Unique usernames
+
+            for (const username of usernames) {
+                User.findByUsername(username, (uErr, targetUser) => {
+                    if (targetUser && targetUser.id !== userId) {
+                        Notification.create(targetUser.id, userId, 'mention', id, page.id);
+                    }
+                });
+            }
+
+            res.json({ success: true, id });
+        });
+    });
+});
+
+// Route to get users for mentions
+router.get('/api/users/search', isAuthenticated, (req, res) => {
+    const query = req.query.q;
+    pool.query('SELECT username FROM users WHERE username ILIKE $1 LIMIT 5', [`${query}%`], (err, result) => {
+        if (err) return res.status(500).json({ error: 'Database error' });
+        res.json(result.rows);
+    });
+});
+
+// GET user notifications
+router.get('/api/notifications', isAuthenticated, (req, res) => {
+    Notification.getByUser(req.session.userId, (err, notifications) => {
+        if (err) return res.status(500).json({ error: 'Failed to fetch notifications' });
+        res.json(notifications || []);
+    });
+});
+
+// GET unread notifications count
+router.get('/api/notifications/unread-count', isAuthenticated, (req, res) => {
+    Notification.getUnreadCount(req.session.userId, (err, count) => {
+        if (err) return res.status(500).json({ error: 'Failed' });
+        res.json({ count });
+    });
+});
+
+// Mark notification as read
+router.post('/api/notifications/:id/read', isAuthenticated, (req, res) => {
+    Notification.markAsRead(req.params.id, (err) => {
+        if (err) return res.status(500).json({ error: 'Failed' });
+        res.json({ success: true });
+    });
+});
+
+// Mark all notifications as read
+router.post('/api/notifications/read-all', isAuthenticated, (req, res) => {
+    Notification.markAllAsRead(req.session.userId, (err) => {
+        if (err) return res.status(500).json({ error: 'Failed' });
+        res.json({ success: true });
+    });
+});
+
+// Delete Comment
+router.delete('/wiki/comment/:id', isAuthenticated, (req, res) => {
+    const commentId = req.params.id;
+    const userId = req.session.userId;
+
+    Comment.delete(commentId, userId, (err, count) => {
+        if (err || count === 0) return res.status(500).json({ error: 'Failed to delete comment' });
+        res.json({ success: true });
+    });
+});
+
+// React to Comment
+router.post('/api/comments/:id/react', isAuthenticated, (req, res) => {
+    const commentId = req.params.id;
+    const { reactionType } = req.body; // e.g., 'like', 'love', 'haha', 'wow'
+    const userId = req.session.userId;
+
+    if (!reactionType) {
+        // Toggle off if no type provided (optional behavior) or just return error
+        return Reaction.remove(commentId, userId, (err) => {
+            if (err) return res.status(500).json({ error: 'Failed' });
+            res.json({ success: true, action: 'removed' });
+        });
+    }
+
+    Reaction.addOrUpdate(commentId, userId, reactionType, (err) => {
+        if (err) return res.status(500).json({ error: 'Failed' });
+        res.json({ success: true, action: 'set', type: reactionType });
+    });
+});
+
+// Remove Reaction
+router.delete('/api/comments/:id/react', isAuthenticated, (req, res) => {
+    const commentId = req.params.id;
+    const userId = req.session.userId;
+    Reaction.remove(commentId, userId, (err) => {
+        if (err) return res.status(500).json({ error: 'Failed' });
+        res.json({ success: true });
     });
 });
 

@@ -47,6 +47,32 @@ class User {
             callback(err);
         }
     }
+
+    static async getCount() {
+        const res = await pool.query('SELECT COUNT(*) FROM users');
+        return parseInt(res.rows[0].count);
+    }
+
+    static async getAll() {
+        const res = await pool.query('SELECT id, username, email, role, created_at FROM users ORDER BY username ASC');
+        return res.rows;
+    }
+
+    static async getStats(userId, callback) {
+        try {
+            const sql = `
+                SELECT 
+                    (SELECT COUNT(*) FROM pages WHERE author_id = $1) as pages_count,
+                    (SELECT COUNT(*) FROM page_revisions WHERE author_id = $1) as revisions_count,
+                    (SELECT COUNT(*) FROM comments WHERE user_id = $1) as comments_count,
+                    (SELECT COUNT(*) FROM activity_log WHERE user_id = $1) as total_contributions
+            `;
+            const res = await pool.query(sql, [userId]);
+            callback(null, res.rows[0]);
+        } catch (err) {
+            callback(err);
+        }
+    }
 }
 
 module.exports = User;

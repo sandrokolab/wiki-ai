@@ -19,11 +19,11 @@
         <div class="getting-started">
             <h3 class="section-label">Getting Started</h3>
             <nav class="action-links">
-                <a href="/create" class="action-item">
+                <a href="<%= wikiUrl('/create') %>" class="action-item">
                     <div class="action-icon"><i class="ph ph-file-plus"></i></div>
                     <span>Learn about Posts</span>
                 </a>
-                <a href="/categorias" class="action-item">
+                <a href="<%= wikiUrl('/categorias') %>" class="action-item">
                     <div class="action-icon"><i class="ph ph-hash"></i></div>
                     <span>Learn about Topics</span>
                 </a>
@@ -40,7 +40,7 @@
             <div class="viewed-list">
                 <% if (viewedPages && viewedPages.length> 0) { %>
                     <% viewedPages.forEach(function(item) { %>
-                        <a href="/wiki/<%= item.slug %>" class="viewed-item">
+                        <a href="<%= wikiUrl('/wiki/' + item.slug) %>" class="viewed-item">
                             <div class="viewed-icon-wrap"><i class="ph ph-file-text"></i></div>
                             <div class="viewed-info">
                                 <span class="viewed-meta">Part of <%= item.category || 'General' %></span>
@@ -69,7 +69,7 @@
         <div class="section-header"
             style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
             <h2 style="border: none; margin: 0; font-size: 1.6rem; font-weight: 800;">Latest content</h2>
-            <a href="/indice" class="btn-text">View all pages →</a>
+            <a href="<%= wikiUrl('/indice') %>" class="btn-text">View all pages →</a>
         </div>
 
         <% if (pages && pages.length> 0) { %>
@@ -78,8 +78,8 @@
                 <% pages.forEach(function(page) { %>
                     <div class="page-card"
                         style="padding: 1.5rem; border: 1px solid var(--border-color); border-radius: var(--radius); background: #fefefe; transition: transform 0.2s, box-shadow 0.2s; cursor: pointer;"
-                        onclick="window.location.href='/wiki/<%= page.slug %>'">
-                        <a href="/wiki/<%= page.slug %>"
+                        onclick="window.location.href='<%= wikiUrl('/wiki/' + page.slug) %>'">
+                        <a href="<%= wikiUrl('/wiki/' + page.slug) %>"
                             style="font-size: 1.15rem; font-weight: 700; color: var(--text-main); text-decoration: none; display: block; margin-bottom: 0.5rem;">
                             <%= page.title %>
                         </a>
@@ -103,7 +103,7 @@
                         style="font-size: 3rem; color: #adb5bd; margin-bottom: 1rem; display: block;"></i>
                     <p style="color: var(--text-muted); margin-bottom: 1.5rem;">No pages found yet. Start building your
                         knowledge base.</p>
-                    <a href="/create" class="btn-create">Create the first page</a>
+                    <a href="<%= wikiUrl('/create') %>" class="btn-create">Create the first page</a>
                 </div>
                 <% } %>
     </section>

@@ -27,19 +27,19 @@
     </div>
 
     <nav class="side-nav">
-        <a href="/" class="nav-item">
+        <a href="<%= wikiUrl('/') %>" class="nav-item">
             <i class="ph ph-house"></i>
             <span>Home</span>
         </a>
-        <a href="/indice" class="nav-item">
+        <a href="<%= wikiUrl('/indice') %>" class="nav-item">
             <i class="ph ph-file-text"></i>
             <span>All Pages</span>
         </a>
-        <a href="/categorias" class="nav-item">
+        <a href="<%= wikiUrl('/categorias') %>" class="nav-item">
             <i class="ph ph-bookmarks"></i>
             <span>Topics</span>
         </a>
-        <a href="/create" class="nav-item">
+        <a href="<%= wikiUrl('/create') %>" class="nav-item">
             <i class="ph ph-plus-circle"></i>
             <span>New Content</span>
         </a>
@@ -56,7 +56,7 @@
                 </summary>
                 <div class="section-content">
                     <% favoriteTopics.forEach(function(topic) { %>
-                        <a href="/categoria/<%= topic.name %>" class="nav-item sub-item">
+                        <a href="<%= wikiUrl('/categoria/' + topic.name) %>" class="nav-item sub-item">
                             <span class="topic-dot" style="background-color: <%= topic.color %>;"></span>
                             <%= topic.name %>
                         </a>
@@ -75,7 +75,7 @@
                         </summary>
                         <div class="section-content">
                             <% favoritePages.forEach(function(page) { %>
-                                <a href="/wiki/<%= page.slug %>" class="nav-item sub-item">
+                                <a href="<%= wikiUrl('/wiki/' + page.slug) %>" class="nav-item sub-item">
                                     <i class="ph ph-file-text"></i>
                                     <span class="truncate-text">
                                         <%= page.title %>
@@ -96,7 +96,7 @@
                                 </summary>
                                 <div class="section-content">
                                     <% userDrafts.forEach(function(draft) { %>
-                                        <a href="/wiki/<%= draft.slug %>" class="nav-item sub-item">
+                                        <a href="<%= wikiUrl('/wiki/' + draft.slug) %>" class="nav-item sub-item">
                                             <i class="ph ph-file-dashed"></i>
                                             <span class="truncate-text">
                                                 <%= draft.title %>
@@ -115,7 +115,8 @@
                                     </summary>
                                     <div class="section-content">
                                         <% userTopics.forEach(function(topic) { %>
-                                            <a href="/categoria/<%= topic.name %>" class="nav-item sub-item">
+                                            <a href="<%= wikiUrl('/categoria/' + topic.name) %>"
+                                                class="nav-item sub-item">
                                                 <span class="topic-dot"
                                                     style="background-color: <%= topic.color %>;"></span>
                                                 <%= topic.name %>
@@ -135,7 +136,8 @@
                                     </summary>
                                     <div class="section-content">
                                         <% allTopics.forEach(function(topic) { %>
-                                            <a href="/categoria/<%= topic.name %>" class="nav-item sub-item">
+                                            <a href="<%= wikiUrl('/categoria/' + topic.name) %>"
+                                                class="nav-item sub-item">
                                                 <i class="<%= topic.icon || 'ph ph-hash' %>"
                                                     style="color: <%= topic.color %>;"></i>
                                                 <%= topic.name %>
