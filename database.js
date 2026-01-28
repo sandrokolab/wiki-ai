@@ -30,7 +30,7 @@ async function safeQuery(client, label, sql, params = []) {
  * This version is designed to never throw a fatal error.
  */
 const initialize = async () => {
-  console.log('[DB] [VER 1.36] Starting indestructible initialization...');
+  console.log('[DB] [VER 1.37] Starting indestructible initialization...');
   let client;
 
   try {

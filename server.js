@@ -9,7 +9,7 @@ const pool = require('./database');
 const { dbReady } = pool;
 
 // Multi-style compatibility check
-console.log(`[SERVER] [VER 1.36] Pool type: ${typeof pool} | hasQuery: ${typeof pool.query === 'function'} | hasDbReady: ${typeof pool.dbReady === 'object'}`);
+console.log(`[SERVER] [VER 1.37] Pool type: ${typeof pool} | hasQuery: ${typeof pool.query === 'function'} | hasDbReady: ${typeof pool.dbReady === 'object'}`);
 
 const User = require('./src/models/user');
 const Page = require('./src/models/page');
@@ -21,7 +21,7 @@ const Favorite = require('./src/models/favorite');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-console.log('[SERVER] [VER 1.36] Initializing system...');
+console.log('[SERVER] [VER 1.37] Initializing system...');
 
 // Trust proxy
 app.set('trust proxy', 1);
@@ -33,7 +33,7 @@ app.set('view engine', 'ejs');
 const viewsDir = path.join(__dirname, 'src', 'views');
 app.set('views', viewsDir);
 
-console.log(`[SERVER] [VER 1.36] View engine: ${app.get('view engine')} | Views dir: ${app.get('views')}`);
+console.log(`[SERVER] [VER 1.37] View engine: ${app.get('view engine')} | Views dir: ${app.get('views')}`);
 
 // Middlewares
 app.use(helmet({
@@ -63,6 +63,27 @@ app.use(session({
 }));
 
 const wikiMiddleware = require('./src/middleware/wiki');
+
+// GLOBAL CONTEXT MIDDLEWARE
+// Ensures that 'wiki' and 'wikiUrl' are always defined, even on non-wiki routes (like /login)
+app.use(async (req, res, next) => {
+    // 1. Default wikiUrl helper
+    res.locals.wikiUrl = (path) => {
+        const slug = (req.wiki && req.wiki.slug) || process.env.DEFAULT_WIKI_SLUG || 'general';
+        const cleanPath = path.startsWith('/') ? path : '/' + path;
+        return `/w/${slug}${cleanPath}`;
+    };
+
+    // 2. Default wiki object (Fallback)
+    if (!res.locals.wiki) {
+        res.locals.wiki = {
+            id: 1,
+            slug: process.env.DEFAULT_WIKI_SLUG || 'general',
+            name: 'Wiki General'
+        };
+    }
+    next();
+});
 
 // Shared Data Middleware
 const provideWikiData = (req, res, next) => {
