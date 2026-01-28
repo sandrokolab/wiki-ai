@@ -16,9 +16,9 @@ const Favorite = require('./src/models/favorite');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-console.log('[SERVER] [VER 1.31] Initializing system...');
+console.log('[SERVER] [VER 1.32] Initializing system...');
 
-// Trust proxy for rate-limiting on Railway
+// Trust proxy
 app.set('trust proxy', 1);
 
 // Configure View Engine
@@ -28,10 +28,9 @@ app.set('view engine', 'ejs');
 const viewsDir = path.join(__dirname, 'src', 'views');
 app.set('views', viewsDir);
 
-// Startup check
-console.log(`[SERVER] [VER 1.31] View engine: ${app.get('view engine')} | Views dir: ${app.get('views')}`);
+console.log(`[SERVER] [VER 1.32] View engine: ${app.get('view engine')} | Views dir: ${app.get('views')}`);
 
-// Security Middlewares
+// Middlewares
 app.use(helmet({
     contentSecurityPolicy: {
         directives: {
@@ -44,32 +43,25 @@ app.use(helmet({
 }));
 app.use(compression());
 
-const limiter = rateLimit({
-    windowMs: 1 * 60 * 1000,
-    max: 100,
-    message: 'Too many requests from this IP, please try again after a minute'
-});
+const limiter = rateLimit({ windowMs: 1 * 60 * 1000, max: 100 });
 app.use(limiter);
 
-// Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'src', 'public')));
 
-// Session configuration
 app.use(session({
     secret: process.env.SESSION_SECRET || 'wiki-ai-secret-key-12345',
     resave: false,
     saveUninitialized: false,
-    cookie: { maxAge: 24 * 60 * 60 * 1000 } // 24 hours
+    cookie: { maxAge: 24 * 60 * 60 * 1000 }
 }));
 
 const wikiMiddleware = require('./src/middleware/wiki');
 
-// Global middleware for sidebar data (Wiki-Aware)
+// Shared Data Middleware
 const provideWikiData = (req, res, next) => {
     const wikiId = req.wiki ? req.wiki.id : null;
-
     if (!wikiId) return next();
 
     Page.getCategories(wikiId, (catErr, categories) => {
@@ -78,7 +70,6 @@ const provideWikiData = (req, res, next) => {
                 res.locals.allCategories = categories || [];
                 res.locals.recentActivity = activity || [];
                 res.locals.allTopics = allTopics || [];
-
                 res.locals.wikiUrl = (path) => {
                     const cleanPath = path.startsWith('/') ? path : '/' + path;
                     return `/w/${req.wiki.slug}${cleanPath}`;
@@ -103,10 +94,7 @@ const provideWikiData = (req, res, next) => {
                     });
                 } else {
                     res.locals.currentUser = null;
-                    res.locals.userTopics = [];
-                    res.locals.favoriteTopics = [];
-                    res.locals.favoritePages = [];
-                    res.locals.userDrafts = [];
+                    res.locals.userTopics = res.locals.favoriteTopics = res.locals.favoritePages = res.locals.userDrafts = [];
                     next();
                 }
             });
@@ -124,35 +112,35 @@ app.use('/admin', provideWikiData, adminRoutes);
 
 app.get('/', (req, res) => {
     const defaultWiki = process.env.DEFAULT_WIKI_SLUG || 'general';
-    console.log(`[SERVER] [VER 1.31] Redirecting root to /w/${defaultWiki}`);
+    console.log(`[SERVER] [VER 1.32] Root redirect -> /w/${defaultWiki}`);
     return res.redirect(`/w/${defaultWiki}`);
 });
 
 app.use('/w/:wiki_slug', wikiMiddleware, provideWikiData, wikiRoutes);
 
-// Global Error Handler
+// Error Handler
 app.use((err, req, res, next) => {
-    console.error('[SERVER ERROR] [VER 1.31]', err.stack);
+    console.error('[SERVER ERROR] [VER 1.32]', err.stack);
     const status = err.status || 500;
     try {
         res.status(status).render('error', {
-            message: process.env.NODE_ENV === 'production'
-                ? 'Something went wrong on our end.'
-                : err.message,
+            message: process.env.NODE_ENV === 'production' ? 'Un error interno ha ocurrido.' : err.message,
             status: status
         });
     } catch (renderErr) {
-        console.error('[CRITICAL] [VER 1.31] Failed to render error page:', renderErr.message);
         res.status(status).send(`Error ${status}: ${err.message}`);
     }
 });
 
-// START SERVER ONLY IF DATABASE IS READY
+// START SERVER
 dbReady.then(() => {
+    console.log('[SERVER] [VER 1.32] Database initialized. Ready for connections.');
     app.listen(PORT, () => {
-        console.log(`[SERVER] [VER 1.31] System online at port ${PORT}`);
+        console.log(`[SERVER] [VER 1.32] Listening on port ${PORT}`);
     });
 }).catch(err => {
-    console.error('[SERVER] [VER 1.31] CRITICAL: DB failed. Server offline.', err.message);
-    process.exit(1);
+    console.error('[SERVER] [VER 1.32] Warning: DB Init encountered errors, but starting anyway.', err.message);
+    app.listen(PORT, () => {
+        console.log(`[SERVER] [VER 1.32] Listening on port ${PORT} (DEGRADED MODE)`);
+    });
 });
