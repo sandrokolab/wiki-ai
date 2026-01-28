@@ -115,9 +115,33 @@ const adminRoutes = require('./src/routes/admin');
 app.use('/', authRoutes);
 app.use('/admin', provideWikiData, adminRoutes);
 
+// System Diagnostic (Hidden)
+app.get('/system/check', async (req, res) => {
+    try {
+        const wikiCount = await pool.query('SELECT count(*) FROM wikis');
+        const generalWiki = await pool.query('SELECT * FROM wikis WHERE slug = $1', ['general']);
+        res.json({
+            version: '1.35',
+            status: 'online',
+            pool: {
+                type: typeof pool,
+                hasQuery: typeof pool.query === 'function',
+                hasDbReady: typeof pool.dbReady === 'object'
+            },
+            database: {
+                wikiCount: wikiCount.rows[0].count,
+                hasGeneral: generalWiki.rows.length > 0,
+                generalData: generalWiki.rows[0] || null
+            }
+        });
+    } catch (err) {
+        res.status(500).json({ version: '1.35', error: err.message, stack: err.stack });
+    }
+});
+
 app.get('/', (req, res) => {
     const defaultWiki = process.env.DEFAULT_WIKI_SLUG || 'general';
-    console.log(`[SERVER] [VER 1.34] Root redirect -> /w/${defaultWiki}`);
+    console.log(`[SERVER] [VER 1.35] Root redirect -> /w/${defaultWiki}`);
     return res.redirect(`/w/${defaultWiki}`);
 });
 
@@ -125,7 +149,7 @@ app.use('/w/:wiki_slug', wikiMiddleware, provideWikiData, wikiRoutes);
 
 // Error Handler
 app.use((err, req, res, next) => {
-    console.error('[SERVER ERROR] [VER 1.34]', err.stack);
+    console.error('[SERVER ERROR] [VER 1.35]', err.stack);
     const status = err.status || 500;
     try {
         res.status(status).render('error', {
@@ -139,13 +163,13 @@ app.use((err, req, res, next) => {
 
 // START SERVER
 dbReady.then(() => {
-    console.log('[SERVER] [VER 1.34] Database initialized. Ready for connections.');
+    console.log('[SERVER] [VER 1.35] Database initialized. Ready for connections.');
     app.listen(PORT, () => {
-        console.log(`[SERVER] [VER 1.34] Listening on port ${PORT}`);
+        console.log(`[SERVER] [VER 1.35] Listening on port ${PORT}`);
     });
 }).catch(err => {
-    console.error('[SERVER] [VER 1.34] Warning: DB Init encountered errors, but starting anyway.', err.message);
+    console.error('[SERVER] [VER 1.35] Warning: DB Init encountered errors, but starting anyway.', err.message);
     app.listen(PORT, () => {
-        console.log(`[SERVER] [VER 1.34] Listening on port ${PORT} (DEGRADED MODE)`);
+        console.log(`[SERVER] [VER 1.35] Listening on port ${PORT} (DEGRADED MODE)`);
     });
 });
