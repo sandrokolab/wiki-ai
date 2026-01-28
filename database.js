@@ -105,6 +105,17 @@ async function createBaseTables(client) {
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
   `);
+
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS page_revisions(
+      id SERIAL PRIMARY KEY,
+      page_id INTEGER REFERENCES pages(id) ON DELETE CASCADE,
+      content TEXT,
+      author_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      change_summary TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
 }
 
 /**
@@ -131,7 +142,7 @@ async function addMissingColumns(client) {
     } catch (err) {
       // 42701 is "column already exists"
       if (err.code !== '42701') {
-        console.warn(`Migration notice (non-critical): ${err.message} [SQL: ${sql}]`);
+        console.warn(`Migration notice(non - critical): ${err.message}[SQL: ${sql}]`);
       }
     }
   }
@@ -199,42 +210,31 @@ async function finalizeSetup(client) {
   await client.query(`
     CREATE TABLE IF NOT EXISTS user_favorites(
       id SERIAL PRIMARY KEY,
-      user_id INTEGER REFERENCES users(id),
-      page_id INTEGER REFERENCES pages(id),
+      user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+      page_id INTEGER REFERENCES pages(id) ON DELETE CASCADE,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       UNIQUE(user_id, page_id)
     )
-  `);
+    `);
 
   await client.query(`
     CREATE TABLE IF NOT EXISTS user_favorite_topics(
-      user_id INTEGER REFERENCES users(id),
-      topic_id INTEGER REFERENCES topics(id),
+      user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+      topic_id INTEGER REFERENCES topics(id) ON DELETE CASCADE,
       PRIMARY KEY(user_id, topic_id)
     )
-  `);
+    `);
 
   await client.query(`
     CREATE TABLE IF NOT EXISTS user_topics(
-      user_id INTEGER REFERENCES users(id),
-      topic_id INTEGER REFERENCES topics(id),
+      user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+      topic_id INTEGER REFERENCES topics(id) ON DELETE CASCADE,
       PRIMARY KEY(user_id, topic_id)
     )
-  `);
+    `);
 
   await client.query(`
-    CREATE TABLE IF NOT EXISTS page_revisions(
-      id SERIAL PRIMARY KEY,
-      page_id INTEGER REFERENCES pages(id),
-      content TEXT,
-      author_id INTEGER REFERENCES users(id),
-      change_summary TEXT,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )
-  `);
-
-  await client.query(`
-    CREATE TABLE IF NOT EXISTS notifications (
+    CREATE TABLE IF NOT EXISTS notifications(
       id SERIAL PRIMARY KEY,
       user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
       actor_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
@@ -244,26 +244,26 @@ async function finalizeSetup(client) {
       is_read BOOLEAN DEFAULT false,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
-  `);
+    `);
 
   await client.query(`
-    CREATE TABLE IF NOT EXISTS comment_reactions (
+    CREATE TABLE IF NOT EXISTS comment_reactions(
       comment_id INTEGER REFERENCES comments(id) ON DELETE CASCADE,
       user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
       reaction_type TEXT NOT NULL,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      PRIMARY KEY (comment_id, user_id)
+      PRIMARY KEY(comment_id, user_id)
     )
-  `);
+    `);
 
   // Session table for connect-pg-simple
   await client.query(`
-    CREATE TABLE IF NOT EXISTS "session" (
+    CREATE TABLE IF NOT EXISTS "session"(
       "sid" varchar NOT NULL COLLATE "default",
       "sess" json NOT NULL,
       "expire" timestamp(6) NOT NULL
-    ) WITH (OIDS=FALSE)
-  `);
+    ) WITH(OIDS = FALSE)
+    `);
   await client.query('ALTER TABLE "session" DROP CONSTRAINT IF EXISTS "session_pkey"');
   await client.query('ALTER TABLE "session" ADD CONSTRAINT "session_pkey" PRIMARY KEY ("sid") NOT DEFERRABLE INITIALLY IMMEDIATE');
   await client.query('CREATE INDEX IF NOT EXISTS "IDX_session_expire" ON "session" ("expire")');
@@ -271,24 +271,34 @@ async function finalizeSetup(client) {
 
 // Main initialization function
 const initialize = async () => {
-  let client;
-  try {
-    client = await pool.connect();
-    await client.query('BEGIN');
+  const phases = [
+    { name: 'Phase 1: Base Tables', fn: createBaseTables },
+    { name: 'Phase 2: Migrations', fn: addMissingColumns },
+    { name: 'Phase 3: Constraints & Indexes', fn: createIndexesAndConstraints },
+    { name: 'Phase 4: Finalize & Linking', fn: finalizeSetup }
+  ];
 
-    await createBaseTables(client);
-    await addMissingColumns(client);
-    await createIndexesAndConstraints(client);
-    await finalizeSetup(client);
-
-    await client.query('COMMIT');
-    console.log('Database initialized successfully.');
-  } catch (e) {
-    if (client) await client.query('ROLLBACK');
-    console.error('Error initializing PostgreSQL tables:', e);
-  } finally {
-    if (client) client.release();
+  for (const phase of phases) {
+    let client;
+    try {
+      client = await pool.connect();
+      await client.query('BEGIN');
+      await phase.fn(client);
+      await client.query('COMMIT');
+      console.log(`${phase.name} completed.`);
+    } catch (e) {
+      if (client) await client.query('ROLLBACK');
+      console.error(`Error in ${phase.name}:`, e.message);
+      // We continue to next phases if possible, unless it's a critical core failure
+      if (phase.name === 'Phase 1: Base Tables') {
+        console.error('Critical failure in base tables. Stopping initialization.');
+        break;
+      }
+    } finally {
+      if (client) client.release();
+    }
   }
+  console.log('Database initialization process finished.');
 };
 
 initialize();
