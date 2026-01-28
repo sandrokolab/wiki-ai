@@ -29,11 +29,14 @@ async function safeQuery(client, label, sql, params = []) {
  * This version is designed to never throw a fatal error.
  */
 const initialize = async () => {
-  console.log('[DB] [VER 1.32] Starting indestructible initialization...');
+  console.log('[DB] [VER 1.34] Starting indestructible initialization...');
   let client;
 
   try {
     client = await pool.connect();
+    // ... base tables, surgical injection, constraints, secondary tables ...
+    // (Note: all safeQuery calls follow here)
+    // I will include the full logic to ensure it's correct.
 
     // 1. BASE TABLES
     await safeQuery(client, 'Table wikis', `
@@ -94,7 +97,7 @@ const initialize = async () => {
       )
     `);
 
-    // 2. SURGICAL COLUMN INJECTION (Robust check)
+    // 2. SURGICAL COLUMN INJECTION
     await safeQuery(client, 'Inject wiki_id topics', 'ALTER TABLE topics ADD COLUMN IF NOT EXISTS wiki_id INTEGER REFERENCES wikis(id) ON DELETE CASCADE');
     await safeQuery(client, 'Inject wiki_id pages', 'ALTER TABLE pages ADD COLUMN IF NOT EXISTS wiki_id INTEGER REFERENCES wikis(id) ON DELETE CASCADE');
     await safeQuery(client, 'Inject topic_id pages', 'ALTER TABLE pages ADD COLUMN IF NOT EXISTS topic_id INTEGER REFERENCES topics(id)');
@@ -117,7 +120,7 @@ const initialize = async () => {
         id SERIAL PRIMARY KEY,
         wiki_id INTEGER REFERENCES wikis(id) ON DELETE CASCADE,
         page_id INTEGER REFERENCES pages (id) ON DELETE CASCADE,
-        user_id INTEGER REFERENCES users (id) ON DELETE CASCADE,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
         content TEXT NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
@@ -128,27 +131,24 @@ const initialize = async () => {
         id SERIAL PRIMARY KEY,
         page_id INTEGER REFERENCES pages (id) ON DELETE CASCADE,
         content TEXT,
-        author_id INTEGER REFERENCES users (id) ON DELETE SET NULL,
+        author_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
         change_summary TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
 
-    // 4. CONSTRAINTS & INDEXES (Final Polish)
+    // 4. CONSTRAINTS & INDEXES
     await safeQuery(client, 'Unique topics', 'ALTER TABLE topics ADD CONSTRAINT topics_wiki_name_unique UNIQUE (wiki_id, name)');
     await safeQuery(client, 'Unique pages', 'ALTER TABLE pages ADD CONSTRAINT pages_wiki_slug_unique UNIQUE (wiki_id, slug)');
     await safeQuery(client, 'Index pages wiki', 'CREATE INDEX IF NOT EXISTS idx_pages_wiki_id ON pages(wiki_id)');
     await safeQuery(client, 'Index topics wiki', 'CREATE INDEX IF NOT EXISTS idx_topics_wiki_id ON topics(wiki_id)');
 
     // 5. SECONDARY TABLES
-    const secondary = [
-      'user_favorites', 'user_favorite_topics', 'user_topics', 'notifications', 'comment_reactions'
-    ];
+    const secondary = ['user_favorites', 'user_favorite_topics', 'user_topics', 'notifications', 'comment_reactions'];
     for (const st of secondary) {
       await safeQuery(client, `Table ${st}`, `CREATE TABLE IF NOT EXISTS ${st} (id SERIAL PRIMARY KEY)`);
     }
 
-    // Session
     await safeQuery(client, 'Table session', `
       CREATE TABLE IF NOT EXISTS "session" (
         "sid" varchar NOT NULL PRIMARY KEY,
@@ -157,13 +157,22 @@ const initialize = async () => {
       )
     `);
 
-    console.log('[DB] [VER 1.32] Initialization COMPLETED (Resilient Mode)');
+    console.log('[DB] [VER 1.34] Initialization COMPLETED');
   } catch (err) {
-    console.error('[DB] [VER 1.32] CRITICAL startup failure:', err.message);
+    console.error('[DB] [VER 1.34] CRITICAL error:', err.message);
   } finally {
     if (client) client.release();
   }
 };
 
+/**
+ * POLYFILL EXPORT
+ * Supports:
+ * 1. const pool = require('./database');
+ * 2. const { pool, dbReady } = require('./database');
+ * 3. const { dbReady } = require('./database');
+ */
+const dbReady = initialize();
+pool.dbReady = dbReady;
+pool.pool = pool; // Self-reference for destructuring
 module.exports = pool;
-pool.dbReady = initialize();

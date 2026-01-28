@@ -7,6 +7,10 @@ const compression = require('compression');
 const rateLimit = require('express-rate-limit');
 const pool = require('./database');
 const { dbReady } = pool;
+
+// Multi-style compatibility check
+console.log(`[SERVER] [VER 1.34] Pool type: ${typeof pool} | hasQuery: ${typeof pool.query === 'function'} | hasDbReady: ${typeof pool.dbReady === 'object'}`);
+
 const User = require('./src/models/user');
 const Page = require('./src/models/page');
 const Revision = require('./src/models/revision');
@@ -17,7 +21,7 @@ const Favorite = require('./src/models/favorite');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-console.log('[SERVER] [VER 1.33] Initializing system...');
+console.log('[SERVER] [VER 1.34] Initializing system...');
 
 // Trust proxy
 app.set('trust proxy', 1);
@@ -29,7 +33,7 @@ app.set('view engine', 'ejs');
 const viewsDir = path.join(__dirname, 'src', 'views');
 app.set('views', viewsDir);
 
-console.log(`[SERVER] [VER 1.33] View engine: ${app.get('view engine')} | Views dir: ${app.get('views')}`);
+console.log(`[SERVER] [VER 1.34] View engine: ${app.get('view engine')} | Views dir: ${app.get('views')}`);
 
 // Middlewares
 app.use(helmet({
@@ -113,7 +117,7 @@ app.use('/admin', provideWikiData, adminRoutes);
 
 app.get('/', (req, res) => {
     const defaultWiki = process.env.DEFAULT_WIKI_SLUG || 'general';
-    console.log(`[SERVER] [VER 1.33] Root redirect -> /w/${defaultWiki}`);
+    console.log(`[SERVER] [VER 1.34] Root redirect -> /w/${defaultWiki}`);
     return res.redirect(`/w/${defaultWiki}`);
 });
 
@@ -121,7 +125,7 @@ app.use('/w/:wiki_slug', wikiMiddleware, provideWikiData, wikiRoutes);
 
 // Error Handler
 app.use((err, req, res, next) => {
-    console.error('[SERVER ERROR] [VER 1.33]', err.stack);
+    console.error('[SERVER ERROR] [VER 1.34]', err.stack);
     const status = err.status || 500;
     try {
         res.status(status).render('error', {
@@ -135,13 +139,13 @@ app.use((err, req, res, next) => {
 
 // START SERVER
 dbReady.then(() => {
-    console.log('[SERVER] [VER 1.33] Database initialized. Ready for connections.');
+    console.log('[SERVER] [VER 1.34] Database initialized. Ready for connections.');
     app.listen(PORT, () => {
-        console.log(`[SERVER] [VER 1.33] Listening on port ${PORT}`);
+        console.log(`[SERVER] [VER 1.34] Listening on port ${PORT}`);
     });
 }).catch(err => {
-    console.error('[SERVER] [VER 1.33] Warning: DB Init encountered errors, but starting anyway.', err.message);
+    console.error('[SERVER] [VER 1.34] Warning: DB Init encountered errors, but starting anyway.', err.message);
     app.listen(PORT, () => {
-        console.log(`[SERVER] [VER 1.33] Listening on port ${PORT} (DEGRADED MODE)`);
+        console.log(`[SERVER] [VER 1.34] Listening on port ${PORT} (DEGRADED MODE)`);
     });
 });
