@@ -6,6 +6,11 @@ const helmet = require('helmet');
 const compression = require('compression');
 const rateLimit = require('express-rate-limit');
 const pool = require('./database');
+const { dbReady } = pool;
+
+// VER 1.40 Log
+console.log('[SERVER] [VER 1.40] Initializing Wiki AI Restoration (Single Wiki Mode)...');
+
 const User = require('./src/models/user');
 const Page = require('./src/models/page');
 const Revision = require('./src/models/revision');
@@ -16,45 +21,44 @@ const Favorite = require('./src/models/favorite');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Trust proxy for rate-limiting on Railway
 app.set('trust proxy', 1);
 
-// Security Middlewares
 app.use(helmet({
     contentSecurityPolicy: {
         directives: {
             ...helmet.contentSecurityPolicy.getDefaultDirectives(),
             "img-src": ["'self'", "data:", "https:", "https://unpkg.com"],
             "script-src": ["'self'", "'unsafe-inline'", "https://unpkg.com", "https://cdn.jsdelivr.net"],
-            "script-src-attr": ["'self'", "'unsafe-inline'"], // Allow inline event handlers if absolutely necessary, but we moved to listeners
+            "script-src-attr": ["'self'", "'unsafe-inline'"],
         },
     },
 }));
 app.use(compression());
 
 const limiter = rateLimit({
-    windowMs: 1 * 60 * 1000, // 1 minute
-    max: 100, // limit each IP to 100 requests per windowMs
-    message: 'Too many requests from this IP, please try again after a minute'
+    windowMs: 1 * 60 * 1000,
+    max: 100,
+    message: 'Too many requests from this IP'
 });
 app.use(limiter);
 
-// Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'src', 'public')));
 
-// Session configuration
 app.use(session({
     secret: process.env.SESSION_SECRET || 'wiki-ai-secret-key-12345',
     resave: false,
     saveUninitialized: false,
-    cookie: { maxAge: 24 * 60 * 60 * 1000 } // 24 hours
+    cookie: { maxAge: 24 * 60 * 60 * 1000 }
 }));
 
-// Global middleware to provide user and layout data to all templates
+// Global Middleware (Single Wiki)
 app.use((req, res, next) => {
-    // Fetch categories and activity for sidebars
+    // Helper to keep templates happy (even in single wiki mode)
+    res.locals.wiki = { id: 1, slug: 'general', name: 'Wiki AI' };
+    res.locals.wikiUrl = (p) => p.startsWith('/') ? p : '/' + p;
+
     Page.getCategories((catErr, categories) => {
         Activity.getRecent(10, (actErr, activity) => {
             Topic.getAll((topErr, allTopics) => {
@@ -65,8 +69,6 @@ app.use((req, res, next) => {
                 if (req.session && req.session.userId) {
                     User.findById(req.session.userId, (err, user) => {
                         res.locals.currentUser = user || null;
-
-                        // Fetch followed, favorites, and drafts if user is logged in
                         Topic.getFollowedByUser(req.session.userId, (fErr, followed) => {
                             Topic.getFavoritesByUser(req.session.userId, (favErr, favorites) => {
                                 Favorite.getByUser(req.session.userId, (pageFavErr, favoritePages) => {
@@ -83,32 +85,13 @@ app.use((req, res, next) => {
                     });
                 } else {
                     res.locals.currentUser = null;
-                    res.locals.userTopics = [];
-                    res.locals.favoriteTopics = [];
-                    res.locals.favoritePages = [];
-                    res.locals.userDrafts = [];
+                    res.locals.userTopics = res.locals.favoriteTopics = res.locals.favoritePages = res.locals.userDrafts = [];
                     next();
                 }
             });
         });
     });
 });
-
-// Recently Viewed Tracking Middleware
-app.use('/wiki/:slug', (req, res, next) => {
-    const slug = req.params.slug;
-    if (!req.session.viewedPages) req.session.viewedPages = [];
-
-    // We don't have the page info here yet, so we'll 
-    // hook into the wiki route or just store the slug for now.
-    // Actually, it's better to do this in the wiki.js route handler
-    // to have access to the page title/category/author.
-    next();
-});
-
-// View Engine
-app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, 'src', 'views'));
 
 // Routes
 const wikiRoutes = require('./src/routes/wiki');
@@ -117,18 +100,20 @@ const authRoutes = require('./src/routes/auth');
 app.use('/', authRoutes);
 app.use('/', wikiRoutes);
 
-// Global Error Handler
+// Error Handler
 app.use((err, req, res, next) => {
-    console.error(err.stack);
+    console.error('[SERVER ERROR]', err.stack);
     const status = err.status || 500;
     res.status(status).render('error', {
-        message: process.env.NODE_ENV === 'production'
-            ? 'Something went wrong on our end.'
-            : err.message,
-        status: status
+        message: process.env.NODE_ENV === 'production' ? 'Error interno.' : err.message,
+        status: status,
+        wiki: { slug: 'general' }
     });
 });
 
-app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
+// Start Server
+dbReady.then(() => {
+    app.listen(PORT, () => {
+        console.log(`[SERVER] [VER 1.40] RESTORED (Single Wiki) on port ${PORT}`);
+    });
 });
