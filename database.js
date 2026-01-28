@@ -9,7 +9,7 @@ const pool = new Pool({
  * PHASE 1: Create base tables with minimal structure
  */
 async function createBaseTables(client) {
-  console.log('Phase 1: Creating base tables...');
+  console.log('[DB] Phase 1: Creating base tables...');
 
   await client.query(`
     CREATE TABLE IF NOT EXISTS wikis (
@@ -22,7 +22,7 @@ async function createBaseTables(client) {
   `);
 
   // Seeding default wiki EARLY in Phase 1 to prevent 404s
-  console.log('Phase 1.5: Seeding default wiki "general"...');
+  console.log('[DB] Phase 1.5: Seeding default wiki "general"...');
   try {
     const insertRes = await client.query(`
       INSERT INTO wikis (name, slug, description)
@@ -31,12 +31,12 @@ async function createBaseTables(client) {
       RETURNING id
     `);
     if (insertRes.rows.length > 0) {
-      console.log(`Default wiki "general" created with ID: ${insertRes.rows[0].id}`);
+      console.log(`[DB] Default wiki "general" created with ID: ${insertRes.rows[0].id}`);
     } else {
-      console.log('Default wiki "general" already exists.');
+      console.log('[DB] Default wiki "general" already exists.');
     }
   } catch (err) {
-    console.error('Error seeding general wiki in Phase 1:', err.message);
+    console.error('[DB] Error seeding general wiki in Phase 1:', err.message);
   }
 
   await client.query(`
@@ -122,7 +122,7 @@ async function createBaseTables(client) {
  * PHASE 2: Add missing columns (migraciones robustas)
  */
 async function addMissingColumns(client) {
-  console.log('Phase 2: Verifying and adding missing columns...');
+  console.log('[DB] Phase 2: Verifying and adding missing columns...');
   const migrations = [
     'ALTER TABLE users ADD COLUMN IF NOT EXISTS role TEXT DEFAULT \'user\'',
     'ALTER TABLE topics ADD COLUMN IF NOT EXISTS wiki_id INTEGER REFERENCES wikis(id) ON DELETE CASCADE',
@@ -140,9 +140,8 @@ async function addMissingColumns(client) {
     try {
       await client.query(sql);
     } catch (err) {
-      // 42701 is "column already exists"
       if (err.code !== '42701') {
-        console.warn(`Migration notice(non - critical): ${err.message}[SQL: ${sql}]`);
+        console.warn(`[DB] Migration notice: ${err.message} [SQL: ${sql}]`);
       }
     }
   }
@@ -152,7 +151,19 @@ async function addMissingColumns(client) {
  * PHASE 3: Apply constraints and indexes
  */
 async function createIndexesAndConstraints(client) {
-  console.log('Phase 3: Applying constraints and indexes...');
+  console.log('[DB] Phase 3: Applying constraints and indexes...');
+
+  // Surgical check for wiki_id before adding constraints
+  const checkColumn = await client.query(`
+    SELECT column_name 
+    FROM information_schema.columns 
+    WHERE table_name = 'topics' AND column_name = 'wiki_id'
+  `);
+
+  if (checkColumn.rows.length === 0) {
+    console.warn('[DB] wiki_id column missing in topics during Phase 3. Re-attempting creation.');
+    await client.query('ALTER TABLE topics ADD COLUMN wiki_id INTEGER REFERENCES wikis(id) ON DELETE CASCADE');
+  }
 
   // Clean up broken/orphaned indexes first to avoid conflicts
   const cleanup = [
@@ -179,7 +190,7 @@ async function createIndexesAndConstraints(client) {
     await client.query('CREATE INDEX IF NOT EXISTS idx_activity_log_wiki_id ON activity_log(wiki_id)');
     await client.query('CREATE INDEX IF NOT EXISTS idx_comments_wiki_id ON comments(wiki_id)');
   } catch (err) {
-    console.error('CRITICAL ERROR in Phase 3:', err.message);
+    console.error('[DB] CRITICAL ERROR in Phase 3:', err.message);
     throw err;
   }
 }
@@ -188,53 +199,41 @@ async function createIndexesAndConstraints(client) {
  * PHASE 4: Secondary tables and data linking
  */
 async function finalizeSetup(client) {
-  console.log('Phase 4: Finalizing setup and data linking...');
+  console.log('[DB] Phase 4: Finalizing setup and data linking...');
 
   const defaultWiki = await client.query("SELECT id FROM wikis WHERE slug = 'general'");
   if (defaultWiki.rows.length > 0) {
     const wikiId = defaultWiki.rows[0].id;
-    console.log(`Ensuring orphaned records are linked to wiki ID: ${wikiId}`);
+    console.log(`[DB] Ensuring orphaned records are linked to wiki ID: ${wikiId}`);
     try {
       await client.query("UPDATE pages SET wiki_id = $1 WHERE wiki_id IS NULL", [wikiId]);
       await client.query("UPDATE topics SET wiki_id = $1 WHERE wiki_id IS NULL", [wikiId]);
       await client.query("UPDATE activity_log SET wiki_id = $1 WHERE wiki_id IS NULL", [wikiId]);
       await client.query("UPDATE comments SET wiki_id = $1 WHERE wiki_id IS NULL", [wikiId]);
     } catch (err) {
-      console.warn('Update orphaned records non-critical error:', err.message);
+      console.warn('[DB] Update orphaned records non-critical error:', err.message);
     }
-  } else {
-    console.error('CRITICAL ERROR: Default wiki "general" could not be found in Phase 4.');
   }
 
-  // Secondary tables
-  await client.query(`
-    CREATE TABLE IF NOT EXISTS user_favorites(
+  const secondaryTables = [
+    `CREATE TABLE IF NOT EXISTS user_favorites(
       id SERIAL PRIMARY KEY,
       user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
       page_id INTEGER REFERENCES pages(id) ON DELETE CASCADE,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       UNIQUE(user_id, page_id)
-    )
-    `);
-
-  await client.query(`
-    CREATE TABLE IF NOT EXISTS user_favorite_topics(
+    )`,
+    `CREATE TABLE IF NOT EXISTS user_favorite_topics(
       user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
       topic_id INTEGER REFERENCES topics(id) ON DELETE CASCADE,
       PRIMARY KEY(user_id, topic_id)
-    )
-    `);
-
-  await client.query(`
-    CREATE TABLE IF NOT EXISTS user_topics(
+    )`,
+    `CREATE TABLE IF NOT EXISTS user_topics(
       user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
       topic_id INTEGER REFERENCES topics(id) ON DELETE CASCADE,
       PRIMARY KEY(user_id, topic_id)
-    )
-    `);
-
-  await client.query(`
-    CREATE TABLE IF NOT EXISTS notifications(
+    )`,
+    `CREATE TABLE IF NOT EXISTS notifications(
       id SERIAL PRIMARY KEY,
       user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
       actor_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
@@ -243,39 +242,39 @@ async function finalizeSetup(client) {
       page_id INTEGER REFERENCES pages(id) ON DELETE CASCADE,
       is_read BOOLEAN DEFAULT false,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )
-    `);
-
-  await client.query(`
-    CREATE TABLE IF NOT EXISTS comment_reactions(
+    )`,
+    `CREATE TABLE IF NOT EXISTS comment_reactions(
       comment_id INTEGER REFERENCES comments(id) ON DELETE CASCADE,
       user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
       reaction_type TEXT NOT NULL,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       PRIMARY KEY(comment_id, user_id)
-    )
-    `);
-
-  // Session table for connect-pg-simple
-  await client.query(`
-    CREATE TABLE IF NOT EXISTS "session"(
+    )`,
+    `CREATE TABLE IF NOT EXISTS "session"(
       "sid" varchar NOT NULL COLLATE "default",
       "sess" json NOT NULL,
       "expire" timestamp(6) NOT NULL
-    ) WITH(OIDS = FALSE)
-    `);
-  await client.query('ALTER TABLE "session" DROP CONSTRAINT IF EXISTS "session_pkey"');
-  await client.query('ALTER TABLE "session" ADD CONSTRAINT "session_pkey" PRIMARY KEY ("sid") NOT DEFERRABLE INITIALLY IMMEDIATE');
-  await client.query('CREATE INDEX IF NOT EXISTS "IDX_session_expire" ON "session" ("expire")');
+    ) WITH(OIDS = FALSE)`
+  ];
+
+  for (const sql of secondaryTables) {
+    await client.query(sql);
+  }
+
+  try {
+    await client.query('ALTER TABLE "session" DROP CONSTRAINT IF EXISTS "session_pkey"');
+    await client.query('ALTER TABLE "session" ADD CONSTRAINT "session_pkey" PRIMARY KEY ("sid") NOT DEFERRABLE INITIALLY IMMEDIATE');
+    await client.query('CREATE INDEX IF NOT EXISTS "IDX_session_expire" ON "session" ("expire")');
+  } catch (e) { }
 }
 
-// Main initialization function
 const initialize = async () => {
+  console.log('[DB] [VER 1.30] Starting initialization...');
   const phases = [
-    { name: 'Phase 1: Base Tables', fn: createBaseTables },
-    { name: 'Phase 2: Migrations', fn: addMissingColumns },
-    { name: 'Phase 3: Constraints & Indexes', fn: createIndexesAndConstraints },
-    { name: 'Phase 4: Finalize & Linking', fn: finalizeSetup }
+    { name: 'Phase 1', fn: createBaseTables },
+    { name: 'Phase 2', fn: addMissingColumns },
+    { name: 'Phase 3', fn: createIndexesAndConstraints },
+    { name: 'Phase 4', fn: finalizeSetup }
   ];
 
   for (const phase of phases) {
@@ -285,22 +284,19 @@ const initialize = async () => {
       await client.query('BEGIN');
       await phase.fn(client);
       await client.query('COMMIT');
-      console.log(`${phase.name} completed.`);
+      console.log(`[DB] ${phase.name} completed.`);
     } catch (e) {
       if (client) await client.query('ROLLBACK');
-      console.error(`Error in ${phase.name}:`, e.message);
-      // We continue to next phases if possible, unless it's a critical core failure
-      if (phase.name === 'Phase 1: Base Tables') {
-        console.error('Critical failure in base tables. Stopping initialization.');
-        break;
-      }
+      console.error(`[DB] Error in ${phase.name}:`, e.message);
+      if (phase.name === 'Phase 1') throw e;
     } finally {
       if (client) client.release();
     }
   }
-  console.log('Database initialization process finished.');
+  console.log('[DB] Initialization process finished.');
 };
 
-initialize();
-
-module.exports = pool;
+module.exports = {
+  pool,
+  dbReady: initialize()
+};

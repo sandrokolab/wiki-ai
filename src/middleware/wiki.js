@@ -10,10 +10,16 @@ module.exports = (req, res, next) => {
 
     Wiki.getBySlug(wikiSlug, (err, wiki) => {
         if (err || !wiki) {
-            return res.status(404).render('error', {
-                message: 'Wiki no encontrada',
-                status: 404
-            });
+            console.error('[WIKI MW] Wiki not found or DB error:', err?.message || 'Not found');
+            try {
+                return res.status(404).render('error', {
+                    message: 'Wiki no encontrada',
+                    status: 404
+                });
+            } catch (renderErr) {
+                console.error('[WIKI MW] Failed to render 404 error page:', renderErr.message);
+                return res.status(404).send('Error 404: Wiki no encontrada.');
+            }
         }
 
         req.wiki = wiki;
