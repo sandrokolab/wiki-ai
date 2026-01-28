@@ -8,8 +8,8 @@ const rateLimit = require('express-rate-limit');
 const pool = require('./database');
 const { dbReady } = pool;
 
-// Multi-style compatibility check
-console.log(`[SERVER] [VER 1.37] Pool type: ${typeof pool} | hasQuery: ${typeof pool.query === 'function'} | hasDbReady: ${typeof pool.dbReady === 'object'}`);
+// VER 1.40 Log
+console.log('[SERVER] [VER 1.40] Initializing Wiki AI Restoration (Multi-Wiki Mode)...');
 
 const User = require('./src/models/user');
 const Page = require('./src/models/page');
@@ -21,19 +21,12 @@ const Favorite = require('./src/models/favorite');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-console.log('[SERVER] [VER 1.37] Initializing system...');
-
-// Trust proxy
+// Trust proxy for Railway/Heroku
 app.set('trust proxy', 1);
 
 // Configure View Engine
-const ejs = require('ejs');
-app.engine('ejs', ejs.renderFile);
 app.set('view engine', 'ejs');
-const viewsDir = path.join(__dirname, 'src', 'views');
-app.set('views', viewsDir);
-
-console.log(`[SERVER] [VER 1.37] View engine: ${app.get('view engine')} | Views dir: ${app.get('views')}`);
+app.set('views', path.join(__dirname, 'src', 'views'));
 
 // Middlewares
 app.use(helmet({
@@ -48,7 +41,11 @@ app.use(helmet({
 }));
 app.use(compression());
 
-const limiter = rateLimit({ windowMs: 1 * 60 * 1000, max: 100 });
+const limiter = rateLimit({
+    windowMs: 1 * 60 * 1000,
+    max: 100,
+    message: 'Too many requests from this IP'
+});
 app.use(limiter);
 
 app.use(express.json());
@@ -64,31 +61,16 @@ app.use(session({
 
 const wikiMiddleware = require('./src/middleware/wiki');
 
-// GLOBAL CONTEXT MIDDLEWARE
-// Ensures that 'wiki' and 'wikiUrl' are always defined, even on non-wiki routes (like /login)
-app.use(async (req, res, next) => {
-    // 1. Default wikiUrl helper
+// SHARED DATA MIDDLEWARE (Multi-Wiki Aware)
+const provideWikiData = (req, res, next) => {
+    const wikiId = req.wiki ? req.wiki.id : 1; // Default to ID 1 if not in wiki context
+
+    // Wiki URL Helper
     res.locals.wikiUrl = (path) => {
-        const slug = (req.wiki && req.wiki.slug) || process.env.DEFAULT_WIKI_SLUG || 'general';
+        const slug = (req.wiki && req.wiki.slug) || 'general';
         const cleanPath = path.startsWith('/') ? path : '/' + path;
         return `/w/${slug}${cleanPath}`;
     };
-
-    // 2. Default wiki object (Fallback)
-    if (!res.locals.wiki) {
-        res.locals.wiki = {
-            id: 1,
-            slug: process.env.DEFAULT_WIKI_SLUG || 'general',
-            name: 'Wiki General'
-        };
-    }
-    next();
-});
-
-// Shared Data Middleware
-const provideWikiData = (req, res, next) => {
-    const wikiId = req.wiki ? req.wiki.id : null;
-    if (!wikiId) return next();
 
     Page.getCategories(wikiId, (catErr, categories) => {
         Activity.getRecent(10, wikiId, (actErr, activity) => {
@@ -96,10 +78,7 @@ const provideWikiData = (req, res, next) => {
                 res.locals.allCategories = categories || [];
                 res.locals.recentActivity = activity || [];
                 res.locals.allTopics = allTopics || [];
-                res.locals.wikiUrl = (path) => {
-                    const cleanPath = path.startsWith('/') ? path : '/' + path;
-                    return `/w/${req.wiki.slug}${cleanPath}`;
-                };
+                res.locals.wiki = req.wiki || { id: 1, slug: 'general', name: 'Wiki General' };
 
                 if (req.session && req.session.userId) {
                     User.findById(req.session.userId, (err, user) => {
@@ -133,64 +112,52 @@ const wikiRoutes = require('./src/routes/wiki');
 const authRoutes = require('./src/routes/auth');
 const adminRoutes = require('./src/routes/admin');
 
-app.use('/', authRoutes);
-app.use('/admin', provideWikiData, adminRoutes);
-
-// System Diagnostic (Hidden)
+// DIAGNOSTIC ROUTE
 app.get('/system/check', async (req, res) => {
     try {
+        const result = await pool.query('SELECT NOW()');
         const wikiCount = await pool.query('SELECT count(*) FROM wikis');
-        const generalWiki = await pool.query('SELECT * FROM wikis WHERE slug = $1', ['general']);
         res.json({
-            version: '1.36',
-            status: 'online',
-            pool: {
-                type: typeof pool,
-                hasQuery: typeof pool.query === 'function',
-                hasDbReady: typeof pool.dbReady === 'object'
-            },
-            database: {
-                wikiCount: wikiCount.rows[0].count,
-                hasGeneral: generalWiki.rows.length > 0,
-                generalData: generalWiki.rows[0] || null
-            }
+            status: 'UP',
+            version: '1.40',
+            db: 'CONNECTED',
+            time: result.rows[0].now,
+            wikis: wikiCount.rows[0].count
         });
-    } catch (err) {
-        res.status(500).json({ version: '1.36', error: err.message, stack: err.stack });
+    } catch (e) {
+        res.status(500).json({ status: 'ERROR', version: '1.40', db: 'DISCONNECTED', error: e.message });
     }
 });
 
+// Root Redirect to Default Wiki
 app.get('/', (req, res) => {
     const defaultWiki = process.env.DEFAULT_WIKI_SLUG || 'general';
-    console.log(`[SERVER] [VER 1.36] Root redirect -> /w/${defaultWiki}`);
     return res.redirect(`/w/${defaultWiki}`);
 });
 
+app.use('/', provideWikiData, authRoutes);
+app.use('/admin', provideWikiData, adminRoutes);
 app.use('/w/:wiki_slug', wikiMiddleware, provideWikiData, wikiRoutes);
 
 // Error Handler
 app.use((err, req, res, next) => {
-    console.error('[SERVER ERROR] [VER 1.36]', err.stack);
+    console.error('[SERVER ERROR] [VER 1.40]', err.stack);
     const status = err.status || 500;
-    try {
-        res.status(status).render('error', {
-            message: process.env.NODE_ENV === 'production' ? 'Un error interno ha ocurrido.' : err.message,
-            status: status
-        });
-    } catch (renderErr) {
-        res.status(status).send(`Error ${status}: ${err.message}`);
-    }
+    res.status(status).render('error', {
+        message: process.env.NODE_ENV === 'production' ? 'Un error interno ha ocurrido.' : err.message,
+        status: status,
+        wiki: res.locals.wiki || { slug: 'general' }
+    });
 });
 
 // START SERVER
 dbReady.then(() => {
-    console.log('[SERVER] [VER 1.36] Database initialized. Ready for connections.');
     app.listen(PORT, () => {
-        console.log(`[SERVER] [VER 1.36] Listening on port ${PORT}`);
+        console.log(`[SERVER] [VER 1.40] RESTORED AND RUNNING on port ${PORT}`);
     });
 }).catch(err => {
-    console.error('[SERVER] [VER 1.36] Warning: DB Init encountered errors, but starting anyway.', err.message);
+    console.error('[SERVER] [VER 1.40] DB connection failed, starting in degraded mode.');
     app.listen(PORT, () => {
-        console.log(`[SERVER] [VER 1.36] Listening on port ${PORT} (DEGRADED MODE)`);
+        console.log(`[SERVER] [VER 1.40] Running on port ${PORT} (DEGRADED)`);
     });
 });
