@@ -127,8 +127,11 @@ app.use('/', authRoutes);
 // Admin routes (middleware and check inside routes/admin.js)
 app.use('/admin', provideWikiData, adminRoutes);
 
-// Redirect root to general wiki
-app.get('/', (req, res) => res.redirect('/w/general'));
+// Redirect root to default wiki
+app.get('/', (req, res) => {
+    const defaultWiki = process.env.DEFAULT_WIKI_SLUG || 'general';
+    return res.redirect(`/w/${defaultWiki}`);
+});
 
 // All wiki-specific routes under /w/:wiki_slug
 app.use('/w/:wiki_slug', wikiMiddleware, provideWikiData, wikiRoutes);
