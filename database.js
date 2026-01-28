@@ -165,7 +165,5 @@ const initialize = async () => {
   }
 };
 
-module.exports = {
-  pool,
-  dbReady: initialize() // This promise ALWAYS resolves (async functions return promise)
-};
+module.exports = pool;
+pool.dbReady = initialize();
