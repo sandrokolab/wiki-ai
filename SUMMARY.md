@@ -60,9 +60,12 @@ Para que el proyecto funcione correctamente en el entorno de Railway, se deben c
 *   **Panel de Administración Centralizado:** Implementación de una suite administrativa protegida por middleware de autorización (`role: admin`). Incluye dashboards de estadísticas globales y gestión masiva de usuarios, wikis y páginas.
 *   **Perfiles de Usuario Dinámicos:** Rediseño de perfiles con estadísticas en tiempo real (páginas, ediciones, comentarios) y una línea de tiempo de actividad personalizada y filtrada por usuario.
 *   **Resolución Definitiva de Inicialización de DB:** Migración exitosa a una base de datos limpia (`Postgres-VQvv`) tras detectar corrupción en el servicio original. Se implementó una lógica de inicialización en 4 fases desacopladas que garantiza la creación de columnas `wiki_id` y restricciones en el orden correcto, logrando un despliegue 100% estable.
+*   **Seeding Temprano y Resiliencia de Wiki:** Refactorización de `database.js` para crear la wiki por defecto "general" en la Fase 1.5 de inicialización. Esto garantiza que la plataforma esté operativa inmediatamente después del arranque, incluso si las tareas de indexación complejas aún están en proceso.
+*   **Fortalecimiento del Motor de Vistas (EJS):** Implementación de una configuración robusta con rutas absolutas resueltas (`path.resolve`) y registros redundantes para eliminar errores de renderizado en entornos de producción (Railway).
+*   **Diagnóstico Integrado en Producción:** Adición de logs de depuración dinámica en las rutas principales para monitorear el estado de las variables de aplicación (`view engine`, `views`) en tiempo real durante las peticiones en vivo.
 
 ### Próximos Pasos:
 1.  Añadir soporte para exportación de páginas en formato PDF.
 2.  Implementar un sistema de badges/logros basado en las estadísticas de contribución.
-3.  Migrar la gestión de sesiones de memoria RAM a PostgreSQL (`connect-pg-simple`) para mayor estabilidad en producción.
+3.  Finalizar la migración de la gestión de sesiones de memoria RAM a PostgreSQL (`connect-pg-simple`) para evitar desconexiones accidentales tras reinicios del servidor.
 

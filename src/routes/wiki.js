@@ -61,6 +61,9 @@ async function processWikiLinks(content, wikiId, wikiSlug) {
 
 // Home route - List all pages
 router.get('/', (req, res) => {
+    console.log('DEBUG: req.app.get("view engine"):', req.app.get('view engine'));
+    console.log('DEBUG: req.app.get("views"):', req.app.get('views'));
+
     Page.getAll(req.wiki.id, (err, pages) => {
         // Handle error gracefully for UI testing/resilience
         res.render('index', {
