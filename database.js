@@ -6,11 +6,28 @@ const pool = new Pool({
 });
 
 /**
- * PHASE 1: Create base tables with minimal structure
+ * HELPER: Ensure column exists
+ */
+async function ensureColumn(client, table, column, definition) {
+  const res = await client.query(`
+    SELECT column_name 
+    FROM information_schema.columns 
+    WHERE table_name = $1 AND column_name = $2
+  `, [table, column]);
+
+  if (res.rows.length === 0) {
+    console.log(`[DB] [SURGERY] Table "${table}" missing column "${column}". Injecting...`);
+    await client.query(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+  }
+}
+
+/**
+ * PHASE 1: Base Structure & Surgical Repair
  */
 async function createBaseTables(client) {
-  console.log('[DB] Phase 1: Creating base tables...');
+  console.log('[DB] [VER 1.31] Phase 1: Base Tables & Surgery...');
 
+  // 1. Core: wikis
   await client.query(`
     CREATE TABLE IF NOT EXISTS wikis (
       id SERIAL PRIMARY KEY,
@@ -21,24 +38,22 @@ async function createBaseTables(client) {
     )
   `);
 
-  // Seeding default wiki EARLY in Phase 1 to prevent 404s
-  console.log('[DB] Phase 1.5: Seeding default wiki "general"...');
-  try {
-    const insertRes = await client.query(`
-      INSERT INTO wikis (name, slug, description)
-      VALUES ('Wiki General', 'general', 'Espacio principal de la wiki')
-      ON CONFLICT (slug) DO NOTHING
-      RETURNING id
-    `);
-    if (insertRes.rows.length > 0) {
-      console.log(`[DB] Default wiki "general" created with ID: ${insertRes.rows[0].id}`);
-    } else {
-      console.log('[DB] Default wiki "general" already exists.');
-    }
-  } catch (err) {
-    console.error('[DB] Error seeding general wiki in Phase 1:', err.message);
+  // 2. IMMEDIATE SEEDING: Wiki General
+  console.log('[DB] Phase 1.1: Seeding "general" wiki...');
+  await client.query(`
+    INSERT INTO wikis (name, slug, description)
+    VALUES ('Wiki General', 'general', 'Espacio principal de la wiki')
+    ON CONFLICT (slug) DO NOTHING
+  `);
+
+  // 3. Surgery: Ensure wiki_id exists for tables that might be old
+  const tablesNeedingWikiId = ['topics', 'pages', 'activity_log', 'comments'];
+  for (const table of tablesNeedingWikiId) {
+    await client.query(`CREATE TABLE IF NOT EXISTS ${table} (id SERIAL PRIMARY KEY)`); // Safety
+    await ensureColumn(client, table, 'wiki_id', 'INTEGER REFERENCES wikis(id) ON DELETE CASCADE');
   }
 
+  // 4. Detailed definitions (will only update if table is new)
   await client.query(`
     CREATE TABLE IF NOT EXISTS users (
       id SERIAL PRIMARY KEY,
@@ -81,6 +96,8 @@ async function createBaseTables(client) {
     )
   `);
 
+  await ensureColumn(client, 'pages', 'topic_id', 'INTEGER REFERENCES topics(id)');
+
   await client.query(`
     CREATE TABLE IF NOT EXISTS activity_log (
       id SERIAL PRIMARY KEY,
@@ -119,20 +136,15 @@ async function createBaseTables(client) {
 }
 
 /**
- * PHASE 2: Add missing columns (migraciones robustas)
+ * PHASE 2: Heavy Migrations
  */
 async function addMissingColumns(client) {
-  console.log('[DB] Phase 2: Verifying and adding missing columns...');
+  console.log('[DB] Phase 2: Heavy Migrations...');
   const migrations = [
     'ALTER TABLE users ADD COLUMN IF NOT EXISTS role TEXT DEFAULT \'user\'',
-    'ALTER TABLE topics ADD COLUMN IF NOT EXISTS wiki_id INTEGER REFERENCES wikis(id) ON DELETE CASCADE',
-    'ALTER TABLE pages ADD COLUMN IF NOT EXISTS wiki_id INTEGER REFERENCES wikis(id) ON DELETE CASCADE',
-    'ALTER TABLE pages ADD COLUMN IF NOT EXISTS topic_id INTEGER REFERENCES topics(id)',
     'ALTER TABLE pages ADD COLUMN IF NOT EXISTS status TEXT DEFAULT \'draft\'',
     'ALTER TABLE pages ADD COLUMN IF NOT EXISTS is_verified BOOLEAN DEFAULT false',
     'ALTER TABLE pages ADD COLUMN IF NOT EXISTS allow_comments BOOLEAN DEFAULT true',
-    'ALTER TABLE activity_log ADD COLUMN IF NOT EXISTS wiki_id INTEGER REFERENCES wikis(id) ON DELETE CASCADE',
-    'ALTER TABLE comments ADD COLUMN IF NOT EXISTS wiki_id INTEGER REFERENCES wikis(id) ON DELETE CASCADE',
     'ALTER TABLE page_revisions ADD COLUMN IF NOT EXISTS change_summary TEXT'
   ];
 
@@ -141,31 +153,19 @@ async function addMissingColumns(client) {
       await client.query(sql);
     } catch (err) {
       if (err.code !== '42701') {
-        console.warn(`[DB] Migration notice: ${err.message} [SQL: ${sql}]`);
+        console.warn(`[DB] Migration notice: ${err.message}`);
       }
     }
   }
 }
 
 /**
- * PHASE 3: Apply constraints and indexes
+ * PHASE 3: Constraints & Indexes (Final Polish)
  */
 async function createIndexesAndConstraints(client) {
-  console.log('[DB] Phase 3: Applying constraints and indexes...');
+  console.log('[DB] Phase 3: Final polish (Constraints & Indexes)...');
 
-  // Surgical check for wiki_id before adding constraints
-  const checkColumn = await client.query(`
-    SELECT column_name 
-    FROM information_schema.columns 
-    WHERE table_name = 'topics' AND column_name = 'wiki_id'
-  `);
-
-  if (checkColumn.rows.length === 0) {
-    console.warn('[DB] wiki_id column missing in topics during Phase 3. Re-attempting creation.');
-    await client.query('ALTER TABLE topics ADD COLUMN wiki_id INTEGER REFERENCES wikis(id) ON DELETE CASCADE');
-  }
-
-  // Clean up broken/orphaned indexes first to avoid conflicts
+  // Pre-cleanup
   const cleanup = [
     'DROP INDEX IF EXISTS idx_pages_wiki_id',
     'DROP INDEX IF EXISTS idx_topics_wiki_id',
@@ -174,8 +174,8 @@ async function createIndexesAndConstraints(client) {
   ];
   for (const sql of cleanup) { try { await client.query(sql); } catch (e) { } }
 
-  // Applying definitive constraints
   try {
+    // Unique constraints
     await client.query('ALTER TABLE topics DROP CONSTRAINT IF EXISTS topics_name_key');
     await client.query('ALTER TABLE topics DROP CONSTRAINT IF EXISTS topics_wiki_name_unique');
     await client.query('ALTER TABLE topics ADD CONSTRAINT topics_wiki_name_unique UNIQUE (wiki_id, name)');
@@ -184,36 +184,19 @@ async function createIndexesAndConstraints(client) {
     await client.query('ALTER TABLE pages DROP CONSTRAINT IF EXISTS pages_wiki_slug_unique');
     await client.query('ALTER TABLE pages ADD CONSTRAINT pages_wiki_slug_unique UNIQUE (wiki_id, slug)');
 
-    // Create indexes for performance
+    // Indexes
     await client.query('CREATE INDEX IF NOT EXISTS idx_pages_wiki_id ON pages(wiki_id)');
     await client.query('CREATE INDEX IF NOT EXISTS idx_topics_wiki_id ON topics(wiki_id)');
-    await client.query('CREATE INDEX IF NOT EXISTS idx_activity_log_wiki_id ON activity_log(wiki_id)');
-    await client.query('CREATE INDEX IF NOT EXISTS idx_comments_wiki_id ON comments(wiki_id)');
   } catch (err) {
-    console.error('[DB] CRITICAL ERROR in Phase 3:', err.message);
-    throw err;
+    console.error('[DB] Error in Phase 3 constraints:', err.message);
   }
 }
 
 /**
- * PHASE 4: Secondary tables and data linking
+ * PHASE 4: Secondary Tables & Linking
  */
 async function finalizeSetup(client) {
-  console.log('[DB] Phase 4: Finalizing setup and data linking...');
-
-  const defaultWiki = await client.query("SELECT id FROM wikis WHERE slug = 'general'");
-  if (defaultWiki.rows.length > 0) {
-    const wikiId = defaultWiki.rows[0].id;
-    console.log(`[DB] Ensuring orphaned records are linked to wiki ID: ${wikiId}`);
-    try {
-      await client.query("UPDATE pages SET wiki_id = $1 WHERE wiki_id IS NULL", [wikiId]);
-      await client.query("UPDATE topics SET wiki_id = $1 WHERE wiki_id IS NULL", [wikiId]);
-      await client.query("UPDATE activity_log SET wiki_id = $1 WHERE wiki_id IS NULL", [wikiId]);
-      await client.query("UPDATE comments SET wiki_id = $1 WHERE wiki_id IS NULL", [wikiId]);
-    } catch (err) {
-      console.warn('[DB] Update orphaned records non-critical error:', err.message);
-    }
-  }
+  console.log('[DB] Phase 4: Finalizing secondary tables...');
 
   const secondaryTables = [
     `CREATE TABLE IF NOT EXISTS user_favorites(
@@ -266,10 +249,18 @@ async function finalizeSetup(client) {
     await client.query('ALTER TABLE "session" ADD CONSTRAINT "session_pkey" PRIMARY KEY ("sid") NOT DEFERRABLE INITIALLY IMMEDIATE');
     await client.query('CREATE INDEX IF NOT EXISTS "IDX_session_expire" ON "session" ("expire")');
   } catch (e) { }
+
+  // Scoped Data Linking (Orphans)
+  const defaultWiki = await client.query("SELECT id FROM wikis WHERE slug = 'general'");
+  if (defaultWiki.rows.length > 0) {
+    const wikiId = defaultWiki.rows[0].id;
+    await client.query("UPDATE pages SET wiki_id = $1 WHERE wiki_id IS NULL", [wikiId]).catch(() => { });
+    await client.query("UPDATE topics SET wiki_id = $1 WHERE wiki_id IS NULL", [wikiId]).catch(() => { });
+  }
 }
 
 const initialize = async () => {
-  console.log('[DB] [VER 1.30] Starting initialization...');
+  console.log('[DB] [VER 1.31] Starting initialization process...');
   const phases = [
     { name: 'Phase 1', fn: createBaseTables },
     { name: 'Phase 2', fn: addMissingColumns },
@@ -284,16 +275,16 @@ const initialize = async () => {
       await client.query('BEGIN');
       await phase.fn(client);
       await client.query('COMMIT');
-      console.log(`[DB] ${phase.name} completed.`);
+      console.log(`[DB] ${phase.name} completed successfully.`);
     } catch (e) {
       if (client) await client.query('ROLLBACK');
-      console.error(`[DB] Error in ${phase.name}:`, e.message);
+      console.error(`[DB] CRITICAL ERROR IN ${phase.name}:`, e.message);
       if (phase.name === 'Phase 1') throw e;
     } finally {
       if (client) client.release();
     }
   }
-  console.log('[DB] Initialization process finished.');
+  console.log('[DB] [VER 1.31] Database initialization finished.');
 };
 
 module.exports = {

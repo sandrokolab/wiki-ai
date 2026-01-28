@@ -16,12 +16,12 @@ const Favorite = require('./src/models/favorite');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-console.log('[SERVER] [VER 1.30] Initializing...');
+console.log('[SERVER] [VER 1.31] Initializing system...');
 
 // Trust proxy for rate-limiting on Railway
 app.set('trust proxy', 1);
 
-// Configure View Engine - DEFINITIVE & EXPLICIT
+// Configure View Engine
 const ejs = require('ejs');
 app.engine('ejs', ejs.renderFile);
 app.set('view engine', 'ejs');
@@ -29,8 +29,7 @@ const viewsDir = path.join(__dirname, 'src', 'views');
 app.set('views', viewsDir);
 
 // Startup check
-console.log(`[SERVER] View engine: ${app.get('view engine')}`);
-console.log(`[SERVER] Views dir: ${app.get('views')}`);
+console.log(`[SERVER] [VER 1.31] View engine: ${app.get('view engine')} | Views dir: ${app.get('views')}`);
 
 // Security Middlewares
 app.use(helmet({
@@ -125,6 +124,7 @@ app.use('/admin', provideWikiData, adminRoutes);
 
 app.get('/', (req, res) => {
     const defaultWiki = process.env.DEFAULT_WIKI_SLUG || 'general';
+    console.log(`[SERVER] [VER 1.31] Redirecting root to /w/${defaultWiki}`);
     return res.redirect(`/w/${defaultWiki}`);
 });
 
@@ -132,7 +132,7 @@ app.use('/w/:wiki_slug', wikiMiddleware, provideWikiData, wikiRoutes);
 
 // Global Error Handler
 app.use((err, req, res, next) => {
-    console.error('[SERVER ERROR]', err.stack);
+    console.error('[SERVER ERROR] [VER 1.31]', err.stack);
     const status = err.status || 500;
     try {
         res.status(status).render('error', {
@@ -142,7 +142,7 @@ app.use((err, req, res, next) => {
             status: status
         });
     } catch (renderErr) {
-        console.error('[CRITICAL] Failed to render error page:', renderErr.message);
+        console.error('[CRITICAL] [VER 1.31] Failed to render error page:', renderErr.message);
         res.status(status).send(`Error ${status}: ${err.message}`);
     }
 });
@@ -150,9 +150,9 @@ app.use((err, req, res, next) => {
 // START SERVER ONLY IF DATABASE IS READY
 dbReady.then(() => {
     app.listen(PORT, () => {
-        console.log(`[SERVER] [VER 1.30] Running on port ${PORT}`);
+        console.log(`[SERVER] [VER 1.31] System online at port ${PORT}`);
     });
 }).catch(err => {
-    console.error('[SERVER] Critical: Database failed to initialize. Server not started.', err.message);
+    console.error('[SERVER] [VER 1.31] CRITICAL: DB failed. Server offline.', err.message);
     process.exit(1);
 });
